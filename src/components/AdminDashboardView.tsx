@@ -1,0 +1,754 @@
+import React, { useMemo, useState } from 'react';
+import {
+  Award,
+  BookOpen,
+  Check,
+  ExternalLink,
+  FileSpreadsheet,
+  FolderGit2,
+  KeyRound,
+  PenSquare,
+  Printer,
+  Search,
+  Users,
+} from 'lucide-react';
+import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
+import {
+  BrandingTemplateConfig,
+  MdaDatabase,
+  PillarSummary,
+  Student,
+} from '../types/mda';
+import {
+  formatRupiah,
+  generateSmartAccessPin,
+  hitungPredikat,
+  hitungRataRataDigital,
+  hitungRataRataDiniyah,
+} from '../utils/grading';
+import { getParentPortalAccessUrl, getThemeStyles, mergeTemplateConfig } from '../utils/theme';
+import { RadarFivePillarsChart } from './Charts';
+import { MdaLogo, StudentAvatar } from './MdaLogo';
+
+interface AdminDashboardViewProps {
+  db: MdaDatabase;
+  selectedYear: string;
+  selectedSemester: 'Gasal' | 'Genap';
+  templateConfig?: BrandingTemplateConfig;
+  onOpenGradeEditor: (studentId: string) => void;
+  onOpenStudentPortal: (studentId: string) => void;
+  onOpenPrintReport: (studentId: string) => void;
+  onOpenPortfolio: (studentId: string) => void;
+  onOpenNarrativeEditor?: () => void;
+}
+
+export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
+  db,
+  selectedYear,
+  selectedSemester,
+  templateConfig,
+  onOpenGradeEditor,
+  onOpenStudentPortal,
+  onOpenPrintReport,
+  onOpenPortfolio,
+  onOpenNarrativeEditor,
+}) => {
+  const [classFilter, setClassFilter] = useState<string>('Semua');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedStudentId, setCopiedStudentId] = useState<string | null>(null);
+
+  const tpl = mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG);
+  const theme = getThemeStyles(tpl.accentTheme);
+
+  const classOptions = useMemo(() => {
+    const set = new Set<string>(['Semua']);
+    db.students.forEach((s) => set.add(s.kelas));
+    return Array.from(set);
+  }, [db.students]);
+
+  const filteredStudents = useMemo(() => {
+    return db.students.filter((s) => {
+      const matchClass = classFilter === 'Semua' || s.kelas === classFilter;
+      const q = searchQuery.trim().toLowerCase();
+      const matchSearch =
+        q === '' ||
+        s.nama.toLowerCase().includes(q) ||
+        s.nisnMda.toLowerCase().includes(q) ||
+        s.waliKelasNama.toLowerCase().includes(q);
+      return matchClass && matchSearch;
+    });
+  }, [db.students, classFilter, searchQuery]);
+
+  const periodReports = useMemo(() => {
+    const ids = new Set(filteredStudents.map((s) => s.id));
+    return db.reports.filter(
+      (r) =>
+        ids.has(r.studentId) &&
+        r.tahunAkademik === selectedYear &&
+        r.semester === selectedSemester
+    );
+  }, [db.reports, filteredStudents, selectedYear, selectedSemester]);
+
+  const cohortStats = useMemo(() => {
+    const count = periodReports.length || 1;
+    const avgPilar: PillarSummary = {
+      penguasaanMultimedia: Math.round(
+        periodReports.reduce((a, r) => a + r.pilar.penguasaanMultimedia, 0) / count
+      ),
+      diniyahPembelajaran: Math.round(
+        periodReports.reduce((a, r) => a + r.pilar.diniyahPembelajaran, 0) / count
+      ),
+      tahfidzulQuran: Math.round(
+        periodReports.reduce((a, r) => a + r.pilar.tahfidzulQuran, 0) / count
+      ),
+      kesantrianKeasramaan: Math.round(
+        periodReports.reduce((a, r) => a + r.pilar.kesantrianKeasramaan, 0) / count
+      ),
+      characterBuilding: Math.round(
+        periodReports.reduce((a, r) => a + r.pilar.characterBuilding, 0) / count
+      ),
+      autoCalculate: false,
+    };
+
+    const avgTahfidz =
+      Math.round(
+        (periodReports.reduce((a, r) => a + r.tahfidz.nilaiAkhir, 0) / count) * 10
+      ) / 10;
+
+    const avgDiniyah =
+      Math.round(
+        (periodReports.reduce((a, r) => a + hitungRataRataDiniyah(r.diniyah), 0) / count) *
+          10
+      ) / 10;
+
+    const avgDigital =
+      Math.round(
+        (periodReports.reduce((a, r) => a + hitungRataRataDigital(r.skillDigital), 0) /
+          count) *
+          10
+      ) / 10;
+
+    const totalIncome = periodReports.reduce((a, r) => a + (r.kpiMda.incomeRp || 0), 0);
+    const totalProjects = db.portfolios.filter((p) =>
+      filteredStudents.some((s) => s.id === p.studentId)
+    ).length;
+
+    return {
+      avgPilar,
+      avgTahfidz,
+      avgDiniyah,
+      avgDigital,
+      totalIncome,
+      totalProjects,
+    };
+  }, [periodReports, db.portfolios, filteredStudents]);
+
+  const getReportForStudent = (student: Student) =>
+    db.reports.find(
+      (r) =>
+        r.studentId === student.id &&
+        r.tahunAkademik === selectedYear &&
+        r.semester === selectedSemester
+    );
+
+  const handleCopyParentAccess = async (student: Student) => {
+    const link = getParentPortalAccessUrl(
+      student.nisnMda,
+      student.accessPin || generateSmartAccessPin(student.nama, student.nisnMda),
+      db.spreadsheetId
+    );
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedStudentId(student.id);
+      setTimeout(() => setCopiedStudentId(null), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Authentic MDA Branded Competence Hero Banner */}
+      <div
+        className="relative rounded-2xl p-5 sm:p-6 text-white overflow-hidden shadow-sm"
+        style={{ background: theme.bannerGradient }}
+      >
+        {tpl.coverPhotoUrl && (
+          <img
+            src={tpl.coverPhotoUrl}
+            alt="Latar MDA"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-luminosity"
+          />
+        )}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <div className="inline-flex items-center justify-center bg-white/95 rounded-xl px-3.5 py-2 shadow-xs w-fit">
+              <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
+            </div>
+            <h1 className="font-['Outfit'] not-italic font-bold text-xl sm:text-2xl tracking-tight pt-1">
+              {tpl.subjudulCompetence}
+            </h1>
+            <p className="font-[Arial] text-xs sm:text-sm text-white/90 max-w-2xl">
+              {tpl.namaLembaga} · {tpl.namaPesantren} · Semester {selectedSemester} TA{' '}
+              {selectedYear}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 shrink-0">
+            <div className="bg-slate-950/35 border border-white/20 rounded-xl px-3.5 py-2.5 backdrop-blur-xs">
+              <div className="text-[11px] text-emerald-200 font-medium">Santri Aktif</div>
+              <div className="font-[Arial] font-bold text-lg text-white tabular-nums">
+                {filteredStudents.length} Santri
+              </div>
+            </div>
+            <div className="bg-slate-950/35 border border-white/20 rounded-xl px-3.5 py-2.5 backdrop-blur-xs">
+              <div className="text-[11px] text-emerald-200 font-medium">Total Karya</div>
+              <div className="font-[Arial] font-bold text-lg text-white tabular-nums">
+                {cohortStats.totalProjects} Proyek
+              </div>
+            </div>
+            <div className="col-span-2 sm:col-span-1 bg-[#1DF27A] text-slate-950 rounded-xl px-3.5 py-2.5 shadow-xs">
+              <div className="text-[11px] font-bold">Total Income Santri</div>
+              <div className="font-[Arial] font-extrabold text-base tabular-nums">
+                {formatRupiah(cohortStats.totalIncome)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Summary Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+        <div
+          className="border border-emerald-200/80 rounded-2xl p-4"
+          style={{ backgroundColor: theme.pageTint }}
+        >
+          <div className="flex items-center justify-between text-xs text-slate-700 font-semibold">
+            <span>Santri Terdaftar</span>
+            <Users className="w-4 h-4 text-emerald-700" />
+          </div>
+          <div className="mt-2 font-display font-bold text-2xl text-slate-900 tabular-nums">
+            {filteredStudents.length}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-600">
+            {periodReports.length} rapor aktif · {selectedSemester}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Rata-rata Tahfidz</span>
+            <BookOpen className="w-4 h-4 text-sky-600" />
+          </div>
+          <div className="mt-2 font-display font-bold text-2xl text-slate-900 tabular-nums">
+            {cohortStats.avgTahfidz || '—'}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            Predikat {hitungPredikat(cohortStats.avgTahfidz || 0)} · KKM 70
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Rata-rata Diniyah</span>
+            <Award className="w-4 h-4 text-teal-600" />
+          </div>
+          <div className="mt-2 font-display font-bold text-2xl text-slate-900 tabular-nums">
+            {cohortStats.avgDiniyah || '—'}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            5 Kitab Wajib · KKM 60
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Skill Digital</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="mt-2 font-display font-bold text-2xl text-slate-900 tabular-nums">
+            {cohortStats.avgDigital || '—'}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">
+            UI/UX · Desain · Foto · Video
+          </div>
+        </div>
+
+        <div
+          className="col-span-2 sm:col-span-1 text-white rounded-2xl p-4"
+          style={{ backgroundColor: theme.darkPill }}
+        >
+          <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold">
+            <span>Portofolio &amp; Income</span>
+            <FolderGit2 className="w-4 h-4 text-[#1DF27A]" />
+          </div>
+          <div className="mt-2 font-display font-bold text-2xl text-white tabular-nums">
+            {cohortStats.totalProjects} Karya
+          </div>
+          <div className="mt-1 font-[Arial] text-[11px] text-emerald-200 tabular-nums">
+            Income {formatRupiah(cohortStats.totalIncome)}
+          </div>
+        </div>
+      </div>
+
+      {/* Cohort 5-Pillar Overview + MDA PDF Mint Bars */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5">
+          <div className="mb-3">
+            <div
+              className="inline-block text-slate-950 font-display font-extrabold text-[11px] px-3 py-1 rounded-full mb-2"
+              style={{ backgroundColor: theme.sectionSky }}
+            >
+              RADAR 5 PILAR KOMPETENSI
+            </div>
+            <h2 className="font-['Outfit'] font-bold text-slate-900 text-base">
+              {tpl.dashboardRadarTitle}
+            </h2>
+            <p className="text-xs text-slate-500">
+              Rata-rata kelas {classFilter} · {selectedSemester} {selectedYear}
+            </p>
+          </div>
+
+          <RadarFivePillarsChart
+            current={cohortStats.avgPilar}
+            currentLabel={`Rata-rata ${classFilter}`}
+          />
+        </div>
+
+        <div
+          className="lg:col-span-7 border border-emerald-200 rounded-2xl p-5 flex flex-col justify-between"
+          style={{ backgroundColor: theme.pageTint }}
+        >
+          <div>
+            <div
+              className="inline-block text-slate-950 font-display font-extrabold text-[11px] px-3.5 py-1 rounded-full mb-2"
+              style={{ backgroundColor: theme.sectionSky }}
+            >
+              RINGKASAN CAPAIAN 5 PILAR
+            </div>
+            <h2 className="font-display font-bold text-slate-900 text-base">
+              {tpl.dashboardPillarTitle}
+            </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              {tpl.dashboardPillarSubtitle}
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {[
+                {
+                  label: 'Penguasaan Multimedia',
+                  value: cohortStats.avgPilar.penguasaanMultimedia,
+                },
+                {
+                  label: 'Diniyah dan Pembelajaran',
+                  value: cohortStats.avgPilar.diniyahPembelajaran,
+                },
+                {
+                  label: "Tahfidzul Qur'an",
+                  value: cohortStats.avgPilar.tahfidzulQuran,
+                },
+                {
+                  label: 'Kesantrian dan Keasramaan',
+                  value: cohortStats.avgPilar.kesantrianKeasramaan,
+                },
+                {
+                  label: 'Character Building',
+                  value: cohortStats.avgPilar.characterBuilding,
+                },
+              ].map((row, idx) => (
+                <div key={row.label} className="flex items-center gap-3">
+                  <div className="relative flex-1 h-9 bg-white rounded-full border border-emerald-200 overflow-hidden flex items-center">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, row.value)}%`,
+                        backgroundColor: theme.barTrack,
+                      }}
+                    />
+                    <span className="absolute left-4 text-xs font-bold text-slate-900 truncate pr-2">
+                      {row.label}
+                    </span>
+                  </div>
+                  <div
+                    className={`w-16 h-9 text-white rounded-full flex items-center justify-center ${
+                      idx === 0 || idx === 1 || idx === 4 ? 'font-[Arial]' : 'font-mono'
+                    } text-xs font-bold tabular-nums shrink-0`}
+                    style={{ backgroundColor: theme.darkPill }}
+                  >
+                    {row.value}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 pt-3 border-t border-emerald-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+            <span className="font-[Arial] italic">
+              Predikat: A (90–100) · B (80–89) · C (70–79) · D (&lt;70)
+            </span>
+            <span className="italic">{tpl.dashboardPillarNote}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Student Reports Table (Desktop) & Stacked Cards (Mobile) */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display font-bold text-slate-900 text-base">
+              {tpl.dashboardTableTitle}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {tpl.dashboardTableSubtitle}
+            </p>
+            {onOpenNarrativeEditor && (
+              <button
+                type="button"
+                onClick={onOpenNarrativeEditor}
+                className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 underline underline-offset-2"
+              >
+                <PenSquare className="w-3 h-3" />
+                <span>Edit Narasi &amp; Tulisan Dashboard</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+              {classOptions.map((cls) => (
+                <button
+                  key={cls}
+                  type="button"
+                  onClick={() => setClassFilter(cls)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                    classFilter === cls
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {cls}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari nama / ID santri..."
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 w-full sm:w-52"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Card Stack */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredStudents.length === 0 ? (
+            <div className="py-10 text-center text-xs text-slate-500">
+              Tidak ada santri yang cocok dengan filter pencarian.
+            </div>
+          ) : (
+            filteredStudents.map((student, idx) => {
+              const rep = getReportForStudent(student);
+              const diniyahAvg = rep ? hitungRataRataDiniyah(rep.diniyah) : 0;
+              const digitalAvg = rep ? hitungRataRataDigital(rep.skillDigital) : 0;
+              const projectCount = db.portfolios.filter(
+                (p) => p.studentId === student.id
+              ).length;
+
+              return (
+                <div key={student.id} className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <StudentAvatar
+                      name={student.nama}
+                      fotoUrl={student.fotoUrl}
+                      className="w-12 h-14 text-sm shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-display font-bold text-slate-900 text-sm">
+                        {student.nama}
+                      </div>
+                      <div className="font-mono text-xs text-emerald-700 font-semibold">
+                        {student.nisnMda}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {student.kelas} · Wali: {student.waliKelasNama}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="grid grid-cols-3 gap-2 p-2.5 rounded-xl border border-emerald-100 text-center text-xs"
+                    style={{ backgroundColor: theme.pageTint }}
+                  >
+                    <div>
+                      <div className="text-[10px] text-slate-500">Tahfidz</div>
+                      <div
+                        className={`${
+                          idx === 0 ? 'font-[Arial]' : 'font-mono'
+                        } font-bold text-slate-900 tabular-nums`}
+                      >
+                        {rep ? `${rep.tahfidz.nilaiAkhir} (${rep.tahfidz.predikat})` : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-500">Diniyah</div>
+                      <div
+                        className={`${
+                          idx === 0 ? 'font-[Arial]' : 'font-mono'
+                        } font-bold text-slate-900 tabular-nums`}
+                      >
+                        {rep ? `${diniyahAvg} (${hitungPredikat(diniyahAvg)})` : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-500">Digital ({projectCount})</div>
+                      <div
+                        className={`${
+                          idx === 0 ? 'font-[Arial]' : 'font-mono'
+                        } font-bold text-slate-900 tabular-nums`}
+                      >
+                        {rep ? `${digitalAvg} (${hitungPredikat(digitalAvg)})` : '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onOpenGradeEditor(student.id)}
+                      className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
+                    >
+                      <PenSquare className="w-3.5 h-3.5" />
+                      <span>Nilai</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenStudentPortal(student.id)}
+                      className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Rapor</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenPortfolio(student.id)}
+                      className="px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700"
+                      title="Portofolio"
+                    >
+                      <FolderGit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyParentAccess(student)}
+                      className="px-2.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800"
+                      title="Salin Link Akses Privat Wali"
+                    >
+                      {copiedStudentId === student.id ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <KeyRound className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenPrintReport(student.id)}
+                      className="px-2.5 py-2 rounded-lg bg-[#0E2228] text-white"
+                      title="Cetak PDF"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr
+                className="text-white text-xs font-semibold"
+                style={{ backgroundColor: theme.darkPill }}
+              >
+                <th className="py-3 px-4">Santri &amp; ID</th>
+                <th className="py-3 px-3">Kelas &amp; Wali</th>
+                <th className="py-3 px-3 text-right">Tahfidz</th>
+                <th className="py-3 px-3 text-right">Diniyah</th>
+                <th className="py-3 px-3 text-right">Digital</th>
+                <th className="py-3 px-3 text-center">Karya</th>
+                <th className="py-3 px-3">PIN Wali</th>
+                <th className="py-3 px-4 text-right">Aksi Cepat</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-10 text-center text-slate-500">
+                    Tidak ada santri yang cocok dengan filter pencarian.
+                  </td>
+                </tr>
+              ) : (
+                filteredStudents.map((student, idx) => {
+                  const rep = getReportForStudent(student);
+                  const diniyahAvg = rep ? hitungRataRataDiniyah(rep.diniyah) : 0;
+                  const digitalAvg = rep ? hitungRataRataDigital(rep.skillDigital) : 0;
+                  const projectCount = db.portfolios.filter(
+                    (p) => p.studentId === student.id
+                  ).length;
+
+                  return (
+                    <tr
+                      key={student.id}
+                      className="hover:bg-emerald-50/40 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <StudentAvatar
+                            name={student.nama}
+                            fotoUrl={student.fotoUrl}
+                            className="w-10 h-11 text-xs shrink-0"
+                          />
+                          <div>
+                            <div className="font-semibold text-slate-900 text-sm">
+                              {student.nama}
+                            </div>
+                            <div
+                              className={`${
+                                idx === 0 ? "font-['JetBrains_Mono']" : 'font-mono'
+                              } text-[11px] text-emerald-700 font-semibold`}
+                            >
+                              {student.nisnMda}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-medium text-slate-800">{student.kelas}</div>
+                        <div className="text-slate-500 truncate max-w-[180px]">
+                          {student.waliKelasNama}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono tabular-nums">
+                        {rep ? (
+                          <div>
+                            <span
+                              className={`${
+                                idx === 0 ? 'font-[Arial] ' : ''
+                              }font-semibold text-slate-900`}
+                            >
+                              {rep.tahfidz.nilaiAkhir}
+                            </span>{' '}
+                            <span className="text-emerald-700 font-bold">
+                              ({rep.tahfidz.predikat})
+                            </span>
+                            <div className="text-[11px] text-slate-500 font-sans">
+                              {rep.tahfidz.totalHafalan}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">Belum ada</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono tabular-nums">
+                        {rep ? (
+                          <span
+                            className={`${
+                              idx === 0 ? 'font-[Arial] ' : ''
+                            }font-semibold text-slate-900`}
+                          >
+                            {diniyahAvg} ({hitungPredikat(diniyahAvg)})
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono tabular-nums">
+                        {rep ? (
+                          <span
+                            className={`${
+                              idx === 0 ? 'font-[Arial] ' : ''
+                            }font-semibold text-slate-900`}
+                          >
+                            {digitalAvg} ({hitungPredikat(digitalAvg)})
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono tabular-nums text-slate-700 font-semibold">
+                        {projectCount}
+                      </td>
+                      <td className="py-3 px-3">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyParentAccess(student)}
+                          className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2 py-1 rounded-md whitespace-nowrap"
+                          title="Salin link akses langsung untuk orang tua"
+                        >
+                          {copiedStudentId === student.id ? (
+                            <Check className="w-3 h-3 text-emerald-700" />
+                          ) : (
+                            <KeyRound className="w-3 h-3" />
+                          )}
+                          <span>
+                            {copiedStudentId === student.id
+                              ? 'Link Disalin'
+                              : student.accessPin || 'MDA123'}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onOpenGradeEditor(student.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium whitespace-nowrap shrink-0"
+                          >
+                            <PenSquare className="w-3.5 h-3.5" />
+                            <span>Nilai</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onOpenStudentPortal(student.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors font-medium whitespace-nowrap shrink-0"
+                            title="Lihat tampilan Portal Santri / Orang Tua"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Rapor</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onOpenPortfolio(student.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors font-medium whitespace-nowrap shrink-0"
+                            title="Buka Portofolio Santri"
+                          >
+                            <FolderGit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onOpenPrintReport(student.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-[#0E2228] text-white hover:bg-slate-800 transition-colors font-medium whitespace-nowrap shrink-0"
+                            title="Cetak / Ekspor PDF Rapor 5 Halaman"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};

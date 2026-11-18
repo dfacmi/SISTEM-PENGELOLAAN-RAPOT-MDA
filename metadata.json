@@ -1,0 +1,6 @@
+{
+  "name": "MDA Rapor Digital & Student Portfolio",
+  "description": "Dashboard Rapor Digital dan Student Portfolio Muslim Digital Academy (MDA) Pondok Pesantren Darul Fithrah berbasis Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
