@@ -181,32 +181,6 @@ export async function loginStaffPinViaServer(params: {
   return res;
 }
 
-export async function loginGoogleViaServer(params: {
-  idToken: string;
-  googleAccessToken?: string | null;
-  spreadsheetId?: string | null;
-}): Promise<{
-  sessionToken: string;
-  user: BackendSessionUser;
-  data: MdaDatabase | null;
-}> {
-  const res = await apiFetch<{
-    sessionToken: string;
-    user: BackendSessionUser;
-    data: MdaDatabase | null;
-  }>('/api/auth/login-google', {
-    method: 'POST',
-    body: {
-      idToken: params.idToken,
-      spreadsheetId: params.spreadsheetId || undefined,
-    },
-    googleAccessToken: params.googleAccessToken,
-    spreadsheetId: params.spreadsheetId,
-  });
-  setStoredSessionToken(res.sessionToken);
-  return res;
-}
-
 export async function logoutViaServer() {
   setStoredSessionToken(null);
   try {

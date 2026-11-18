@@ -219,6 +219,7 @@ export interface UserAccess {
   nama: string;
   role: UserRole;
   linkedStudentId: string;
+  accessPin?: string;
   statusAktif: boolean;
 }
 

@@ -355,58 +355,6 @@ function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaD
   };
 }
 
-async function verifyGoogleIdentity(
-  idToken: string | undefined,
-  googleAccessToken: string | undefined
-): Promise<{ email: string; name?: string } | null> {
-  try {
-    if (idToken) {
-      const fbCfgPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
-      if (fs.existsSync(fbCfgPath)) {
-        const fbCfg = JSON.parse(fs.readFileSync(fbCfgPath, 'utf8')) as { apiKey?: string };
-        if (fbCfg.apiKey) {
-          const res = await fetch(
-            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(fbCfg.apiKey)}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken }),
-            }
-          );
-          if (res.ok) {
-            const payload = (await res.json()) as {
-              users?: { email?: string; emailVerified?: boolean; displayName?: string }[];
-            };
-            const u = payload.users?.[0];
-            if (u?.email && u.emailVerified !== false) {
-              return { email: u.email.toLowerCase(), name: u.displayName };
-            }
-          }
-        }
-      }
-    }
-
-    if (googleAccessToken) {
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${googleAccessToken}` },
-      });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          email?: string;
-          email_verified?: boolean;
-          name?: string;
-        };
-        if (data.email && data.email_verified !== false) {
-          return { email: data.email.toLowerCase(), name: data.name };
-        }
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export function createApiApp(): express.Express {
   const app = express();
   app.set('trust proxy', 1);
@@ -464,14 +412,15 @@ export function createApiApp(): express.Express {
     });
   });
 
-  // 3. Parent/Student PIN Login (verified strictly on backend!)
+  // 3. Parent/Student PIN Login (verified strictly on backend against students & userAccess!)
   app.post('/api/auth/login-parent', async (req, res) => {
     try {
       const { identifier, pin } = req.body as { identifier?: string; pin?: string };
       const q = (identifier || '').trim().replace(/\s+/g, ' ').toLowerCase();
-      const normalizedPin = (pin || '').trim().toUpperCase();
+      const rawPin = (pin || '').trim();
+      const normalizedPin = rawPin.toUpperCase();
       if (!q || !normalizedPin) {
-        res.status(400).json({ error: 'Masukkan ID/Nama Santri beserta PIN Akses.' });
+        res.status(400).json({ error: 'Masukkan ID/Nama/Email Santri & Wali beserta PIN Akses.' });
         return;
       }
 
@@ -485,28 +434,84 @@ export function createApiApp(): express.Express {
       }
 
       const db = await loadDbFromStorage(storage);
-      const matched = db.students.find((s) => {
+
+      // A. Match direct Student record (NISN MDA, Nama Lengkap, ID, or Email Wali)
+      let matchedStudent = db.students.find((s) => {
         const matchIdentity =
           s.nisnMda.trim().toLowerCase() === q ||
-          s.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q;
+          s.id.trim().toLowerCase() === q ||
+          s.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
+          (s.emailSantriOrtu || '').trim().toLowerCase() === q;
+        if (!matchIdentity) return false;
         const expectedPin = (s.accessPin || generateSmartAccessPin(s.nama, s.nisnMda))
           .trim()
           .toUpperCase();
-        return matchIdentity && expectedPin === normalizedPin;
+        if (expectedPin === normalizedPin) return true;
+        // Also allow any active userAccess entry linked to this student with a matching custom PIN
+        return db.userAccess.some(
+          (u) =>
+            u.statusAktif !== false &&
+            u.role === 'santri_ortu' &&
+            u.linkedStudentId === s.id &&
+            Boolean(u.accessPin?.trim()) &&
+            u.accessPin!.trim().toUpperCase() === normalizedPin
+        );
       });
 
-      if (!matched) {
+      // B. Match active UserAccess record for Orang Tua / Santri
+      let matchedAccess: UserAccess | undefined;
+      if (!matchedStudent) {
+        matchedAccess = db.userAccess.find((u) => {
+          if (u.statusAktif === false || u.role !== 'santri_ortu') return false;
+          const linked = db.students.find((s) => s.id === u.linkedStudentId);
+          const matchUserIdentity =
+            u.email.trim().toLowerCase() === q ||
+            u.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
+            u.id.trim().toLowerCase() === q ||
+            Boolean(
+              linked &&
+                (linked.nisnMda.trim().toLowerCase() === q ||
+                  linked.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q)
+            );
+          if (!matchUserIdentity) return false;
+
+          const customPin = (u.accessPin || '').trim().toUpperCase();
+          if (customPin && customPin === normalizedPin) return true;
+
+          if (linked) {
+            const studentPin = (
+              linked.accessPin || generateSmartAccessPin(linked.nama, linked.nisnMda)
+            )
+              .trim()
+              .toUpperCase();
+            return studentPin === normalizedPin;
+          }
+          return false;
+        });
+
+        if (matchedAccess) {
+          matchedStudent = db.students.find((s) => s.id === matchedAccess!.linkedStudentId);
+        }
+      }
+
+      if (!matchedStudent && !matchedAccess) {
         res.status(401).json({
           error: 'ID/Nama Santri atau PIN Akses tidak sesuai. Periksa kembali kartu akses wali.',
         });
         return;
       }
 
+      const targetStudentId = matchedStudent?.id || matchedAccess?.linkedStudentId || '__none__';
+      const displayName = matchedStudent
+        ? `Wali ${matchedStudent.nama}`
+        : matchedAccess?.nama || 'Wali Santri';
+
       const session: SessionPayload = {
         role: 'santri_ortu',
-        userId: `parent:${matched.id}`,
-        studentId: matched.id,
-        name: `Wali ${matched.nama}`,
+        userId: matchedStudent ? `parent:${matchedStudent.id}` : `access:${matchedAccess!.id}`,
+        studentId: targetStudentId,
+        email: matchedAccess?.email || matchedStudent?.emailSantriOrtu || undefined,
+        name: displayName,
         exp: Date.now() + SESSION_TTL_MS,
       };
       const sessionToken = signSessionToken(session);
@@ -522,28 +527,71 @@ export function createApiApp(): express.Express {
     }
   });
 
-  // 4. Staff (Admin / Guru) PIN Login (verified strictly on backend!)
+  // 4. Staff (Admin / Guru) PIN Login (Super Admin fallback + live teachers & userAccess)
   app.post('/api/auth/login-staff-pin', async (req, res) => {
     try {
       const { identifier, pin } = req.body as { identifier?: string; pin?: string };
       const q = (identifier || '').trim().replace(/\s+/g, ' ').toLowerCase();
-      const normalizedPin = (pin || '').trim().toUpperCase();
+      const rawPin = (pin || '').trim();
+      const normalizedPin = rawPin.toUpperCase();
       if (!q || !normalizedPin) {
         res.status(400).json({ error: 'Masukkan Nama/ID/Email Guru beserta PIN Akses.' });
         return;
       }
 
       const storage = await resolveBackendStorage(req);
+
+      // Built-in Super Admin fallback (works even when Google Sheets teachers table is empty [])
+      const adminUsername = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
+      const adminPin = (process.env.ADMIN_PIN || 'mda2026admin').trim();
+      const isSuperAdmin =
+        q === adminUsername &&
+        (rawPin === adminPin || normalizedPin === adminPin.toUpperCase());
+
+      if (isSuperAdmin) {
+        let db: MdaDatabase = {
+          periods: [],
+          teachers: [],
+          students: [],
+          reports: [],
+          portfolios: [],
+          userAccess: [],
+          templateConfig: DEFAULT_TEMPLATE_CONFIG,
+        };
+        if (storage.mode !== 'none') {
+          try {
+            db = await loadDbFromStorage(storage);
+          } catch {
+            // Keep empty DB fallback so Super Admin can enter dashboard and inspect/fix settings
+          }
+        }
+        const session: SessionPayload = {
+          role: 'admin',
+          userId: `superadmin:${adminUsername}`,
+          email: 'dfacmi123@gmail.com',
+          name: 'Super Admin MDA',
+          exp: Date.now() + SESSION_TTL_MS,
+        };
+        const sessionToken = signSessionToken(session);
+        setSessionCookie(req, res, sessionToken);
+        res.json({
+          sessionToken,
+          user: session,
+          data: scopeDatabaseForSession(db, session),
+        });
+        return;
+      }
+
       if (storage.mode === 'none') {
         res.status(503).json({
           error:
-            'Koneksi database Google Sheets / Apps Script belum aktif. Hubungi Admin untuk menyambungkan URL Web App Apps Script atau Service Account.',
+            'Koneksi database Google Sheets / Apps Script belum aktif. Masuk sebagai Super Admin untuk menempelkan URL Web App Apps Script di Pengaturan.',
         });
         return;
       }
 
       const db = await loadDbFromStorage(storage);
-      const matched = db.teachers.find((t) => {
+      const matchedTeacher = db.teachers.find((t) => {
         const matchIdentity =
           t.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
           (t.kodeGuru || '').trim().toLowerCase() === q ||
@@ -555,22 +603,45 @@ export function createApiApp(): express.Express {
         return matchIdentity && expectedPin === normalizedPin;
       });
 
-      if (!matched) {
+      const matchedStaffAccess = !matchedTeacher
+        ? db.userAccess.find((u) => {
+            if (u.statusAktif === false || (u.role !== 'admin' && u.role !== 'guru')) {
+              return false;
+            }
+            const matchIdentity =
+              u.email.trim().toLowerCase() === q ||
+              u.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
+              u.id.trim().toLowerCase() === q;
+            const customPin = (u.accessPin || '').trim().toUpperCase();
+            return matchIdentity && Boolean(customPin) && customPin === normalizedPin;
+          })
+        : undefined;
+
+      if (!matchedTeacher && !matchedStaffAccess) {
         res.status(401).json({
           error: 'Nama/ID/Email Guru atau PIN Akses tidak sesuai.',
         });
         return;
       }
 
-      const session: SessionPayload = {
-        role: matched.role,
-        userId: `teacher:${matched.id}`,
-        teacherId: matched.id,
-        kelasDiampu: matched.kelasDiampu,
-        email: matched.email,
-        name: matched.nama,
-        exp: Date.now() + SESSION_TTL_MS,
-      };
+      const session: SessionPayload = matchedTeacher
+        ? {
+            role: matchedTeacher.role,
+            userId: `teacher:${matchedTeacher.id}`,
+            teacherId: matchedTeacher.id,
+            kelasDiampu: matchedTeacher.kelasDiampu,
+            email: matchedTeacher.email,
+            name: matchedTeacher.nama,
+            exp: Date.now() + SESSION_TTL_MS,
+          }
+        : {
+            role: matchedStaffAccess!.role,
+            userId: `access:${matchedStaffAccess!.id}`,
+            email: matchedStaffAccess!.email,
+            name: matchedStaffAccess!.nama,
+            exp: Date.now() + SESSION_TTL_MS,
+          };
+
       const sessionToken = signSessionToken(session);
       setSessionCookie(req, res, sessionToken);
 
@@ -581,114 +652,6 @@ export function createApiApp(): express.Express {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Gagal memverifikasi login guru/admin.' });
-    }
-  });
-
-  // 5. Google Sign-In Verification (validates Firebase ID token / OAuth access token + resolves RBAC from Sheets)
-  app.post('/api/auth/login-google', async (req, res) => {
-    try {
-      const { idToken } = req.body as { idToken?: string };
-      const headerAccessToken =
-        typeof req.headers['x-google-access-token'] === 'string'
-          ? req.headers['x-google-access-token']
-          : undefined;
-      if (!idToken && !headerAccessToken) {
-        res.status(400).json({ error: 'Token identitas Google tidak ditemukan.' });
-        return;
-      }
-      const verified = await verifyGoogleIdentity(idToken, headerAccessToken);
-      if (!verified) {
-        res.status(401).json({ error: 'Verifikasi akun Google gagal. Silakan login ulang.' });
-        return;
-      }
-
-      const email = verified.email;
-      const storage = await resolveBackendStorage(req);
-
-      if (storage.mode === 'none') {
-        if (email === 'dfacmi123@gmail.com') {
-          const session: SessionPayload = {
-            role: 'admin',
-            userId: `google:${email}`,
-            email,
-            name: verified.name || 'Admin MDA',
-            exp: Date.now() + SESSION_TTL_MS,
-          };
-          const sessionToken = signSessionToken(session);
-          setSessionCookie(req, res, sessionToken);
-          res.json({ sessionToken, user: session, data: null });
-          return;
-        }
-        res.status(503).json({
-          error: 'Database Google Sheets / Apps Script belum tersambung oleh Admin MDA.',
-        });
-        return;
-      }
-
-      const db = await loadDbFromStorage(storage);
-      const accessRec = db.userAccess.find(
-        (u) => u.email.toLowerCase() === email && u.statusAktif
-      );
-      const teacherRec = db.teachers.find((t) => t.email.toLowerCase() === email);
-      const studentRec = db.students.find((s) => s.emailSantriOrtu.toLowerCase() === email);
-
-      let session: SessionPayload | null = null;
-      if (accessRec) {
-        session = {
-          role: accessRec.role,
-          userId: `google:${email}`,
-          teacherId: teacherRec?.id,
-          studentId: accessRec.linkedStudentId || studentRec?.id,
-          kelasDiampu: teacherRec?.kelasDiampu,
-          email,
-          name: accessRec.nama || verified.name || email,
-          exp: Date.now() + SESSION_TTL_MS,
-        };
-      } else if (teacherRec) {
-        session = {
-          role: teacherRec.role,
-          userId: `google:${email}`,
-          teacherId: teacherRec.id,
-          kelasDiampu: teacherRec.kelasDiampu,
-          email,
-          name: teacherRec.nama,
-          exp: Date.now() + SESSION_TTL_MS,
-        };
-      } else if (studentRec) {
-        session = {
-          role: 'santri_ortu',
-          userId: `google:${email}`,
-          studentId: studentRec.id,
-          email,
-          name: `Wali ${studentRec.nama}`,
-          exp: Date.now() + SESSION_TTL_MS,
-        };
-      } else if (email === 'dfacmi123@gmail.com') {
-        session = {
-          role: 'admin',
-          userId: `google:${email}`,
-          email,
-          name: verified.name || 'Admin MDA',
-          exp: Date.now() + SESSION_TTL_MS,
-        };
-      }
-
-      if (!session) {
-        res.status(403).json({
-          error: `Email ${email} belum terdaftar pada daftar Guru, Admin, atau Email Wali Santri.`,
-        });
-        return;
-      }
-
-      const sessionToken = signSessionToken(session);
-      setSessionCookie(req, res, sessionToken);
-      res.json({
-        sessionToken,
-        user: session,
-        data: scopeDatabaseForSession(db, session),
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Gagal autentikasi Google.' });
     }
   });
 

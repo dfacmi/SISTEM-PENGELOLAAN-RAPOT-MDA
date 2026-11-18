@@ -25,7 +25,6 @@ import {
   WifiOff,
   X,
 } from 'lucide-react';
-import { User } from 'firebase/auth';
 import { AdminDashboardView } from './components/AdminDashboardView';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { GradeEditorView } from './components/GradeEditorView';
@@ -50,7 +49,6 @@ import {
   fetchScopedDataFromServer,
   fetchServerHealth,
   getStoredSessionToken,
-  loginGoogleViaServer,
   loginParentViaServer,
   loginStaffPinViaServer,
   logoutViaServer,
@@ -67,13 +65,7 @@ import {
   upsertStudentOnServer,
   upsertTeacherOnServer,
 } from './services/backendApi';
-import { getAccessToken, googleSignIn, initAuth, logout } from './services/googleAuth';
-import {
-  createMdaSpreadsheet,
-  extractSpreadsheetId,
-  syncDatabaseToSheet,
-  uploadFileToDrive,
-} from './services/sheetsDb';
+import { extractSpreadsheetId } from './services/sheetsDb';
 import {
   AcademicPeriod,
   BrandingTemplateConfig,
@@ -201,8 +193,6 @@ export default function App() {
     useState<BrandingTemplateConfig>(DEFAULT_TEMPLATE_CONFIG);
   const [serverHealth, setServerHealth] = useState<ServerHealthStatus | null>(null);
 
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [hasGoogleOAuthToken, setHasGoogleOAuthToken] = useState(false);
   const [backendUser, setBackendUser] = useState<BackendSessionUser | null>(null);
   const [previewSampleMode, setPreviewSampleMode] = useState(false);
 
@@ -282,21 +272,6 @@ export default function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, [showToast]);
-
-  // Listen to Firebase Auth state changes (for OAuth access token helper)
-  useEffect(() => {
-    const unsubscribe = initAuth(
-      (user, token) => {
-        setAuthUser(user);
-        setHasGoogleOAuthToken(Boolean(token));
-      },
-      (user) => {
-        setAuthUser(user);
-        setHasGoogleOAuthToken(false);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
 
   const applyServerDatabase = useCallback(
     (incomingDb: MdaDatabase) => {
@@ -425,9 +400,7 @@ export default function App() {
       // 3. Restore existing signed session on refresh / page reload
       if (getStoredSessionToken()) {
         try {
-          const oauthToken = await getAccessToken();
           const scoped = await fetchScopedDataFromServer({
-            googleAccessToken: oauthToken,
             spreadsheetId: activeSheetId,
           });
           setBackendUser(scoped.user);
@@ -573,9 +546,7 @@ export default function App() {
     setIsSyncing(true);
     setSyncState('loading');
     try {
-      const oauthToken = await getAccessToken();
       const res = await fetchScopedDataFromServer({
-        googleAccessToken: oauthToken,
         spreadsheetId: preferredSheetId || db.spreadsheetId,
       });
       setBackendUser(res.user);
@@ -588,57 +559,6 @@ export default function App() {
       if (!silent) showToast('err', msg);
     } finally {
       setIsSyncing(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    if (isLoggingIn) return;
-    setAuthError(null);
-    setIsLoggingIn(true);
-    try {
-      const res = await googleSignIn();
-      if (!res || res.cancelled) {
-        setAuthError(
-          'Jendela login Google ditutup sebelum selesai. Klik "Sign in with Google" lagi, atau gunakan PIN / mode pratinjau Alwan Hanif.'
-        );
-        return;
-      }
-      setAuthUser(res.user);
-      setHasGoogleOAuthToken(true);
-
-      const serverLogin = await loginGoogleViaServer({
-        idToken: res.idToken,
-        googleAccessToken: res.accessToken,
-        spreadsheetId: preferredSheetId || db.spreadsheetId,
-      });
-
-      setPreviewSampleMode(false);
-      setBackendUser(serverLogin.user);
-      if (serverLogin.data) {
-        applyServerDatabase(serverLogin.data);
-        if (serverLogin.user.role === 'santri_ortu') {
-          setActiveNav('portal');
-        } else {
-          setActiveNav('overview');
-        }
-        setSyncState('saved');
-        showToast('ok', `Berhasil masuk & memuat Google Sheets (${res.user.email})`);
-      } else {
-        // Admin logged in before spreadsheet is connected yet -> direct to Sheets setup tab
-        setDb({
-          ...EMPTY_DATABASE,
-          templateConfig: publicTemplateConfig,
-        });
-        setActiveNav('sheets');
-        showToast(
-          'ok',
-          'Login Admin berhasil. Silakan buat atau hubungkan Google Spreadsheet MDA di tab Google Sheets & Akses.'
-        );
-      }
-    } catch (err: any) {
-      setAuthError(err.message || 'Gagal login dengan Google.');
-    } finally {
-      setIsLoggingIn(false);
     }
   };
 
@@ -738,9 +658,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await Promise.all([logout(), logoutViaServer()]);
-    setAuthUser(null);
-    setHasGoogleOAuthToken(false);
+    await logoutViaServer();
     setBackendUser(null);
     setPreviewSampleMode(false);
     setDb(EMPTY_DATABASE);
@@ -771,12 +689,10 @@ export default function App() {
     setIsSyncing(true);
     setSyncState('saving');
     try {
-      const oauthToken = await getAccessToken();
       const res = await saveReportOnServer({
         report,
         expectedUpdatedAt,
         forceOverwrite,
-        googleAccessToken: oauthToken,
         spreadsheetId: db.spreadsheetId || preferredSheetId,
       });
       applyServerDatabase(res.data);
@@ -864,13 +780,11 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const sheetId = db.spreadsheetId || preferredSheetId;
           let latestDb = db;
           for (const d of deleted) {
             const res = await deleteStudentOnServer({
               studentId: d.id,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -878,7 +792,6 @@ export default function App() {
           for (const s of upserted) {
             const res = await upsertStudentOnServer({
               student: s,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -920,10 +833,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await upsertStudentOnServer({
             student: updatedStudent,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.data);
@@ -963,10 +874,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await upsertStudentOnServer({
             student: updatedStudent,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.data);
@@ -1012,13 +921,11 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const sheetId = db.spreadsheetId || preferredSheetId;
           let latestDb = db;
           for (const d of deleted) {
             const res = await deleteTeacherOnServer({
               teacherId: d.id,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -1026,7 +933,6 @@ export default function App() {
           for (const t of upserted) {
             const res = await upsertTeacherOnServer({
               teacher: t,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -1068,13 +974,11 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const sheetId = db.spreadsheetId || preferredSheetId;
           let latestDb = db;
           for (const p of changed) {
             const res = await upsertPeriodOnServer({
               period: p,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -1122,13 +1026,11 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const sheetId = db.spreadsheetId || preferredSheetId;
           let latestDb = db;
           for (const d of deleted) {
             const res = await deletePortfolioOnServer({
               portfolioId: d.id,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -1136,7 +1038,6 @@ export default function App() {
           for (const p of upserted) {
             const res = await upsertPortfolioOnServer({
               project: p,
-              googleAccessToken: oauthToken,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
@@ -1172,10 +1073,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await saveTemplateOnServer({
             templateConfig,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.data);
@@ -1209,10 +1108,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await saveAccessOnServer({
             userAccess,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.data);
@@ -1228,55 +1125,14 @@ export default function App() {
     });
   };
 
-  const handleCreateSpreadsheet = () => {
-    setConfirmDialog({
-      open: true,
-      title: 'Buat Google Spreadsheet MDA Baru?',
-      message:
-        'Sistem akan membuat spreadsheet baru di Google Drive Anda berisi 11 tab terstruktur beserta data awal MDA dan langsung menautkannya ke backend server.',
-      confirmLabel: 'Buat Spreadsheet',
-      onConfirm: async () => {
-        if (!ensureOnlineForWrite()) return;
-        const token = await getAccessToken();
-        if (!token) {
-          showToast('err', 'Silakan Sign in with Google terlebih dahulu.');
-          return;
-        }
-        setIsSyncing(true);
-        setSyncState('saving');
-        try {
-          const seedSource = db.students.length > 0 ? db : INITIAL_MDA_DATABASE;
-          const created = await createMdaSpreadsheet(token, seedSource);
-          const connected = await connectSpreadsheetOnServer({
-            spreadsheetId: created.spreadsheetId,
-            googleAccessToken: token,
-          });
-          applyServerDatabase(connected.data);
-          setSyncState('saved');
-          showToast(
-            'ok',
-            'Google Spreadsheet MDA berhasil dibuat & ditautkan ke server! Bagikan juga spreadsheet ini ke email Service Account sebagai Editor.'
-          );
-        } catch (err: any) {
-          setSyncState('error');
-          showToast('err', err.message || 'Gagal membuat Google Spreadsheet.');
-        } finally {
-          setIsSyncing(false);
-        }
-      },
-    });
-  };
-
   const handleConnectSpreadsheet = async (urlOrId: string) => {
     if (!ensureOnlineForWrite()) return;
     const id = extractSpreadsheetId(urlOrId);
     setIsSyncing(true);
     setSyncState('saving');
     try {
-      const oauthToken = await getAccessToken();
       const connected = await connectSpreadsheetOnServer({
         spreadsheetId: id,
-        googleAccessToken: oauthToken,
       });
       applyServerDatabase(connected.data);
       setSyncState('saved');
@@ -1346,33 +1202,10 @@ export default function App() {
       handleSaveAllAppsScript();
       return;
     }
-    if (!db.spreadsheetId || !ensureOnlineForWrite()) return;
-    setConfirmDialog({
-      open: true,
-      title: 'Sinkronkan Ulang Seluruh Tab ke Google Sheets?',
-      message: `Seluruh data pada ${db.students.length} santri, ${db.reports.length} rapor semester, ${db.portfolios.length} karya portofolio, dan template rapor akan disinkronkan ke Google Spreadsheet "${db.spreadsheetTitle || db.spreadsheetId}".`,
-      confirmLabel: 'Sinkronkan Sekarang',
-      onConfirm: async () => {
-        const token = await getAccessToken();
-        if (!token || !db.spreadsheetId) {
-          showToast('err', 'Gunakan tombol Edit pada setiap santri/rapor atau Sign in with Google.');
-          return;
-        }
-        setIsSyncing(true);
-        setSyncState('saving');
-        try {
-          const synced = await syncDatabaseToSheet(token, db.spreadsheetId, db);
-          applyServerDatabase({ ...synced, lastSyncedAt: new Date().toISOString() });
-          setSyncState('saved');
-          showToast('ok', 'Seluruh data berhasil disinkronkan ke Google Sheets.');
-        } catch (err: any) {
-          setSyncState('error');
-          showToast('err', err.message || 'Gagal sinkronisasi ke Google Sheets.');
-        } finally {
-          setIsSyncing(false);
-        }
-      },
-    });
+    showToast(
+      'err',
+      'Koneksi Google Apps Script Web App API belum aktif. Tempel URL /exec pada Pengaturan & Sheets.'
+    );
   };
 
   const handleMigrateLocalToSheets = () => {
@@ -1387,10 +1220,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await migrateLocalSnapshotToServer({
             localDb: legacySnapshot,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.db);
@@ -1437,10 +1268,8 @@ export default function App() {
         setIsSyncing(true);
         setSyncState('saving');
         try {
-          const oauthToken = await getAccessToken();
           const res = await migrateLocalSnapshotToServer({
             localDb: restored,
-            googleAccessToken: oauthToken,
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.db);
@@ -1460,9 +1289,7 @@ export default function App() {
     file: File
   ): Promise<{ url: string; type: 'image' | 'video' } | null> => {
     if (previewSampleMode) return null;
-    const oauthToken = await getAccessToken();
-    const canUploadViaServer = Boolean(serverHealth?.serviceAccountConfigured || oauthToken);
-    if (!canUploadViaServer) return null;
+    if (!serverHealth?.serviceAccountConfigured) return null;
 
     return new Promise((resolve) => {
       setConfirmDialog({
@@ -1474,20 +1301,10 @@ export default function App() {
         confirmLabel: 'Unggah ke Drive',
         onConfirm: async () => {
           try {
-            if (oauthToken) {
-              const uploaded = await uploadFileToDrive(oauthToken, file);
-              showToast('ok', `File "${file.name}" berhasil diunggah ke Google Drive.`);
-              resolve({
-                url: uploaded.url,
-                type: uploaded.mimeType.startsWith('video/') ? 'video' : 'image',
-              });
-              return;
-            }
             const dataUrl = await fileToDataUrl(file);
             const uploaded = await uploadAssetToDriveViaServer({
               dataUrl,
               fileName: file.name,
-              googleAccessToken: oauthToken,
             });
             showToast('ok', `File "${file.name}" berhasil diunggah ke Google Drive.`);
             resolve({
@@ -1703,7 +1520,7 @@ export default function App() {
                     Masuk Dashboard Admin / Guru
                   </h2>
                   <p className="font-[Arial] text-xs text-slate-500 mt-1 leading-relaxed">
-                    Masuk dengan ID/Email Guru &amp; PIN yang tersimpan di Google Sheets, atau gunakan Google Sign-In untuk mengelola Spreadsheet.
+                    Masuk menggunakan ID/Nama/Email Admin atau Guru beserta PIN yang tersimpan di Google Sheets (atau gunakan akun Super Admin bawaan).
                   </p>
                 </div>
 
@@ -1800,49 +1617,7 @@ export default function App() {
                   </button>
                 </form>
 
-                <div className="relative py-0.5 flex items-center">
-                  <div className="flex-grow border-t border-slate-200" />
-                  <span className="px-3 text-[11px] text-slate-400">
-                    atau masuk dengan Akun Google
-                  </span>
-                  <div className="flex-grow border-t border-slate-200" />
-                </div>
-
-                <div className="space-y-2.5">
-                  <button
-                    type="button"
-                    disabled={isLoggingIn}
-                    onClick={handleGoogleLogin}
-                    className="gsi-material-button w-full disabled:opacity-60 disabled:cursor-wait"
-                  >
-                    <div className="gsi-material-button-state" />
-                    <div className="gsi-material-button-content-wrapper">
-                      <div className="gsi-material-button-icon">
-                        <svg viewBox="0 0 48 48" className="block w-full h-full">
-                          <path
-                            fill="#EA4335"
-                            d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                          />
-                          <path
-                            fill="#4285F4"
-                            d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                          />
-                          <path
-                            fill="#FBBC05"
-                            d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                          />
-                          <path
-                            fill="#34A853"
-                            d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                          />
-                        </svg>
-                      </div>
-                      <span className="gsi-material-button-contents">
-                        {isLoggingIn ? 'Menghubungkan ke Google...' : 'Sign in with Google'}
-                      </span>
-                    </div>
-                  </button>
-
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={() => enterAlwanHanifPreview('admin')}
@@ -1960,50 +1735,6 @@ export default function App() {
                     <span>{isLoggingIn ? 'Memverifikasi...' : 'Buka Rapor Santri'}</span>
                   </button>
                 </form>
-
-                <div className="relative py-0.5 flex items-center">
-                  <div className="flex-grow border-t border-slate-200" />
-                  <span className="px-3 text-[11px] text-slate-400">
-                    atau Gmail wali terdaftar
-                  </span>
-                  <div className="flex-grow border-t border-slate-200" />
-                </div>
-
-                <button
-                  type="button"
-                  disabled={isLoggingIn}
-                  onClick={handleGoogleLogin}
-                  className="gsi-material-button w-full disabled:opacity-60 disabled:cursor-wait"
-                >
-                  <div className="gsi-material-button-state" />
-                  <div className="gsi-material-button-content-wrapper">
-                    <div className="gsi-material-button-icon">
-                      <svg viewBox="0 0 48 48" className="block w-full h-full">
-                        <path
-                          fill="#EA4335"
-                          d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                        />
-                        <path
-                          fill="#4285F4"
-                          d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                        />
-                      </svg>
-                    </div>
-                    <span className="gsi-material-button-contents">
-                      {isLoggingIn
-                        ? 'Menghubungkan ke Google...'
-                        : 'Sign in with Google (Email Terdaftar)'}
-                    </span>
-                  </div>
-                </button>
               </div>
             )}
 
@@ -2227,7 +1958,7 @@ export default function App() {
               <div className="text-xs font-semibold text-slate-900 truncate">
                 {previewSampleMode
                   ? 'Pratinjau Alwan Hanif'
-                  : backendUser?.name || authUser?.displayName || 'Pengguna MDA'}
+                  : backendUser?.name || 'Pengguna MDA'}
               </div>
               <div className="text-[11px] text-slate-500 truncate">
                 {previewSampleMode
@@ -2624,7 +2355,7 @@ export default function App() {
                 effectiveRole !== 'santri_ortu' ? handleUpdateStudentPhoto : undefined
               }
               onUploadPhotoToDrive={
-                hasGoogleOAuthToken || serverHealth?.serviceAccountConfigured
+                serverHealth?.serviceAccountConfigured
                   ? async (file) => {
                       const res = await handleUploadToDrive(file);
                       return res ? res.url : null;
@@ -2666,8 +2397,7 @@ export default function App() {
               config={tpl}
               isGoogleConnected={
                 Boolean(
-                  hasGoogleOAuthToken ||
-                    serverHealth?.serviceAccountConfigured ||
+                  serverHealth?.serviceAccountConfigured ||
                     serverHealth?.appsScriptConfigured
                 )
               }
@@ -2682,8 +2412,6 @@ export default function App() {
           {activeNav === 'sheets' && effectiveRole === 'admin' && (
             <SettingsSheetsView
               db={db}
-              isGoogleConnected={hasGoogleOAuthToken}
-              userEmail={authUser?.email || backendUser?.email || null}
               isSyncing={isSyncing}
               serverHealth={serverHealth}
               localSnapshotStats={
@@ -2696,8 +2424,6 @@ export default function App() {
                     }
                   : null
               }
-              onGoogleLogin={handleGoogleLogin}
-              onCreateSpreadsheet={handleCreateSpreadsheet}
               onConnectSpreadsheet={handleConnectSpreadsheet}
               onConnectAppsScript={handleConnectAppsScript}
               onSaveAllAppsScript={handleSaveAllAppsScript}

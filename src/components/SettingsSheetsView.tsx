@@ -3,7 +3,6 @@ import {
   Download,
   ExternalLink,
   FileSpreadsheet,
-  FolderPlus,
   KeyRound,
   Plus,
   RefreshCw,
@@ -22,8 +21,6 @@ import {
 
 interface SettingsSheetsViewProps {
   db: MdaDatabase;
-  isGoogleConnected: boolean;
-  userEmail: string | null;
   isSyncing: boolean;
   serverHealth?: ServerHealthStatus | null;
   localSnapshotStats?: {
@@ -32,8 +29,6 @@ interface SettingsSheetsViewProps {
     reports: number;
     portfolios: number;
   } | null;
-  onGoogleLogin: () => void;
-  onCreateSpreadsheet: () => void;
   onConnectSpreadsheet: (urlOrId: string) => void;
   onConnectAppsScript?: (url: string) => void;
   onSaveAllAppsScript?: () => void;
@@ -46,13 +41,9 @@ interface SettingsSheetsViewProps {
 
 export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
   db,
-  isGoogleConnected,
-  userEmail,
   isSyncing,
   serverHealth,
   localSnapshotStats,
-  onGoogleLogin,
-  onCreateSpreadsheet,
   onConnectSpreadsheet,
   onConnectAppsScript,
   onSaveAllAppsScript,
@@ -73,18 +64,18 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
     nama: string;
     role: UserRole;
     linkedStudentId: string;
+    accessPin: string;
   }>({
     email: '',
     nama: '',
     role: 'santri_ortu',
     linkedStudentId: db.students[0]?.id || '',
+    accessPin: '',
   });
   const [restoreError, setRestoreError] = useState<string | null>(null);
 
   const canBackendOperateSheets = Boolean(
-    isGoogleConnected ||
-      serverHealth?.serviceAccountConfigured ||
-      serverHealth?.appsScriptConfigured
+    serverHealth?.serviceAccountConfigured || serverHealth?.appsScriptConfigured
   );
 
   const handleAppsScriptSubmit = (e: React.FormEvent) => {
@@ -126,6 +117,7 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
       nama: newUser.nama.trim(),
       role: newUser.role,
       linkedStudentId: newUser.role === 'santri_ortu' ? newUser.linkedStudentId : '',
+      accessPin: newUser.accessPin.trim().toUpperCase(),
       statusAktif: true,
     };
     onSaveUserAccess([...db.userAccess, item]);
@@ -134,6 +126,7 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
       nama: '',
       role: 'santri_ortu',
       linkedStudentId: db.students[0]?.id || '',
+      accessPin: '',
     });
   };
 
@@ -233,66 +226,22 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
             </div>
             <div>
               <h2 className="font-display font-bold text-slate-900 text-base">
-                Database Google Sheets (Multi-Perangkat)
+                Status Database Google Sheets
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Simpan seluruh data santri, nilai, tahfidz, sikap, portofolio, TTD digital, dan hak akses langsung di Google Spreadsheet Anda.
+                Seluruh data santri, nilai, tahfidz, sikap, portofolio, TTD digital, dan hak akses disinkronkan permanen melalui Google Apps Script API.
               </p>
             </div>
           </div>
 
-          {!isGoogleConnected ? (
-            <button
-              type="button"
-              onClick={onGoogleLogin}
-              className="gsi-material-button shrink-0"
-            >
-              <div className="gsi-material-button-state" />
-              <div className="gsi-material-button-content-wrapper">
-                <div className="gsi-material-button-icon">
-                  <svg viewBox="0 0 48 48" className="block w-full h-full">
-                    <path
-                      fill="#EA4335"
-                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-                    />
-                    <path
-                      fill="#4285F4"
-                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-                    />
-                  </svg>
-                </div>
-                <span className="gsi-material-button-contents">Sign in with Google</span>
-              </div>
-            </button>
-          ) : (
-            <div className="text-right text-xs">
-              <div className="font-semibold text-emerald-700">Terhubung ke Google</div>
-              <div className="font-mono text-slate-600">{userEmail}</div>
-            </div>
-          )}
+          <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0 self-start sm:self-auto">
+            {canBackendOperateSheets ? 'Koneksi Backend Aktif' : 'Belum Terhubung'}
+          </span>
         </div>
 
-        {/* Prompt when neither Google OAuth nor Service Account is connected */}
         {!canBackendOperateSheets && (
-          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900">
-            <div>
-              <strong>Langkah pertama sebelum sinkronisasi:</strong> Tempelkan URL Web App <strong>Google Apps Script</strong> asli Anda pada kartu di atas dan klik <strong>Simpan &amp; Tes Koneksi</strong>, atau hubungkan akun Google Anda melalui <strong>Sign in with Google</strong>.
-            </div>
-            <button
-              type="button"
-              onClick={onGoogleLogin}
-              className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold whitespace-nowrap shrink-0"
-            >
-              Hubungkan Google Sekarang
-            </button>
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+            <strong>Langkah pertama sebelum sinkronisasi:</strong> Tempelkan URL Web App <strong>Google Apps Script</strong> asli Anda pada kartu di atas dan klik <strong>Simpan &amp; Tes Koneksi (GET)</strong>.
           </div>
         )}
 
@@ -300,29 +249,20 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-6 space-y-3">
             <div className="text-xs font-semibold text-slate-800">
-              1. Buat Spreadsheet Baru Otomatis (11 Tab Siap Pakai)
+              Struktur 11 Tab Google Sheets MDA
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Membuat file Google Spreadsheet baru di Google Drive Anda dengan tab:{' '}
+              Tab yang dikelola otomatis oleh Apps Script:{' '}
               <span className="font-mono text-slate-700">
                 Master_Akademik, Guru_Kelas, Santri, Rapor_Semester, Sikap_Character, Tahfidz, Nilai_Diniyah, Nilai_Digital, Portofolio, Hak_Akses, Template_Branding
               </span>
               .
             </p>
-            <button
-              type="button"
-              disabled={!isGoogleConnected || isSyncing}
-              onClick={onCreateSpreadsheet}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FolderPlus className="w-4 h-4" />
-              <span>Buat Google Spreadsheet MDA Baru</span>
-            </button>
           </div>
 
           <div className="lg:col-span-6 space-y-3">
             <div className="text-xs font-semibold text-slate-800">
-              2. Atau Hubungkan ke Google Spreadsheet yang Sudah Ada
+              Tautan ID / URL Spreadsheet (Opsional)
             </div>
             <form onSubmit={handleConnectSubmit} className="flex items-center gap-2">
               <input
@@ -378,7 +318,7 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
                     <RefreshCw className="w-3 h-3" />
                     <span>Muat Ulang dari Sheets</span>
                   </button>
-                  {isGoogleConnected && (
+                  {serverHealth?.appsScriptConfigured && (
                     <button
                       type="button"
                       disabled={isSyncing}
@@ -486,7 +426,7 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
               Pengaturan Hak Akses Pengguna (Admin, Guru, Santri & Orang Tua)
             </h2>
             <p className="text-xs text-slate-500">
-              Daftarkan akun Google berdasarkan perannya. Akun Santri/Orang Tua hanya dapat melihat rapor & portofolio anandanya sendiri.
+              Daftarkan akun login (Admin, Guru, atau Santri/Orang Tua) beserta PIN aksesnya ke tab <code className="font-mono">Hak_Akses</code> Google Sheets. Akun Santri/Orang Tua hanya dapat melihat rapor &amp; portofolio anandanya sendiri.
             </p>
           </div>
         </div>
@@ -497,18 +437,18 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
         >
           <div className="md:col-span-3">
             <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-              Email Google
+              Email / ID Login
             </label>
             <input
-              type="email"
+              type="text"
               required
               value={newUser.email}
               onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              placeholder="nama@gmail.com"
+              placeholder="nama@gmail.com atau ID"
               className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
             />
           </div>
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <label className="block text-[11px] font-semibold text-slate-700 mb-1">
               Nama Pengguna
             </label>
@@ -537,9 +477,9 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
               <option value="santri_ortu">Santri / Ortu</option>
             </select>
           </div>
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-              Tautkan ke Santri (Khusus Santri/Ortu)
+              Tautkan ke Santri
             </label>
             <select
               disabled={newUser.role !== 'santri_ortu'}
@@ -556,6 +496,18 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
               ))}
             </select>
           </div>
+          <div className="md:col-span-2">
+            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+              PIN Akses (Opsional)
+            </label>
+            <input
+              type="text"
+              value={newUser.accessPin}
+              onChange={(e) => setNewUser({ ...newUser, accessPin: e.target.value })}
+              placeholder="Otomatis / Custom PIN"
+              className="w-full px-3 py-1.5 text-xs font-mono uppercase bg-white border border-slate-200 rounded-lg"
+            />
+          </div>
           <div className="md:col-span-1 flex items-end">
             <button
               type="submit"
@@ -571,10 +523,11 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-900 text-white">
-                <th className="py-2.5 px-4">Email Google</th>
+                <th className="py-2.5 px-4">Email / ID Login</th>
                 <th className="py-2.5 px-4">Nama</th>
                 <th className="py-2.5 px-4">Hak Akses</th>
                 <th className="py-2.5 px-4">Santri Tertaut</th>
+                <th className="py-2.5 px-4">PIN Akses</th>
                 <th className="py-2.5 px-4">Status</th>
                 <th className="py-2.5 px-4 text-right">Aksi</th>
               </tr>
@@ -602,6 +555,9 @@ export const SettingsSheetsView: React.FC<SettingsSheetsViewProps> = ({
                     </td>
                     <td className="py-2.5 px-4 text-slate-600">
                       {linkedStudent ? linkedStudent.nama : 'Semua Santri'}
+                    </td>
+                    <td className="py-2.5 px-4 font-mono text-slate-700">
+                      {u.accessPin || (linkedStudent?.accessPin || 'Sesuai PIN Santri')}
                     </td>
                     <td className="py-2.5 px-4">
                       <button
