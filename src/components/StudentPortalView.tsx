@@ -24,6 +24,7 @@ import {
   getPortfolioUrl,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
+  resolveTanggalRapor,
 } from '../utils/grading';
 import { compressImageToDataUrl } from '../utils/imageHelper';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
@@ -317,8 +318,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                   <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
                     Tanggal Pembagian Rapor
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-700 mt-0.5">
-                    {currentReport.tanggalRapor}
+                  <div className="text-xs sm:text-sm text-slate-700 mt-0.5 tabular-nums">
+                    {resolveTanggalRapor(
+                      currentReport.tanggalRapor,
+                      currentReport.semester,
+                      currentReport.tahunAkademik
+                    )}
                   </div>
                 </div>
 
@@ -489,8 +494,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               ['Total Murojaah', currentReport.tahfidz.totalMurojaah],
             ].map(([lbl, val]) => (
               <div key={lbl} className="py-2 flex items-center justify-between gap-2">
-                <span className="text-slate-500">{lbl}</span>
-                <span className="font-semibold text-slate-900 text-right">{val || '—'}</span>
+                <span className="font-normal text-slate-600">{lbl}</span>
+                <span className="font-bold text-slate-950 text-right tabular-nums">{val || '—'}</span>
               </div>
             ))}
           </div>
@@ -623,7 +628,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           </div>
 
           {/* Desktop Table */}
-          <table className="hidden md:table w-full text-left border-collapse text-xs">
+          <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="text-white" style={{ backgroundColor: theme.darkPill }}>
                 <th className="py-2 px-3">Mapel &amp; Kitab</th>
@@ -639,10 +645,10 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     <div className="font-semibold text-slate-900">{d.mataPelajaran}</div>
                     <div className="text-slate-500">{d.kitabMateri}</div>
                   </td>
-                  <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                  <td className="py-2.5 px-3 text-right tabular-nums">
                     {d.kkm}
                   </td>
-                  <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                  <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">
                     {d.nilai}
                   </td>
                   <td className="py-2.5 px-3 font-semibold text-emerald-700">
@@ -652,6 +658,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
@@ -691,7 +698,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           </div>
 
           {/* Desktop Table */}
-          <table className="hidden md:table w-full text-left border-collapse text-xs">
+          <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="text-white" style={{ backgroundColor: theme.darkPill }}>
                 <th className="py-2 px-3">Materi Skill</th>
@@ -708,19 +716,20 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     <td className="py-2.5 px-3 font-semibold text-slate-900">
                       {s.materiSkill}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                    <td className="py-2.5 px-3 text-right tabular-nums">
                       {s.pengetahuan}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                    <td className="py-2.5 px-3 text-right tabular-nums">
                       {s.keterampilan}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700 tabular-nums">
+                    <td className="py-2.5 px-3 text-right font-bold text-emerald-700 tabular-nums">
                       {s.nilaiAkhir} ({s.predikat})
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

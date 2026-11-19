@@ -78,6 +78,17 @@
   min-width: 18px;
 }
 
+/* Enforce consistent Arial typography across printed & exported report pages */
+.rapor-document-arial,
+.rapor-document-arial *,
+.rapor-document-arial h1,
+.rapor-document-arial h2,
+.rapor-document-arial h3,
+.rapor-document-arial .font-display,
+.rapor-document-arial .font-mono {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
 /* A4 Print Layout for Official MDA Rapor Export */
 @media print {
   @page {
@@ -102,6 +113,7 @@
     padding: 0 !important;
     margin: 0 !important;
     background: #ffffff !important;
+    overflow: visible !important;
   }
 
   .a4-scale-outer,

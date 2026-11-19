@@ -191,8 +191,8 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
     setEditingPeriod({
       id: `per-${Date.now()}`,
       tahunAkademik: '2026/2027',
-      semester: 'Genap',
-      tanggalRapor: '20 Juni 2027',
+      semester: 'Gasal',
+      tanggalRapor: '19 Desember 2026',
       kkmDiniyah: 60,
       kkmTahfidz: 70,
       kkmDigital: 60,

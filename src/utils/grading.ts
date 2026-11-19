@@ -215,3 +215,27 @@ export function generateSmartAccessPin(
 
   return `${prefix}${lastThree}`;
 }
+
+export function resolveTanggalRapor(
+  tanggalRapor?: string,
+  semester?: 'Gasal' | 'Genap' | string,
+  tahunAkademik?: string
+): string {
+  const raw = (tanggalRapor || '').trim();
+  const isStaleJune2027 = /^(20|27)\s+Juni\s+2027$/i.test(raw);
+  if (!raw) {
+    return semester === 'Genap' ? '20 Juni 2026' : '19 Desember 2026';
+  }
+  if (/^27\s+Juni\s+2027$/i.test(raw)) {
+    return '19 Desember 2026';
+  }
+  if (
+    isStaleJune2027 &&
+    (!semester || semester === 'Gasal') &&
+    (!tahunAkademik || tahunAkademik === '2026/2027')
+  ) {
+    return '19 Desember 2026';
+  }
+  return raw;
+}
+
