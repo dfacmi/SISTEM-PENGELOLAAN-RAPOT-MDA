@@ -382,9 +382,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               />
             )}
 
-            <div className="m-6 flex-1 border-2 border-white/80 rounded-2xl p-9 flex flex-col justify-between relative z-10 overflow-hidden">
-              {/* Top row */}
-              <div className="flex items-start justify-between gap-4">
+            <div className="m-6 flex-1 border-2 border-white/80 rounded-2xl px-10 py-10 flex flex-col justify-between relative z-10 overflow-hidden">
+              {/* 1. Top row */}
+              <div className="flex items-start justify-between gap-4 shrink-0">
                 <div className="inline-flex items-center justify-center bg-white rounded-2xl px-5 py-3 shadow-md shrink-0">
                   <MdaLogo size="md" customLogoUrl={tpl.customLogoUrl} />
                 </div>
@@ -393,57 +393,94 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 </div>
               </div>
 
-              {/* Cover Title & Tiered Institution Block */}
-              <div className="my-auto py-6 space-y-5">
-                <h1 className="font-bold text-[38px] leading-[1.22] tracking-normal text-white drop-shadow-xs">
-                  {tpl.judulRapor}
+              {/* 2. Cover Title & Tiered Institution Block */}
+              <div className="pt-2 shrink-0">
+                <h1
+                  style={{
+                    fontFamily: 'Arial, Helvetica, sans-serif',
+                    fontWeight: 700,
+                    fontSize: '56px',
+                    lineHeight: 1.12,
+                    color: '#FFFFFF',
+                    textShadow: '0px 4px 10px rgba(0, 0, 0, 0.28)',
+                  }}
+                >
+                  {tpl.judulRapor.trim().toLowerCase() === 'laporan hasil belajar santri' ? (
+                    <>
+                      Laporan Hasil
+                      <br />
+                      Belajar Santri
+                    </>
+                  ) : (
+                    tpl.judulRapor.replace(
+                      /\w\S*/g,
+                      (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+                    )
+                  )}
                 </h1>
 
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-[22px] font-bold leading-[1.35] text-white">
-                    {tpl.namaLembaga}
-                  </div>
-                  <div className="text-[18px] font-semibold leading-[1.35] text-white/95">
-                    {tpl.namaPesantren}
-                  </div>
-                  <div className="text-[14px] font-medium leading-[1.4] text-emerald-200 pt-1 tabular-nums">
-                    Tahun Akademik {report.tahunAkademik}
-                  </div>
+                <div
+                  className="mt-3"
+                  style={{
+                    fontFamily: 'Arial, Helvetica, sans-serif',
+                    fontWeight: 700,
+                    fontSize: '24px',
+                    lineHeight: 1.3,
+                    color: 'rgba(255, 255, 255, 0.88)',
+                    textShadow: '0px 2px 6px rgba(0, 0, 0, 0.22)',
+                  }}
+                >
+                  <div>{tpl.namaLembaga}</div>
+                  <div>{tpl.namaPesantren}</div>
                 </div>
 
-                {/* Stylized MDA Studio Banner */}
-                <div className="mt-4 rounded-2xl bg-slate-950/35 border border-white/25 p-5 space-y-3 backdrop-blur-[2px]">
-                  <div className="space-y-2">
-                    <div className="text-xs font-bold tracking-wide text-emerald-300">
-                      PROGRAM TAHFIDZ &amp; TEKNOLOGI DIGITAL
-                    </div>
-                    <div className="text-sm font-medium text-white/95 leading-relaxed">
-                      {tpl.coverTagline}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs font-semibold text-emerald-200 tabular-nums">
-                      <span>ID: {student.nisnMda}</span>
-                      <span>·</span>
-                      <span>{student.kelas}</span>
-                    </div>
-                  </div>
-                  <div className="pt-3 border-t border-white/15 flex flex-col gap-1">
-                    <span className="text-[10px] uppercase tracking-wider text-emerald-200 font-bold">
-                      Link Portofolio Online Santri:
-                    </span>
-                    <a
-                      href={portfolioUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] font-bold text-[#1DF27A] break-all underline decoration-emerald-300/50 leading-snug"
-                    >
-                      {portfolioUrl}
-                    </a>
-                  </div>
+                <div
+                  className="mt-2 tabular-nums"
+                  style={{
+                    fontFamily: 'Arial, Helvetica, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '18px',
+                    lineHeight: 1.35,
+                    color: '#FFFFFF',
+                    textShadow: '0px 1px 4px rgba(0, 0, 0, 0.15)',
+                  }}
+                >
+                  Tahun Akademik {report.tahunAkademik}
                 </div>
               </div>
 
-              {/* Student Name Plaque */}
-              <div className="mx-auto w-full max-w-[460px] bg-white border-[3px] border-[#00B0FF] rounded-md py-4 px-6 text-center shadow-lg">
+              {/* 3. Stylized MDA Studio Banner */}
+              <div className="shrink-0 rounded-2xl bg-slate-950/35 border border-white/25 p-6 space-y-3 backdrop-blur-[2px] shadow-sm">
+                <div className="space-y-2">
+                  <div className="text-xs font-bold tracking-wider text-emerald-300">
+                    PROGRAM TAHFIDZ &amp; TEKNOLOGI DIGITAL
+                  </div>
+                  <div className="text-sm font-medium text-white/95 leading-relaxed">
+                    {tpl.coverTagline}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs font-semibold text-emerald-200 tabular-nums">
+                    <span>ID: {student.nisnMda}</span>
+                    <span>·</span>
+                    <span>{student.kelas}</span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-white/15 flex flex-col gap-1">
+                  <span className="text-[10px] uppercase tracking-wider text-emerald-200 font-bold">
+                    Link Portofolio Online Santri:
+                  </span>
+                  <a
+                    href={portfolioUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] font-bold text-[#1DF27A] break-all underline decoration-emerald-300/50 leading-snug"
+                  >
+                    {portfolioUrl}
+                  </a>
+                </div>
+              </div>
+
+              {/* 4. Student Name Plaque */}
+              <div className="mb-8 shrink-0 mx-auto w-full max-w-[460px] bg-white border-[3px] border-[#00B0FF] rounded-lg py-4 px-6 text-center shadow-lg">
                 <div className="font-bold text-[23px] leading-[1.3] text-slate-950 tracking-wide uppercase">
                   {student.nama}
                 </div>
