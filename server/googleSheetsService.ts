@@ -57,6 +57,9 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   qrBannerTitle: 'LIHAT KARYA SELENGKAPNYA',
   qrBannerDescription:
     'Semua proyek, sidang karya, dan video santri semester ini dapat dilihat melalui link portofolio online di bawah ini.',
+  lockRaporDuringExam: false,
+  lockRaporMessage:
+    'Portal Rapor & Portofolio Wali Santri ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Santri silakan masuk melalui tab Ruang Ujian CBT.',
 };
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';

@@ -1,10 +1,16 @@
 import type {
   AcademicPeriod,
   BrandingTemplateConfig,
+  CbtAttempt,
+  CbtExam,
+  CbtOptionKey,
+  CbtQuestion,
+  CbtViolationLog,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
   Student,
+  StudentCbtQuestion,
   TeacherClass,
   UserAccess,
   UserRole,
@@ -14,6 +20,7 @@ const SESSION_TOKEN_STORAGE_KEY = 'mda_backend_session_token';
 
 export interface BackendSessionUser {
   role: UserRole;
+  portalMode?: 'rapor' | 'cbt';
   userId: string;
   teacherId?: string;
   studentId?: string;
@@ -113,9 +120,13 @@ async function apiFetch<T>(
         data.serverReport
       );
     }
-    throw new Error(
+    const err = new Error(
       data?.error || `Terjadi kesalahan server (${res.status}). Silakan coba lagi.`
-    );
+    ) as Error & { status?: number; code?: string; attempt?: CbtAttempt };
+    err.status = res.status;
+    if (data?.code) err.code = data.code;
+    if (data?.attempt) err.attempt = data.attempt;
+    throw err;
   }
 
   return data as T;
@@ -147,6 +158,28 @@ export async function loginParentViaServer(params: {
     user: BackendSessionUser;
     data: MdaDatabase;
   }>('/api/auth/login-parent', {
+    method: 'POST',
+    body: {
+      identifier: params.identifier,
+      pin: params.pin,
+      spreadsheetId: params.spreadsheetId || undefined,
+    },
+    spreadsheetId: params.spreadsheetId,
+  });
+  setStoredSessionToken(res.sessionToken);
+  return res;
+}
+
+export async function loginCbtViaServer(params: {
+  identifier: string;
+  pin: string;
+  spreadsheetId?: string | null;
+}): Promise<{ sessionToken: string; user: BackendSessionUser; data: MdaDatabase }> {
+  const res = await apiFetch<{
+    sessionToken: string;
+    user: BackendSessionUser;
+    data: MdaDatabase;
+  }>('/api/auth/login-cbt', {
     method: 'POST',
     body: {
       identifier: params.identifier,
@@ -417,5 +450,126 @@ export async function uploadAssetToDriveViaServer(params: {
     method: 'POST',
     body: { dataUrl: params.dataUrl, fileName: params.fileName },
     googleAccessToken: params.googleAccessToken,
+  });
+}
+
+// ==========================================
+// CBT Module API Functions
+// ==========================================
+
+export async function toggleRaporLockOnServer(params: {
+  lockRaporDuringExam: boolean;
+  lockRaporMessage?: string;
+}): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/cbt/settings/rapor-lock', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export async function seedDefaultCbtExamsOnServer(): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/cbt/exams/seed-defaults', {
+    method: 'POST',
+    body: {},
+  });
+}
+
+export async function saveCbtExamOnServer(exam: CbtExam): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/cbt/exams/upsert', {
+    method: 'POST',
+    body: { exam },
+  });
+}
+
+export async function deleteCbtExamOnServer(examId: string): Promise<{ data: MdaDatabase }> {
+  return apiFetch(`/api/cbt/exams/${encodeURIComponent(examId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function saveCbtQuestionsOnServer(params: {
+  examId: string;
+  questions: CbtQuestion[];
+}): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/cbt/questions/save', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export async function proctorCbtActionOnServer(params: {
+  action: 'unlock' | 'reset' | 'sync_rapor' | 'bulk_sync_rapor';
+  examId: string;
+  attemptId?: string;
+}): Promise<{ data: MdaDatabase; syncedCount?: number }> {
+  return apiFetch('/api/cbt/attempts/proctor-action', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export interface StudentCbtExamSummary extends CbtExam {
+  questionCount: number;
+}
+
+export async function fetchStudentCbtOverview(): Promise<{
+  student: Student | null;
+  exams: StudentCbtExamSummary[];
+  attempts: CbtAttempt[];
+  serverNow: string;
+}> {
+  return apiFetch('/api/cbt/student/overview');
+}
+
+export async function startCbtExamOnServer(params: {
+  examId: string;
+  token?: string;
+}): Promise<{
+  alreadySubmitted: boolean;
+  autoTimedOut?: boolean;
+  exam: CbtExam;
+  attempt: CbtAttempt;
+  questions: StudentCbtQuestion[];
+  remainingSeconds: number;
+  syncedToRapor?: boolean;
+  serverNow: string;
+}> {
+  return apiFetch('/api/cbt/student/start', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export async function saveCbtAttemptProgressOnServer(params: {
+  attemptId: string;
+  answers?: Record<string, CbtOptionKey>;
+  raguIds?: string[];
+  currentQuestionIndex?: number;
+  newViolations?: CbtViolationLog[];
+}): Promise<{
+  attempt: CbtAttempt;
+  locked: boolean;
+  submitted?: boolean;
+  remainingSeconds?: number;
+  serverNow?: string;
+}> {
+  return apiFetch('/api/cbt/student/save', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export async function submitCbtExamOnServer(params: {
+  attemptId: string;
+  answers: Record<string, CbtOptionKey>;
+  raguIds: string[];
+}): Promise<{
+  attempt: CbtAttempt;
+  showScoreAfterFinish: boolean;
+  syncedToRapor: boolean;
+}> {
+  return apiFetch('/api/cbt/student/submit', {
+    method: 'POST',
+    body: params,
   });
 }

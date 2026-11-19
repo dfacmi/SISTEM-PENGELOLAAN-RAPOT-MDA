@@ -90,6 +90,91 @@ export interface BrandingTemplateConfig {
   coverTagline: string;
   qrBannerTitle: string;
   qrBannerDescription: string;
+  // Pengaturan Mode Pekan Ujian (Kunci Sementara Rapor)
+  lockRaporDuringExam?: boolean;
+  lockRaporMessage?: string;
+}
+
+export type CbtExamStatus = 'draft' | 'active' | 'finished';
+export type CbtOptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
+export type CbtTargetRaporCategory = 'none' | 'diniyah' | 'skillDigital' | 'tahfidz';
+export type CbtDigitalScoreTarget = 'pengetahuan' | 'keterampilan' | 'nilaiAkhir';
+export type CbtAttemptStatus = 'in_progress' | 'locked' | 'submitted';
+
+export interface CbtTargetRaporMapping {
+  category: CbtTargetRaporCategory;
+  subjectName: string;
+  digitalField?: CbtDigitalScoreTarget;
+}
+
+export interface CbtExam {
+  id: string;
+  title: string;
+  mapelCode?: string;
+  deskripsi?: string;
+  status: CbtExamStatus;
+  token: string;
+  durationMinutes: number;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  maxViolations: number;
+  targetRaporMapping: CbtTargetRaporMapping;
+  autoSyncToRapor: boolean;
+  showScoreAfterFinish: boolean;
+  tahunAkademik?: string;
+  semester?: 'Gasal' | 'Genap';
+  updatedAt: string;
+}
+
+export interface CbtQuestion {
+  id: string;
+  examId: string;
+  orderNumber: number;
+  pertanyaan: string;
+  opsiA: string;
+  opsiB: string;
+  opsiC: string;
+  opsiD: string;
+  opsiE?: string;
+  kunciJawaban: CbtOptionKey;
+  imageUrl?: string;
+}
+
+export type StudentCbtQuestion = Omit<CbtQuestion, 'kunciJawaban'>;
+
+export interface CbtViolationLog {
+  timestamp: string;
+  type:
+    | 'fullscreen_exit'
+    | 'tab_switch'
+    | 'window_blur'
+    | 'split_screen'
+    | 'shortcut_blocked';
+  detail: string;
+}
+
+export interface CbtAttempt {
+  id: string;
+  examId: string;
+  studentId: string;
+  studentName: string;
+  studentNisn: string;
+  studentKelas: string;
+  status: CbtAttemptStatus;
+  startedAt: string;
+  submittedAt?: string;
+  lastSavedAt: string;
+  questionOrder: string[];
+  answers: Record<string, CbtOptionKey>;
+  raguIds: string[];
+  currentQuestionIndex: number;
+  violationCount: number;
+  violations: CbtViolationLog[];
+  benarCount?: number;
+  salahCount?: number;
+  totalQuestions?: number;
+  score?: number;
+  syncedToRaporAt?: string;
 }
 
 export interface PillarSummary {
@@ -230,6 +315,9 @@ export interface MdaDatabase {
   reports: SemesterReport[];
   portfolios: PortfolioProject[];
   userAccess: UserAccess[];
+  cbtExams?: CbtExam[];
+  cbtQuestions?: CbtQuestion[];
+  cbtAttempts?: CbtAttempt[];
   templateConfig?: BrandingTemplateConfig;
   spreadsheetId?: string;
   spreadsheetUrl?: string;

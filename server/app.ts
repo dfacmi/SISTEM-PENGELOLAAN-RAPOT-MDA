@@ -28,15 +28,24 @@ import {
 import {
   DEFAULT_APPS_SCRIPT_SECRET,
   DEFAULT_APPS_SCRIPT_URL,
+  deleteCbtExamInAppsScript,
   deletePortfolioInAppsScript,
   deleteStudentInAppsScript,
   deleteTeacherInAppsScript,
+  gradeAttemptAgainstQuestions,
   isValidAppsScriptUrl,
   mergeLocalSnapshotIntoAppsScript,
+  proctorActionInAppsScript,
   readDatabaseFromAppsScript,
   saveAllToAppsScript,
+  saveCbtExamInAppsScript,
+  saveCbtQuestionsForExamInAppsScript,
+  saveSectionInAppsScript,
   saveTemplateConfigInAppsScript,
   saveUserAccessInAppsScript,
+  seedDefaultCbtExamsInAppsScript,
+  syncAttemptAndMaybeRaporInAppsScript,
+  upsertCbtAttemptInAppsScript,
   upsertPeriodInAppsScript,
   upsertPortfolioInAppsScript,
   upsertReportInAppsScript,
@@ -46,17 +55,26 @@ import {
 import type {
   AcademicPeriod,
   BrandingTemplateConfig,
+  CbtAttempt,
+  CbtExam,
+  CbtOptionKey,
+  CbtQuestion,
+  CbtViolationLog,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
   Student,
+  StudentCbtQuestion,
   TeacherClass,
   UserAccess,
   UserRole,
 } from '../src/types/mda.ts';
 
+export type PortalMode = 'rapor' | 'cbt';
+
 export interface SessionPayload {
   role: UserRole;
+  portalMode?: PortalMode;
   userId: string;
   teacherId?: string;
   studentId?: string;
@@ -290,6 +308,45 @@ function isTeacherAuthorizedForStudent(
   return tokens.some((tok) => studentClass === tok || studentClass.includes(tok) || tok.includes(studentClass));
 }
 
+function sanitizeStudentCbtQuestion(q: CbtQuestion): StudentCbtQuestion {
+  return {
+    id: q.id,
+    examId: q.examId,
+    orderNumber: q.orderNumber,
+    pertanyaan: q.pertanyaan,
+    opsiA: q.opsiA,
+    opsiB: q.opsiB,
+    opsiC: q.opsiC,
+    opsiD: q.opsiD,
+    ...(q.opsiE ? { opsiE: q.opsiE } : {}),
+    ...(q.imageUrl ? { imageUrl: q.imageUrl } : {}),
+  };
+}
+
+function sanitizeExamForStudent(exam: CbtExam): CbtExam {
+  return {
+    ...exam,
+    token: '', // Never expose exam token to students
+  };
+}
+
+function sanitizeAttemptForStudent(attempt: CbtAttempt, exam?: CbtExam): CbtAttempt {
+  if (exam && exam.showScoreAfterFinish === false && attempt.status === 'submitted') {
+    const { score: _s, benarCount: _b, salahCount: _w, ...rest } = attempt;
+    return rest;
+  }
+  return attempt;
+}
+
+function shuffleIds(ids: string[]): string[] {
+  const arr = [...ids];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaDatabase {
   if (session.role === 'admin') {
     return db;
@@ -320,6 +377,9 @@ function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaD
       reports: db.reports.filter((r) => allowedIds.has(r.studentId)),
       portfolios: db.portfolios.filter((p) => allowedIds.has(p.studentId)),
       userAccess: [],
+      cbtExams: db.cbtExams || [],
+      cbtQuestions: db.cbtQuestions || [],
+      cbtAttempts: (db.cbtAttempts || []).filter((a) => allowedIds.has(a.studentId)),
       templateConfig: db.templateConfig,
       spreadsheetId: db.spreadsheetId,
       spreadsheetUrl: db.spreadsheetUrl,
@@ -328,25 +388,38 @@ function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaD
     };
   }
 
-  // Strictly scoped parent/student view — ONLY 1 child, NO other students, NO PINs
+  // Strictly scoped parent/student view — ONLY 1 child, NO other students, NO PINs, NO answer keys
   const myStudent = db.students.find((s) => s.id === session.studentId);
   const myId = myStudent?.id || '__none__';
+  const isCbtPortal = session.portalMode === 'cbt';
+  const isRaporLocked = !isCbtPortal && Boolean(db.templateConfig?.lockRaporDuringExam);
+  const examsById = new Map((db.cbtExams || []).map((e) => [e.id, e]));
 
   return {
-    periods: db.periods,
-    teachers: db.teachers.map((t) => ({
-      id: t.id,
-      nama: t.nama,
-      jabatan: t.jabatan,
-      email: '',
-      kelasDiampu: t.kelasDiampu,
-      role: t.role,
-      ttdUrl: t.ttdUrl || '',
-    })),
+    periods: isCbtPortal ? [] : db.periods,
+    teachers: isCbtPortal
+      ? []
+      : db.teachers.map((t) => ({
+          id: t.id,
+          nama: t.nama,
+          jabatan: t.jabatan,
+          email: '',
+          kelasDiampu: t.kelasDiampu,
+          role: t.role,
+          ttdUrl: t.ttdUrl || '',
+        })),
     students: myStudent ? [{ ...myStudent, accessPin: '' }] : [],
-    reports: db.reports.filter((r) => r.studentId === myId),
-    portfolios: db.portfolios.filter((p) => p.studentId === myId),
+    reports: isCbtPortal || isRaporLocked ? [] : db.reports.filter((r) => r.studentId === myId),
+    portfolios:
+      isCbtPortal || isRaporLocked ? [] : db.portfolios.filter((p) => p.studentId === myId),
     userAccess: [],
+    cbtExams: isCbtPortal ? (db.cbtExams || []).map(sanitizeExamForStudent) : [],
+    cbtQuestions: [], // Never send answer keys in /api/data for students
+    cbtAttempts: isCbtPortal
+      ? (db.cbtAttempts || [])
+          .filter((a) => a.studentId === myId)
+          .map((a) => sanitizeAttemptForStudent(a, examsById.get(a.examId)))
+      : [],
     templateConfig: db.templateConfig,
     spreadsheetId: db.spreadsheetId,
     spreadsheetUrl: db.spreadsheetUrl,
@@ -412,13 +485,80 @@ export function createApiApp(): express.Express {
     });
   });
 
-  // 3. Parent/Student PIN Login (verified strictly on backend against students & userAccess!)
+  // Helper for matching Student / Parent credentials cleanly across both Rapor & CBT doors
+  function matchStudentCredential(
+    db: MdaDatabase,
+    identifier: string,
+    pin: string
+  ): { matchedStudent?: Student; matchedAccess?: UserAccess } {
+    const q = identifier.trim().replace(/\s+/g, ' ').toLowerCase();
+    const normalizedPin = pin.trim().toUpperCase();
+
+    let matchedStudent = db.students.find((s) => {
+      const matchIdentity =
+        s.nisnMda.trim().toLowerCase() === q ||
+        s.id.trim().toLowerCase() === q ||
+        s.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
+        (s.emailSantriOrtu || '').trim().toLowerCase() === q;
+      if (!matchIdentity) return false;
+      const expectedPin = (s.accessPin || generateSmartAccessPin(s.nama, s.nisnMda))
+        .trim()
+        .toUpperCase();
+      if (expectedPin === normalizedPin) return true;
+      return db.userAccess.some(
+        (u) =>
+          u.statusAktif !== false &&
+          u.role === 'santri_ortu' &&
+          u.linkedStudentId === s.id &&
+          Boolean(u.accessPin?.trim()) &&
+          u.accessPin!.trim().toUpperCase() === normalizedPin
+      );
+    });
+
+    let matchedAccess: UserAccess | undefined;
+    if (!matchedStudent) {
+      matchedAccess = db.userAccess.find((u) => {
+        if (u.statusAktif === false || u.role !== 'santri_ortu') return false;
+        const linked = db.students.find((s) => s.id === u.linkedStudentId);
+        const matchUserIdentity =
+          u.email.trim().toLowerCase() === q ||
+          u.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
+          u.id.trim().toLowerCase() === q ||
+          Boolean(
+            linked &&
+              (linked.nisnMda.trim().toLowerCase() === q ||
+                linked.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q)
+          );
+        if (!matchUserIdentity) return false;
+
+        const customPin = (u.accessPin || '').trim().toUpperCase();
+        if (customPin && customPin === normalizedPin) return true;
+
+        if (linked) {
+          const studentPin = (
+            linked.accessPin || generateSmartAccessPin(linked.nama, linked.nisnMda)
+          )
+            .trim()
+            .toUpperCase();
+          return studentPin === normalizedPin;
+        }
+        return false;
+      });
+
+      if (matchedAccess) {
+        matchedStudent = db.students.find((s) => s.id === matchedAccess!.linkedStudentId);
+      }
+    }
+
+    return { matchedStudent, matchedAccess };
+  }
+
+  // 3A. Portal Rapor & Portofolio (Wali/Santri) Login — honors lockRaporDuringExam!
   app.post('/api/auth/login-parent', async (req, res) => {
     try {
       const { identifier, pin } = req.body as { identifier?: string; pin?: string };
       const q = (identifier || '').trim().replace(/\s+/g, ' ').toLowerCase();
-      const rawPin = (pin || '').trim();
-      const normalizedPin = rawPin.toUpperCase();
+      const normalizedPin = (pin || '').trim().toUpperCase();
       if (!q || !normalizedPin) {
         res.status(400).json({ error: 'Masukkan ID/Nama/Email Santri & Wali beserta PIN Akses.' });
         return;
@@ -435,64 +575,18 @@ export function createApiApp(): express.Express {
 
       const db = await loadDbFromStorage(storage);
 
-      // A. Match direct Student record (NISN MDA, Nama Lengkap, ID, or Email Wali)
-      let matchedStudent = db.students.find((s) => {
-        const matchIdentity =
-          s.nisnMda.trim().toLowerCase() === q ||
-          s.id.trim().toLowerCase() === q ||
-          s.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
-          (s.emailSantriOrtu || '').trim().toLowerCase() === q;
-        if (!matchIdentity) return false;
-        const expectedPin = (s.accessPin || generateSmartAccessPin(s.nama, s.nisnMda))
-          .trim()
-          .toUpperCase();
-        if (expectedPin === normalizedPin) return true;
-        // Also allow any active userAccess entry linked to this student with a matching custom PIN
-        return db.userAccess.some(
-          (u) =>
-            u.statusAktif !== false &&
-            u.role === 'santri_ortu' &&
-            u.linkedStudentId === s.id &&
-            Boolean(u.accessPin?.trim()) &&
-            u.accessPin!.trim().toUpperCase() === normalizedPin
-        );
-      });
-
-      // B. Match active UserAccess record for Orang Tua / Santri
-      let matchedAccess: UserAccess | undefined;
-      if (!matchedStudent) {
-        matchedAccess = db.userAccess.find((u) => {
-          if (u.statusAktif === false || u.role !== 'santri_ortu') return false;
-          const linked = db.students.find((s) => s.id === u.linkedStudentId);
-          const matchUserIdentity =
-            u.email.trim().toLowerCase() === q ||
-            u.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q ||
-            u.id.trim().toLowerCase() === q ||
-            Boolean(
-              linked &&
-                (linked.nisnMda.trim().toLowerCase() === q ||
-                  linked.nama.trim().replace(/\s+/g, ' ').toLowerCase() === q)
-            );
-          if (!matchUserIdentity) return false;
-
-          const customPin = (u.accessPin || '').trim().toUpperCase();
-          if (customPin && customPin === normalizedPin) return true;
-
-          if (linked) {
-            const studentPin = (
-              linked.accessPin || generateSmartAccessPin(linked.nama, linked.nisnMda)
-            )
-              .trim()
-              .toUpperCase();
-            return studentPin === normalizedPin;
-          }
-          return false;
+      if (db.templateConfig?.lockRaporDuringExam) {
+        res.status(423).json({
+          code: 'RAPOR_LOCKED_FOR_EXAM',
+          error:
+            db.templateConfig.lockRaporMessage ||
+            DEFAULT_TEMPLATE_CONFIG.lockRaporMessage ||
+            'Portal Rapor & Portofolio ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai.',
         });
-
-        if (matchedAccess) {
-          matchedStudent = db.students.find((s) => s.id === matchedAccess!.linkedStudentId);
-        }
+        return;
       }
+
+      const { matchedStudent, matchedAccess } = matchStudentCredential(db, q, normalizedPin);
 
       if (!matchedStudent && !matchedAccess) {
         res.status(401).json({
@@ -508,6 +602,7 @@ export function createApiApp(): express.Express {
 
       const session: SessionPayload = {
         role: 'santri_ortu',
+        portalMode: 'rapor',
         userId: matchedStudent ? `parent:${matchedStudent.id}` : `access:${matchedAccess!.id}`,
         studentId: targetStudentId,
         email: matchedAccess?.email || matchedStudent?.emailSantriOrtu || undefined,
@@ -524,6 +619,61 @@ export function createApiApp(): express.Express {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Gagal memverifikasi login wali santri.' });
+    }
+  });
+
+  // 3B. Ruang Ujian CBT (Santri) Login — stays OPEN during Exam Week, strictly isolated from Rapor!
+  app.post('/api/auth/login-cbt', async (req, res) => {
+    try {
+      const { identifier, pin } = req.body as { identifier?: string; pin?: string };
+      const q = (identifier || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      const normalizedPin = (pin || '').trim().toUpperCase();
+      if (!q || !normalizedPin) {
+        res.status(400).json({ error: 'Masukkan ID/NIS/Nama Santri beserta PIN Akses CBT.' });
+        return;
+      }
+
+      const storage = await resolveBackendStorage(req);
+      if (storage.mode === 'none') {
+        res.status(503).json({
+          error:
+            'Koneksi database Google Sheets / Apps Script belum aktif. Hubungi Pengawas / Admin MDA.',
+        });
+        return;
+      }
+
+      const db = await loadDbFromStorage(storage);
+      const { matchedStudent, matchedAccess } = matchStudentCredential(db, q, normalizedPin);
+
+      if (!matchedStudent && !matchedAccess) {
+        res.status(401).json({
+          error: 'ID/NIS/Nama Santri atau PIN Akses tidak sesuai. Periksa kartu peserta ujian Anda.',
+        });
+        return;
+      }
+
+      const targetStudentId = matchedStudent?.id || matchedAccess?.linkedStudentId || '__none__';
+      const displayName = matchedStudent?.nama || matchedAccess?.nama || 'Peserta CBT';
+
+      const session: SessionPayload = {
+        role: 'santri_ortu',
+        portalMode: 'cbt',
+        userId: matchedStudent ? `cbt:${matchedStudent.id}` : `cbt-access:${matchedAccess!.id}`,
+        studentId: targetStudentId,
+        email: matchedAccess?.email || matchedStudent?.emailSantriOrtu || undefined,
+        name: displayName,
+        exp: Date.now() + SESSION_TTL_MS,
+      };
+      const sessionToken = signSessionToken(session);
+      setSessionCookie(req, res, sessionToken);
+
+      res.json({
+        sessionToken,
+        user: session,
+        data: scopeDatabaseForSession(db, session),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Gagal memverifikasi login Ruang Ujian CBT.' });
     }
   });
 
@@ -670,7 +820,7 @@ export function createApiApp(): express.Express {
     res.json({ ok: true });
   });
 
-  // 6. Authenticated Read (always reads fresh from Google Sheets / Apps Script & scopes strictly by role)
+  // 6. Authenticated Read (always reads fresh from Google Sheets / Apps Script & scopes strictly by role & portalMode)
   app.get('/api/data', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const session = req.session!;
@@ -683,6 +833,20 @@ export function createApiApp(): express.Express {
         return;
       }
       const db = await loadDbFromStorage(storage);
+      if (
+        session.role === 'santri_ortu' &&
+        session.portalMode !== 'cbt' &&
+        db.templateConfig?.lockRaporDuringExam
+      ) {
+        res.status(423).json({
+          code: 'RAPOR_LOCKED_FOR_EXAM',
+          error:
+            db.templateConfig.lockRaporMessage ||
+            DEFAULT_TEMPLATE_CONFIG.lockRaporMessage ||
+            'Portal Rapor & Portofolio ditutup sementara selama Pekan Ujian berlangsung.',
+        });
+        return;
+      }
       res.json({
         user: session,
         data: scopeDatabaseForSession(db, session),
@@ -1247,6 +1411,545 @@ export function createApiApp(): express.Express {
       });
     } catch (err: any) {
       res.status(502).json({ error: err.message || 'Gagal memuat portofolio.' });
+    }
+  });
+
+  // 13. CBT Module Endpoints (Admin/Guru Management + Server-Side Graded Student Exam Flow)
+  app.post('/api/cbt/settings/rapor-lock', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.session!.role !== 'admin') {
+        res.status(403).json({ error: 'Hanya Admin yang dapat mengunci atau membuka akses Portal Rapor.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { lockRaporDuringExam, lockRaporMessage } = req.body as {
+        lockRaporDuringExam?: boolean;
+        lockRaporMessage?: string;
+      };
+      const currentDb = await readDatabaseFromAppsScript(appsScript.url);
+      const nextTemplate: BrandingTemplateConfig = {
+        ...DEFAULT_TEMPLATE_CONFIG,
+        ...(currentDb.templateConfig || {}),
+        lockRaporDuringExam: Boolean(lockRaporDuringExam),
+        ...(typeof lockRaporMessage === 'string' && lockRaporMessage.trim()
+          ? { lockRaporMessage: lockRaporMessage.trim() }
+          : {}),
+      };
+      const nextDb = await saveTemplateConfigInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        nextTemplate
+      );
+      res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan status Mode Pekan Ujian.' });
+    }
+  });
+
+  app.post('/api/cbt/exams/seed-defaults', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.session!.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Akses ditolak.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const nextDb = await seedDefaultCbtExamsInAppsScript(appsScript.url, appsScript.secret);
+      res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal membuat 7 paket mapel CBT.' });
+    }
+  });
+
+  app.post('/api/cbt/exams/upsert', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.session!.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Akses ditolak.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { exam } = req.body as { exam?: CbtExam };
+      if (!exam || !exam.id || !exam.title?.trim()) {
+        res.status(400).json({ error: 'Data paket ujian tidak lengkap.' });
+        return;
+      }
+      const nextDb = await saveCbtExamInAppsScript(appsScript.url, appsScript.secret, exam);
+      res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan pengaturan paket ujian.' });
+    }
+  });
+
+  app.delete('/api/cbt/exams/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.session!.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Akses ditolak.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const nextDb = await deleteCbtExamInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        String(req.params.id)
+      );
+      res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menghapus paket ujian.' });
+    }
+  });
+
+  app.post('/api/cbt/questions/save', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.session!.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Akses ditolak.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { examId, questions } = req.body as {
+        examId?: string;
+        questions?: CbtQuestion[];
+      };
+      if (!examId || !Array.isArray(questions)) {
+        res.status(400).json({ error: 'Data bank soal tidak valid.' });
+        return;
+      }
+      const nextDb = await saveCbtQuestionsForExamInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        examId,
+        questions
+      );
+      res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan bank soal ke Google Sheets.' });
+    }
+  });
+
+  app.post(
+    '/api/cbt/attempts/proctor-action',
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        if (req.session!.role === 'santri_ortu') {
+          res.status(403).json({ error: 'Hanya Pengawas (Admin/Guru) yang diizinkan.' });
+          return;
+        }
+        const appsScript = resolveAppsScriptConfig();
+        if (!appsScript.configured) {
+          res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+          return;
+        }
+        const { action, examId, attemptId } = req.body as {
+          action?: 'unlock' | 'reset' | 'sync_rapor' | 'bulk_sync_rapor';
+          examId?: string;
+          attemptId?: string;
+        };
+        if (!action || !examId) {
+          res.status(400).json({ error: 'Parameter aksi pengawas tidak lengkap.' });
+          return;
+        }
+        const result = await proctorActionInAppsScript(appsScript.url, appsScript.secret, {
+          action,
+          examId,
+          attemptId,
+        });
+        res.json({
+          data: scopeDatabaseForSession(result.db, req.session!),
+          syncedCount: result.syncedCount || 0,
+        });
+      } catch (err: any) {
+        res.status(500).json({ error: err.message || 'Gagal menjalankan aksi pengawas.' });
+      }
+    }
+  );
+
+  // Student CBT Overview (NO answer keys, NO exam tokens, NO rapor grades!)
+  app.get('/api/cbt/student/overview', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const studentId = session.studentId || '';
+      const student = db.students.find((s) => s.id === studentId);
+      const questionCountByExam: Record<string, number> = {};
+      for (const q of db.cbtQuestions || []) {
+        questionCountByExam[q.examId] = (questionCountByExam[q.examId] || 0) + 1;
+      }
+      const exams = (db.cbtExams || []).map((e) => ({
+        ...sanitizeExamForStudent(e),
+        questionCount: questionCountByExam[e.id] || 0,
+      }));
+      const attempts = (db.cbtAttempts || [])
+        .filter((a) => a.studentId === studentId)
+        .map((a) => {
+          const exam = (db.cbtExams || []).find((e) => e.id === a.examId);
+          return sanitizeAttemptForStudent(a, exam);
+        });
+      res.json({
+        student: student ? { ...student, accessPin: '' } : null,
+        exams,
+        attempts,
+        serverNow: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal memuat daftar ujian CBT.' });
+    }
+  });
+
+  // Start / Resume CBT Exam (verifies token on start, never returns kunciJawaban!)
+  app.post('/api/cbt/student/start', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { examId, token } = req.body as { examId?: string; token?: string };
+      if (!examId) {
+        res.status(400).json({ error: 'ID Paket Ujian diperlukan.' });
+        return;
+      }
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const exam = (db.cbtExams || []).find((e) => e.id === examId);
+      if (!exam) {
+        res.status(404).json({ error: 'Paket ujian tidak ditemukan.' });
+        return;
+      }
+      if (exam.status !== 'active') {
+        res.status(403).json({
+          error:
+            exam.status === 'finished'
+              ? 'Sesi ujian mata pelajaran ini telah ditutup.'
+              : 'Ujian mata pelajaran ini belum dibuka oleh Pengawas (masih Draft).',
+        });
+        return;
+      }
+      const examQuestions = (db.cbtQuestions || [])
+        .filter((q) => q.examId === exam.id)
+        .sort((a, b) => a.orderNumber - b.orderNumber);
+      if (examQuestions.length === 0) {
+        res.status(400).json({ error: 'Bank soal untuk ujian ini masih kosong.' });
+        return;
+      }
+
+      const studentId = session.studentId || '';
+      const student = db.students.find((s) => s.id === studentId);
+      if (!student) {
+        res.status(403).json({ error: 'Identitas peserta santri tidak ditemukan.' });
+        return;
+      }
+
+      const attemptId = `${exam.id}__${student.id}`;
+      let attempt = (db.cbtAttempts || []).find((a) => a.id === attemptId);
+
+      if (attempt?.status === 'submitted') {
+        res.json({
+          alreadySubmitted: true,
+          exam: sanitizeExamForStudent(exam),
+          attempt: sanitizeAttemptForStudent(attempt, exam),
+          questions: [],
+          remainingSeconds: 0,
+          serverNow: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (attempt?.status === 'locked') {
+        res.status(423).json({
+          code: 'ATTEMPT_LOCKED',
+          error:
+            'Ujian Anda terkunci karena melebihi batas pelanggaran Web Lockdown. Hubungi Pengawas untuk membuka kunci.',
+          attempt: sanitizeAttemptForStudent(attempt, exam),
+        });
+        return;
+      }
+
+      if (!attempt) {
+        const cleanToken = (token || '').trim().toUpperCase();
+        if (!cleanToken || cleanToken !== exam.token.trim().toUpperCase()) {
+          res.status(401).json({ error: 'Token Ujian salah atau tidak sesuai. Minta token aktif dari Pengawas.' });
+          return;
+        }
+        const rawIds = examQuestions.map((q) => q.id);
+        const questionOrder = exam.shuffleQuestions ? shuffleIds(rawIds) : rawIds;
+        const nowIso = new Date().toISOString();
+        attempt = {
+          id: attemptId,
+          examId: exam.id,
+          studentId: student.id,
+          studentName: student.nama,
+          studentNisn: student.nisnMda,
+          studentKelas: student.kelas,
+          status: 'in_progress',
+          startedAt: nowIso,
+          lastSavedAt: nowIso,
+          questionOrder,
+          answers: {},
+          raguIds: [],
+          currentQuestionIndex: 0,
+          violationCount: 0,
+          violations: [],
+          totalQuestions: examQuestions.length,
+        };
+        await upsertCbtAttemptInAppsScript(appsScript.url, appsScript.secret, attempt);
+      }
+
+      const endMs =
+        new Date(attempt.startedAt).getTime() + Number(exam.durationMinutes || 60) * 60 * 1000;
+      const remainingSeconds = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+
+      // If timer already expired while offline/closed, auto-grade & submit cleanly on server!
+      if (remainingSeconds <= 0) {
+        const graded = gradeAttemptAgainstQuestions(attempt, examQuestions);
+        const finishedAttempt: CbtAttempt = {
+          ...attempt,
+          ...graded,
+          status: 'submitted',
+          submittedAt: new Date().toISOString(),
+          lastSavedAt: new Date().toISOString(),
+        };
+        const synced = await syncAttemptAndMaybeRaporInAppsScript(
+          appsScript.url,
+          appsScript.secret,
+          finishedAttempt,
+          exam,
+          Boolean(exam.autoSyncToRapor)
+        );
+        res.json({
+          alreadySubmitted: true,
+          autoTimedOut: true,
+          exam: sanitizeExamForStudent(exam),
+          attempt: sanitizeAttemptForStudent(synced.attempt, exam),
+          questions: [],
+          remainingSeconds: 0,
+          syncedToRapor: synced.syncedToRapor,
+          serverNow: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Build ordered sanitized questions WITHOUT kunciJawaban
+      const questionMap = new Map(examQuestions.map((q) => [q.id, q]));
+      const orderedIds =
+        attempt.questionOrder && attempt.questionOrder.length > 0
+          ? attempt.questionOrder.filter((id) => questionMap.has(id))
+          : examQuestions.map((q) => q.id);
+      for (const q of examQuestions) {
+        if (!orderedIds.includes(q.id)) orderedIds.push(q.id);
+      }
+      const sanitizedQuestions = orderedIds
+        .map((id) => questionMap.get(id)!)
+        .map(sanitizeStudentCbtQuestion);
+
+      res.json({
+        alreadySubmitted: false,
+        exam: sanitizeExamForStudent(exam),
+        attempt: sanitizeAttemptForStudent(attempt, exam),
+        questions: sanitizedQuestions,
+        remainingSeconds,
+        serverNow: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Gagal memulai sesi ujian CBT.' });
+    }
+  });
+
+  // Auto-save answers, ragu status, and Web Lockdown violations via upsertCbtAttempt
+  app.post('/api/cbt/student/save', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const {
+        attemptId,
+        answers,
+        raguIds,
+        currentQuestionIndex,
+        newViolations,
+      } = req.body as {
+        attemptId?: string;
+        answers?: Record<string, CbtOptionKey>;
+        raguIds?: string[];
+        currentQuestionIndex?: number;
+        newViolations?: CbtViolationLog[];
+      };
+
+      if (!attemptId) {
+        res.status(400).json({ error: 'ID Attempt diperlukan.' });
+        return;
+      }
+
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const existing = (db.cbtAttempts || []).find((a) => a.id === attemptId);
+      if (!existing) {
+        res.status(404).json({ error: 'Sesi pengerjaan ujian tidak ditemukan.' });
+        return;
+      }
+      if (session.role === 'santri_ortu' && existing.studentId !== session.studentId) {
+        res.status(403).json({ error: 'Tidak berhak mengubah sesi ujian peserta lain.' });
+        return;
+      }
+      const exam = (db.cbtExams || []).find((e) => e.id === existing.examId);
+      if (!exam) {
+        res.status(404).json({ error: 'Paket ujian tidak ditemukan.' });
+        return;
+      }
+      if (existing.status === 'submitted') {
+        res.json({
+          attempt: sanitizeAttemptForStudent(existing, exam),
+          locked: false,
+          submitted: true,
+        });
+        return;
+      }
+      if (existing.status === 'locked') {
+        res.status(423).json({
+          code: 'ATTEMPT_LOCKED',
+          error: 'Ujian Anda sedang terkunci oleh sistem pengawasan.',
+          attempt: sanitizeAttemptForStudent(existing, exam),
+        });
+        return;
+      }
+
+      const incomingViolations = Array.isArray(newViolations) ? newViolations : [];
+      const mergedViolations = [...(existing.violations || []), ...incomingViolations].slice(-50);
+      const nextViolationCount = (existing.violationCount || 0) + incomingViolations.length;
+      const maxViolations = Math.max(1, Number(exam.maxViolations || 3));
+      const shouldLock = nextViolationCount >= maxViolations;
+
+      const updated: CbtAttempt = {
+        ...existing,
+        answers: answers && typeof answers === 'object' ? answers : existing.answers,
+        raguIds: Array.isArray(raguIds) ? raguIds : existing.raguIds,
+        currentQuestionIndex:
+          typeof currentQuestionIndex === 'number'
+            ? currentQuestionIndex
+            : existing.currentQuestionIndex,
+        violationCount: nextViolationCount,
+        violations: mergedViolations,
+        status: shouldLock ? 'locked' : 'in_progress',
+        lastSavedAt: new Date().toISOString(),
+      };
+
+      await upsertCbtAttemptInAppsScript(appsScript.url, appsScript.secret, updated);
+
+      const endMs =
+        new Date(updated.startedAt).getTime() + Number(exam.durationMinutes || 60) * 60 * 1000;
+      const remainingSeconds = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+
+      res.json({
+        attempt: sanitizeAttemptForStudent(updated, exam),
+        locked: shouldLock,
+        remainingSeconds,
+        serverNow: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan progres ujian.' });
+    }
+  });
+
+  // Final Submit & 100% Server-Side Grading + Auto-Sync to Rapor
+  app.post('/api/cbt/student/submit', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { attemptId, answers, raguIds } = req.body as {
+        attemptId?: string;
+        answers?: Record<string, CbtOptionKey>;
+        raguIds?: string[];
+      };
+      if (!attemptId) {
+        res.status(400).json({ error: 'ID Attempt diperlukan.' });
+        return;
+      }
+
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const existing = (db.cbtAttempts || []).find((a) => a.id === attemptId);
+      if (!existing) {
+        res.status(404).json({ error: 'Sesi pengerjaan ujian tidak ditemukan.' });
+        return;
+      }
+      if (session.role === 'santri_ortu' && existing.studentId !== session.studentId) {
+        res.status(403).json({ error: 'Tidak berhak mengumpulkan ujian peserta lain.' });
+        return;
+      }
+      const exam = (db.cbtExams || []).find((e) => e.id === existing.examId);
+      if (!exam) {
+        res.status(404).json({ error: 'Paket ujian tidak ditemukan.' });
+        return;
+      }
+
+      if (existing.status === 'submitted') {
+        res.json({
+          attempt: sanitizeAttemptForStudent(existing, exam),
+          showScoreAfterFinish: exam.showScoreAfterFinish,
+          syncedToRapor: Boolean(existing.syncedToRaporAt),
+        });
+        return;
+      }
+
+      const examQuestions = (db.cbtQuestions || []).filter((q) => q.examId === exam.id);
+      const finalAnswers = answers && typeof answers === 'object' ? answers : existing.answers;
+      const mergedAttempt: CbtAttempt = {
+        ...existing,
+        answers: finalAnswers,
+        raguIds: Array.isArray(raguIds) ? raguIds : existing.raguIds,
+        status: 'submitted',
+        submittedAt: new Date().toISOString(),
+        lastSavedAt: new Date().toISOString(),
+      };
+      const graded = gradeAttemptAgainstQuestions(mergedAttempt, examQuestions);
+      const scoredAttempt: CbtAttempt = {
+        ...mergedAttempt,
+        ...graded,
+      };
+
+      const synced = await syncAttemptAndMaybeRaporInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        scoredAttempt,
+        exam,
+        Boolean(exam.autoSyncToRapor)
+      );
+
+      res.json({
+        attempt: sanitizeAttemptForStudent(synced.attempt, exam),
+        showScoreAfterFinish: exam.showScoreAfterFinish,
+        syncedToRapor: synced.syncedToRapor,
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal mengumpulkan jawaban ujian.' });
     }
   });
 

@@ -1,4 +1,4 @@
-import { BrandingTemplateConfig, MdaDatabase } from '../types/mda';
+import { BrandingTemplateConfig, CbtExam, MdaDatabase } from '../types/mda';
 
 export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   namaLembaga: 'Muslim Digital Academy (MDA)',
@@ -46,7 +46,114 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   qrBannerTitle: 'LIHAT KARYA SELENGKAPNYA',
   qrBannerDescription:
     'Semua proyek, sidang karya, dan video santri semester ini dapat dilihat melalui link portofolio online di bawah ini.',
+  lockRaporDuringExam: false,
+  lockRaporMessage:
+    'Portal Rapor & Portofolio Wali Santri ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Santri silakan masuk melalui tab Ruang Ujian CBT.',
 };
+
+export function generateRandomCbtToken(length = 6): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+export function createDefaultCbtExams(
+  tahunAkademik = '2026/2027',
+  semester: 'Gasal' | 'Genap' = 'Gasal'
+): CbtExam[] {
+  const now = new Date().toISOString();
+  const presets: Array<{
+    id: string;
+    title: string;
+    mapelCode: string;
+    durationMinutes: number;
+    targetRaporMapping: CbtExam['targetRaporMapping'];
+  }> = [
+    {
+      id: 'cbt-mapel-1-aqidah',
+      title: 'Ujian Aqidah',
+      mapelCode: 'DIN-AQD',
+      durationMinutes: 60,
+      targetRaporMapping: { category: 'diniyah', subjectName: 'Aqidah' },
+    },
+    {
+      id: 'cbt-mapel-2-akhlak',
+      title: 'Ujian Akhlak',
+      mapelCode: 'DIN-AKH',
+      durationMinutes: 60,
+      targetRaporMapping: { category: 'diniyah', subjectName: 'Akhlak' },
+    },
+    {
+      id: 'cbt-mapel-3-fikih',
+      title: 'Ujian Fikih',
+      mapelCode: 'DIN-FKH',
+      durationMinutes: 60,
+      targetRaporMapping: { category: 'diniyah', subjectName: 'Fikih' },
+    },
+    {
+      id: 'cbt-mapel-4-dakwah-tahsin',
+      title: 'Ujian Dakwah & Tahsin',
+      mapelCode: 'DIN-DKW',
+      durationMinutes: 60,
+      targetRaporMapping: { category: 'diniyah', subjectName: 'Dakwah' },
+    },
+    {
+      id: 'cbt-mapel-5-uiux',
+      title: 'Ujian UI/UX Design',
+      mapelCode: 'DIG-UIUX',
+      durationMinutes: 75,
+      targetRaporMapping: {
+        category: 'skillDigital',
+        subjectName: 'UI/UX Design',
+        digitalField: 'pengetahuan',
+      },
+    },
+    {
+      id: 'cbt-mapel-6-graphic',
+      title: 'Ujian Graphic Design',
+      mapelCode: 'DIG-GD',
+      durationMinutes: 75,
+      targetRaporMapping: {
+        category: 'skillDigital',
+        subjectName: 'Graphic Design',
+        digitalField: 'pengetahuan',
+      },
+    },
+    {
+      id: 'cbt-mapel-7-multimedia',
+      title: 'Ujian Videography & Motion',
+      mapelCode: 'DIG-VID',
+      durationMinutes: 75,
+      targetRaporMapping: {
+        category: 'skillDigital',
+        subjectName: 'Videography',
+        digitalField: 'pengetahuan',
+      },
+    },
+  ];
+
+  return presets.map((p) => ({
+    id: p.id,
+    title: p.title,
+    mapelCode: p.mapelCode,
+    deskripsi: `Paket Ujian CBT Pilihan Ganda mandiri untuk mata pelajaran ${p.title.replace(/^Ujian\s+/i, '')}.`,
+    status: 'draft',
+    token: generateRandomCbtToken(6),
+    durationMinutes: p.durationMinutes,
+    shuffleQuestions: true,
+    shuffleOptions: true,
+    maxViolations: 3,
+    targetRaporMapping: p.targetRaporMapping,
+    autoSyncToRapor: true,
+    showScoreAfterFinish: true,
+    tahunAkademik,
+    semester,
+    updatedAt: now,
+  }));
+}
 
 export const DEFAULT_SIKAP_ASPEK = [
   'Akhlak kepada guru dan teman',

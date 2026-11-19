@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardCheck,
   CloudOff,
   Database,
   Eye,
@@ -26,6 +27,8 @@ import {
   X,
 } from 'lucide-react';
 import { AdminDashboardView } from './components/AdminDashboardView';
+import { CbtAdminView } from './components/CbtAdminView';
+import { CbtStudentView } from './components/CbtStudentView';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { GradeEditorView } from './components/GradeEditorView';
 import { MasterManagementView } from './components/MasterManagementView';
@@ -41,6 +44,7 @@ import {
   BackendSessionUser,
   connectAppsScriptOnServer,
   connectSpreadsheetOnServer,
+  deleteCbtExamOnServer,
   deletePortfolioOnServer,
   deleteStudentOnServer,
   deleteTeacherOnServer,
@@ -49,16 +53,22 @@ import {
   fetchScopedDataFromServer,
   fetchServerHealth,
   getStoredSessionToken,
+  loginCbtViaServer,
   loginParentViaServer,
   loginStaffPinViaServer,
   logoutViaServer,
   migrateLocalSnapshotToServer,
+  proctorCbtActionOnServer,
   saveAccessOnServer,
   saveAllAppsScriptOnServer,
+  saveCbtExamOnServer,
+  saveCbtQuestionsOnServer,
   saveReportOnServer,
   saveTemplateOnServer,
+  seedDefaultCbtExamsOnServer,
   ServerHealthStatus,
   setStoredSessionToken,
+  toggleRaporLockOnServer,
   uploadAssetToDriveViaServer,
   upsertPeriodOnServer,
   upsertPortfolioOnServer,
@@ -69,6 +79,8 @@ import { extractSpreadsheetId } from './services/sheetsDb';
 import {
   AcademicPeriod,
   BrandingTemplateConfig,
+  CbtExam,
+  CbtQuestion,
   ConfirmDialogState,
   MdaDatabase,
   PortfolioProject,
@@ -84,6 +96,7 @@ type NavSection =
   | 'overview'
   | 'master'
   | 'grading'
+  | 'cbt'
   | 'portal'
   | 'portfolio'
   | 'template'
@@ -203,8 +216,8 @@ export default function App() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
 
-  const [loginTab, setLoginTab] = useState<'admin' | 'parent'>(() =>
-    initialNisnParam ? 'parent' : 'admin'
+  const [loginTab, setLoginTab] = useState<'cbt' | 'parent' | 'admin'>(() =>
+    initialNisnParam ? 'parent' : 'cbt'
   );
   const [loginNisn, setLoginNisn] = useState(initialNisnParam || '');
   const [loginPin, setLoginPin] = useState(initialPinParam || '');
@@ -414,10 +427,19 @@ export default function App() {
           setSyncState('saved');
         } catch (err: any) {
           const msg = String(err?.message || '');
-          // If session expired/unauthorized -> clear token cleanly and return to login gate
-          if (msg.includes('Sesi login tidak valid') || msg.includes('401')) {
+          const code = String(err?.code || '');
+          // If session expired/unauthorized or Rapor locked during exam -> clear token cleanly and return to login gate
+          if (
+            msg.includes('Sesi login tidak valid') ||
+            msg.includes('401') ||
+            code === 'RAPOR_LOCKED_FOR_EXAM'
+          ) {
             setStoredSessionToken(null);
             setBackendUser(null);
+            if (code === 'RAPOR_LOCKED_FOR_EXAM') {
+              setLoginTab('parent');
+              setAuthError(msg);
+            }
           } else {
             // Keep authenticated error visible — NEVER fall back to dummy data!
             setDbLoadError(
@@ -652,6 +674,49 @@ export default function App() {
       );
     } catch (err: any) {
       setAuthError(err.message || 'Nama/ID/Email Guru atau PIN Akses tidak sesuai.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleCbtStudentLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (!isOnline) {
+      setAuthError('Koneksi internet terputus. Periksa jaringan Anda lalu coba masuk kembali.');
+      return;
+    }
+    const identifier = loginNisn.trim();
+    const pin = loginPin.trim();
+    if (!identifier || !pin) {
+      setAuthError('Masukkan ID/NIS/Nama Lengkap Santri beserta PIN Akses Ujian.');
+      return;
+    }
+    setIsLoggingIn(true);
+    try {
+      const res = await loginCbtViaServer({
+        identifier,
+        pin,
+        spreadsheetId: preferredSheetId || db.spreadsheetId,
+      });
+      setPreviewSampleMode(false);
+      setBackendUser(res.user);
+      applyServerDatabase(res.data);
+      if (rememberLoginOnDevice) {
+        const studentName = res.data.students[0]?.nama || identifier;
+        setSavedDeviceCreds(
+          upsertSavedDeviceCred({
+            roleGroup: 'parent',
+            identifier,
+            displayName: studentName,
+            pin,
+            savedAt: new Date().toISOString(),
+          })
+        );
+      }
+      setSyncState('saved');
+    } catch (err: any) {
+      setAuthError(err.message || 'ID/NIS Santri atau PIN Akses tidak sesuai.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -1423,8 +1488,21 @@ export default function App() {
     );
   }
 
-  // 3. Authentication Gate (Admin/Guru OR Private Parent/Student)
+  // 2B. Isolated CBT Student Exam Mode (Rapor & Portfolio completely blocked!)
+  if (backendUser?.portalMode === 'cbt' && !previewSampleMode) {
+    return (
+      <CbtStudentView
+        studentFallback={db.students[0] || null}
+        displayName={backendUser.name}
+        templateConfig={tpl}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // 3. Authentication Gate (3 Doors: Ruang Ujian CBT, Portal Rapor Wali, Admin & Guru)
   if (!backendUser && !previewSampleMode) {
+    const isRaporLocked = Boolean(tpl.lockRaporDuringExam);
     return (
       <div
         className="min-h-screen flex flex-col justify-between p-4 sm:p-8"
@@ -1458,12 +1536,12 @@ export default function App() {
 
             <div className="relative z-10 mt-6 sm:mt-8 pt-5 border-t border-white/25 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <div className="font-[Arial] font-bold text-[#1DF27A]">Admin &amp; Guru</div>
+                <div className="font-[Arial] font-bold text-[#1DF27A]">Ruang Ujian CBT &amp; Admin</div>
                 <div className="font-[Arial] text-white/90 mt-1">{tpl.loginAdminInfo}</div>
               </div>
               <div>
                 <div className="font-[Arial] font-bold text-sky-200">
-                  Orang Tua &amp; Santri (Privat)
+                  Portal Rapor Wali (Privat)
                 </div>
                 <div className="font-[Arial] text-white/90 mt-1">{tpl.loginParentInfo}</div>
               </div>
@@ -1472,21 +1550,21 @@ export default function App() {
 
           {/* Right Sign-In Card */}
           <div className="lg:col-span-6 bg-white border border-emerald-200 rounded-3xl p-5 sm:p-8 flex flex-col justify-center space-y-5 shadow-xs">
-            {/* Switch between Admin/Guru and Parent/Student */}
-            <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+            {/* 3 Entry Doors Switcher */}
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
                 onClick={() => {
-                  setLoginTab('admin');
+                  setLoginTab('cbt');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] py-2 px-3 rounded-lg font-[Arial] text-xs font-bold transition-colors ${
-                  loginTab === 'admin'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
+                  loginTab === 'cbt'
+                    ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Admin &amp; Guru
+                Ruang Ujian CBT
               </button>
               <button
                 type="button"
@@ -1494,13 +1572,27 @@ export default function App() {
                   setLoginTab('parent');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] py-2 px-3 rounded-lg font-[Arial] text-xs font-bold transition-colors ${
+                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
                   loginTab === 'parent'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Orang Tua &amp; Santri
+                Portal Rapor
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginTab('admin');
+                  setAuthError(null);
+                }}
+                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
+                  loginTab === 'admin'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Admin &amp; Guru
               </button>
             </div>
 
@@ -1510,7 +1602,79 @@ export default function App() {
               </div>
             )}
 
-            {loginTab === 'admin' ? (
+            {loginTab === 'cbt' ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                    <span className="font-[Arial]">RUANG UJIAN CBT SANTRI (MODE LOCKDOWN)</span>
+                  </div>
+                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
+                    Masuk Ruang Ujian CBT
+                  </h2>
+                  <p className="font-[Arial] text-xs text-slate-500 mt-1 leading-relaxed">
+                    Khusus santri peserta ujian. Jalur ini hanya membuka lembar Ujian CBT Pilihan Ganda — menu Rapor &amp; Portofolio tidak dapat diakses dari sini.
+                  </p>
+                </div>
+
+                <form onSubmit={handleCbtStudentLogin} autoComplete="on" className="space-y-3">
+                  <div>
+                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                      ID Santri MDA / NIS / Nama Lengkap
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      autoComplete="username"
+                      list="mda-saved-parent-names"
+                      value={loginNisn}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLoginNisn(val);
+                        const savedPin = findSavedPinForInput(savedDeviceCreds, 'parent', val);
+                        if (savedPin) {
+                          setLoginPin(savedPin);
+                        }
+                      }}
+                      placeholder="Contoh: MDA02.2526.791 atau Nama Lengkap Santri"
+                      className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                      PIN Akses Santri
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showParentPin ? 'text' : 'password'}
+                        name="password"
+                        autoComplete="current-password"
+                        value={loginPin}
+                        onChange={(e) => setLoginPin(e.target.value)}
+                        placeholder="Masukkan PIN kartu peserta ujian"
+                        className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowParentPin((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                        title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
+                      >
+                        {showParentPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoggingIn}
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                  >
+                    <ClipboardCheck className="w-4 h-4 text-[#1DF27A]" />
+                    <span>{isLoggingIn ? 'Memverifikasi...' : 'Masuk Ruang Ujian CBT'}</span>
+                  </button>
+                </form>
+              </div>
+            ) : loginTab === 'admin' ? (
               <div className="space-y-4">
                 <div>
                   <div className="text-xs font-[Arial] font-semibold text-emerald-700">
@@ -1633,7 +1797,7 @@ export default function App() {
                 <div>
                   <div className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-700">
                     <Lock className="w-3.5 h-3.5" />
-                    <span className="font-[Arial]">PORTAL PRIVAT WALI &amp; SANTRI</span>
+                    <span className="font-[Arial]">PORTAL RAPOR &amp; PORTOFOLIO (WALI/SANTRI)</span>
                   </div>
                   <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
                     Masuk Melihat Rapor Putra Anda
@@ -1643,98 +1807,122 @@ export default function App() {
                   </p>
                 </div>
 
-                <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3">
-                  <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
-                      Nama Lengkap Santri atau ID Santri MDA
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      autoComplete="username"
-                      list="mda-saved-parent-names"
-                      value={loginNisn}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setLoginNisn(val);
-                        const savedPin = findSavedPinForInput(savedDeviceCreds, 'parent', val);
-                        if (savedPin) {
-                          setLoginPin(savedPin);
-                        }
-                      }}
-                      placeholder="Contoh: Nama Lengkap Santri atau MDA02.2526.791"
-                      className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                    />
-                    <datalist id="mda-saved-parent-names">
-                      {savedDeviceCreds
-                        .filter((c) => c.roleGroup === 'parent')
-                        .map((c) => (
-                          <option key={c.identifier} value={c.displayName} />
-                        ))}
-                    </datalist>
-                  </div>
-                  <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
-                      PIN / Password Akses Privat
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showParentPin ? 'text' : 'password'}
-                        name="password"
-                        autoComplete="current-password"
-                        value={loginPin}
-                        onChange={(e) => setLoginPin(e.target.value)}
-                        placeholder="Terisi otomatis jika tersimpan di perangkat ini"
-                        className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowParentPin((v) => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
-                        title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
-                      >
-                        {showParentPin ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
+                {isRaporLocked ? (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-2.5">
+                    <div className="font-bold flex items-center gap-2 text-amber-800">
+                      <Lock className="w-4 h-4 shrink-0" />
+                      <span>Portal Rapor Ditutup Sementara (Mode Pekan Ujian)</span>
                     </div>
+                    <p className="leading-relaxed">
+                      {tpl.lockRaporMessage ||
+                        'Akses Portal Rapor & Portofolio ditutup sementara hingga pekan ujian selesai.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginTab('cbt');
+                        setAuthError(null);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-[#0E2228] text-[#1DF27A] font-bold inline-flex items-center gap-1.5"
+                    >
+                      <ClipboardCheck className="w-3.5 h-3.5" />
+                      <span>Buka Tab Ruang Ujian CBT</span>
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                ) : (
+                  <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3">
+                    <div>
+                      <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                        Nama Lengkap Santri atau ID Santri MDA
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={rememberLoginOnDevice}
-                        onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                      <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
-                    </label>
-                    {savedDeviceCreds.some((c) => c.roleGroup === 'parent') && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'parent');
-                          localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
-                          setSavedDeviceCreds(next);
-                          setLoginPin('');
+                        type="text"
+                        name="username"
+                        autoComplete="username"
+                        list="mda-saved-parent-names"
+                        value={loginNisn}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setLoginNisn(val);
+                          const savedPin = findSavedPinForInput(savedDeviceCreds, 'parent', val);
+                          if (savedPin) {
+                            setLoginPin(savedPin);
+                          }
                         }}
-                        className="text-rose-600 hover:underline shrink-0"
-                      >
-                        Hapus tersimpan
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoggingIn}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
-                  >
-                    <KeyRound className="w-4 h-4" />
-                    <span>{isLoggingIn ? 'Memverifikasi...' : 'Buka Rapor Santri'}</span>
-                  </button>
-                </form>
+                        placeholder="Contoh: Nama Lengkap Santri atau MDA02.2526.791"
+                        className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                      <datalist id="mda-saved-parent-names">
+                        {savedDeviceCreds
+                          .filter((c) => c.roleGroup === 'parent')
+                          .map((c) => (
+                            <option key={c.identifier} value={c.displayName} />
+                          ))}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                        PIN / Password Akses Privat
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showParentPin ? 'text' : 'password'}
+                          name="password"
+                          autoComplete="current-password"
+                          value={loginPin}
+                          onChange={(e) => setLoginPin(e.target.value)}
+                          placeholder="Terisi otomatis jika tersimpan di perangkat ini"
+                          className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowParentPin((v) => !v)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                          title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
+                        >
+                          {showParentPin ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600">
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={rememberLoginOnDevice}
+                          onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
+                      </label>
+                      {savedDeviceCreds.some((c) => c.roleGroup === 'parent') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'parent');
+                            localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
+                            setSavedDeviceCreds(next);
+                            setLoginPin('');
+                          }}
+                          className="text-rose-600 hover:underline shrink-0"
+                        >
+                          Hapus tersimpan
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isLoggingIn}
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                      <span>{isLoggingIn ? 'Memverifikasi...' : 'Buka Rapor Santri'}</span>
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 
@@ -1798,6 +1986,12 @@ export default function App() {
       id: 'grading',
       label: 'Input & Hitung Nilai',
       icon: PenSquare,
+      roles: ['admin', 'guru'],
+    },
+    {
+      id: 'cbt',
+      label: 'Ujian CBT',
+      icon: ClipboardCheck,
       roles: ['admin', 'guru'],
     },
     {
@@ -2338,6 +2532,170 @@ export default function App() {
               onOpenPrint={(id) => {
                 setSelectedStudentId(id);
                 setPrintMode(true);
+              }}
+            />
+          )}
+
+          {activeNav === 'cbt' && effectiveRole !== 'santri_ortu' && (
+            <CbtAdminView
+              db={db}
+              canManageRaporLock={effectiveRole === 'admin'}
+              isBusy={isSyncing}
+              onShowToast={showToast}
+              onRefreshLive={() => refreshFromServer(true)}
+              onToggleRaporLock={async (locked, message) => {
+                if (previewSampleMode) {
+                  setDb((prev) => ({
+                    ...prev,
+                    templateConfig: {
+                      ...tpl,
+                      lockRaporDuringExam: locked,
+                      lockRaporMessage: message,
+                    },
+                  }));
+                  showToast('ok', 'Mode Pekan Ujian diperbarui di mode pratinjau.');
+                  return;
+                }
+                if (!ensureOnlineForWrite()) return;
+                setIsSyncing(true);
+                setSyncState('saving');
+                try {
+                  const res = await toggleRaporLockOnServer({
+                    lockRaporDuringExam: locked,
+                    lockRaporMessage: message,
+                  });
+                  applyServerDatabase(res.data);
+                  if (res.data.templateConfig) setPublicTemplateConfig(res.data.templateConfig);
+                  setSyncState('saved');
+                  showToast(
+                    'ok',
+                    locked
+                      ? 'Portal Rapor Wali dikunci sementara (Mode Pekan Ujian AKTIF).'
+                      : 'Portal Rapor Wali dibuka kembali.'
+                  );
+                } catch (err: any) {
+                  setSyncState('error');
+                  showToast('err', err.message || 'Gagal mengubah kunci Portal Rapor.');
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              onSeedDefaultExams={async () => {
+                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                setIsSyncing(true);
+                setSyncState('saving');
+                try {
+                  const res = await seedDefaultCbtExamsOnServer();
+                  applyServerDatabase(res.data);
+                  setSyncState('saved');
+                  showToast('ok', '7 Paket Mapel Ujian CBT Standar MDA berhasil dibuat.');
+                } catch (err: any) {
+                  setSyncState('error');
+                  showToast('err', err.message || 'Gagal membuat 7 paket mapel.');
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              onSaveExam={async (exam: CbtExam) => {
+                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                setIsSyncing(true);
+                setSyncState('saving');
+                try {
+                  const res = await saveCbtExamOnServer(exam);
+                  applyServerDatabase(res.data);
+                  setSyncState('saved');
+                  showToast('ok', `Pengaturan "${exam.title}" tersimpan ke Google Sheets.`);
+                } catch (err: any) {
+                  setSyncState('error');
+                  showToast('err', err.message || 'Gagal menyimpan paket ujian.');
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              onDeleteExam={async (examId: string) => {
+                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                setConfirmDialog({
+                  open: true,
+                  title: 'Hapus Paket Ujian CBT?',
+                  message:
+                    'Paket mapel ini beserta seluruh bank soal dan riwayat pengerjaan santri pada mapel ini akan dihapus permanen.',
+                  confirmLabel: 'Hapus Paket Mapel',
+                  variant: 'danger',
+                  onConfirm: async () => {
+                    setIsSyncing(true);
+                    setSyncState('saving');
+                    try {
+                      const res = await deleteCbtExamOnServer(examId);
+                      applyServerDatabase(res.data);
+                      setSyncState('saved');
+                      showToast('ok', 'Paket ujian CBT berhasil dihapus.');
+                    } catch (err: any) {
+                      setSyncState('error');
+                      showToast('err', err.message || 'Gagal menghapus paket ujian.');
+                    } finally {
+                      setIsSyncing(false);
+                    }
+                  },
+                });
+              }}
+              onSaveQuestions={async (examId: string, questions: CbtQuestion[]) => {
+                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                setIsSyncing(true);
+                setSyncState('saving');
+                try {
+                  const res = await saveCbtQuestionsOnServer({ examId, questions });
+                  applyServerDatabase(res.data);
+                  setSyncState('saved');
+                  showToast(
+                    'ok',
+                    `${questions.length} butir soal tersimpan ke Google Sheets (action: saveSection).`
+                  );
+                } catch (err: any) {
+                  setSyncState('error');
+                  showToast('err', err.message || 'Gagal menyimpan bank soal.');
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              onProctorAction={async (params) => {
+                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                const runAction = async () => {
+                  setIsSyncing(true);
+                  setSyncState('saving');
+                  try {
+                    const res = await proctorCbtActionOnServer(params);
+                    applyServerDatabase(res.data);
+                    setSyncState('saved');
+                    if (params.action === 'unlock') {
+                      showToast('ok', 'Kunci ujian santri berhasil dibuka kembali.');
+                    } else if (params.action === 'reset') {
+                      showToast('ok', 'Sesi pengerjaan santri di-reset.');
+                    } else {
+                      showToast(
+                        'ok',
+                        `Nilai berhasil disinkronkan ke Rapor (${res.syncedCount || 1} santri).`
+                      );
+                    }
+                  } catch (err: any) {
+                    setSyncState('error');
+                    showToast('err', err.message || 'Gagal menjalankan aksi pengawas.');
+                  } finally {
+                    setIsSyncing(false);
+                  }
+                };
+                if (params.action === 'reset') {
+                  setConfirmDialog({
+                    open: true,
+                    title: 'Reset Ujian Santri Pada Mapel Ini?',
+                    message:
+                      'Jawaban santri pada mapel ini akan dihapus agar dapat mengulang dari awal. Mapel lain tidak terpengaruh.',
+                    confirmLabel: 'Reset Ujian',
+                    variant: 'danger',
+                    onConfirm: runAction,
+                  });
+                } else {
+                  await runAction();
+                }
               }}
             />
           )}
