@@ -77,6 +77,23 @@ async function waitForImagesInElement(el: HTMLElement): Promise<void> {
   );
 }
 
+function normalizePdfLinkUrl(rawUrl: string | undefined | null): string {
+  const trimmed = (rawUrl || '').trim();
+  if (!trimmed || trimmed.startsWith('#') || /^javascript:/i.test(trimmed)) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+  if (trimmed.startsWith('/') && typeof window !== 'undefined') {
+    return new URL(trimmed, window.location.origin).toString();
+  }
+  return `https://${trimmed}`;
+}
+
 interface PrintableReportViewProps {
   db: MdaDatabase;
   studentId: string;
@@ -170,7 +187,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     );
   }
 
-  const portfolioUrl = getPortfolioUrl(student.portfolioSlug, db.spreadsheetId);
+  const portfolioUrl = normalizePdfLinkUrl(
+    getPortfolioUrl(student.portfolioSlug, db.spreadsheetId)
+  );
   const diniyahAvg = hitungRataRataDiniyah(report.diniyah);
   const digitalAvg = hitungRataRataDigital(report.skillDigital);
   const digitalPredikat = hitungPredikat(digitalAvg);
@@ -203,6 +222,11 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         throw new Error('Halaman rapor tidak ditemukan untuk diekspor.');
       }
 
+      const imgX = 0;
+      const imgY = 0;
+      const imgWidth = 210;
+      const imgHeight = 297;
+
       for (let i = 0; i < pages.length; i++) {
         setExportProgress(`Membuat PDF (${i + 1}/${pages.length})...`);
         const pageEl = pages[i];
@@ -230,7 +254,45 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
         }
-        pdf.addImage(pngDataUrl, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+        pdf.addImage(pngDataUrl, 'PNG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
+
+        // Tambahkan anotasi link PDF yang dapat diklik berdasarkan posisi elemen link terukur di halaman A4
+        const pageRect = pageEl.getBoundingClientRect();
+        if (pageRect.width > 0 && pageRect.height > 0) {
+          const linkElements = Array.from(
+            pageEl.querySelectorAll<HTMLElement>('a[href], [data-pdf-link]')
+          );
+          for (const linkEl of linkElements) {
+            const url = normalizePdfLinkUrl(
+              linkEl.getAttribute('href') || linkEl.getAttribute('data-pdf-link-url')
+            );
+            if (!url) continue;
+
+            const clientRects = linkEl.getClientRects();
+            const rects =
+              clientRects.length > 0
+                ? Array.from(clientRects)
+                : [linkEl.getBoundingClientRect()];
+
+            for (const rect of rects) {
+              const x = imgX + ((rect.left - pageRect.left) / pageRect.width) * imgWidth;
+              const y = imgY + ((rect.top - pageRect.top) / pageRect.height) * imgHeight;
+              const w = (rect.width / pageRect.width) * imgWidth;
+              const h = (rect.height / pageRect.height) * imgHeight;
+
+              if (
+                w > 0 &&
+                h > 0 &&
+                x + w > imgX &&
+                y + h > imgY &&
+                x < imgX + imgWidth &&
+                y < imgY + imgHeight
+              ) {
+                pdf.link(x, y, w, h, { url });
+              }
+            }
+          }
+        }
       }
 
       const safeStudent =
@@ -471,7 +533,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   <a
                     href={portfolioUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
+                    data-pdf-link="true"
                     className="text-[11px] font-bold text-[#1DF27A] break-all underline decoration-emerald-300/50 leading-snug"
                   >
                     {portfolioUrl}
@@ -1418,11 +1481,23 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                           'Dokumentasi karya dan presentasi sidang santri pada semester berjalan.'}
                       </div>
                     </div>
-                    {sidangProject?.externalLink && (
-                      <div className="pt-1.5 mt-1.5 border-t border-slate-100 text-[9.5px] font-semibold text-sky-700 break-all">
-                        Tautan Karya: {sidangProject.externalLink}
-                      </div>
-                    )}
+                    {sidangProject?.externalLink && (() => {
+                      const sidangUrl = normalizePdfLinkUrl(sidangProject.externalLink);
+                      return sidangUrl ? (
+                        <div className="pt-1.5 mt-1.5 border-t border-slate-100 text-[9.5px] font-semibold text-sky-700 break-all">
+                          Tautan Karya:{' '}
+                          <a
+                            href={sidangUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-pdf-link="true"
+                            className="underline text-sky-700"
+                          >
+                            {sidangUrl}
+                          </a>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1462,24 +1537,41 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                             jenis: 'Sidang Karya / Portofolio',
                             keteranganSingkat:
                               'Silakan input melalui menu Portofolio & Sidang Karya.',
+                            externalLink: '',
                           },
                         ]
-                    ).map((p, idx) => (
-                      <tr key={p.id}>
-                        <td className="border border-slate-300 py-1.5 px-2 text-center font-bold tabular-nums align-top">
-                          {idx + 1}
-                        </td>
-                        <td className="border border-slate-300 py-1.5 px-2.5 font-semibold text-slate-900 align-top break-words">
-                          {p.judul}
-                        </td>
-                        <td className="border border-slate-300 py-1.5 px-2.5 text-emerald-800 font-medium align-top break-words">
-                          {p.jenis}
-                        </td>
-                        <td className="border border-slate-300 py-1.5 px-2.5 text-slate-700 align-top break-words">
-                          {p.keteranganSingkat || '—'}
-                        </td>
-                      </tr>
-                    ))}
+                    ).map((p, idx) => {
+                      const projectUrl = normalizePdfLinkUrl(p.externalLink);
+                      return (
+                        <tr key={p.id}>
+                          <td className="border border-slate-300 py-1.5 px-2 text-center font-bold tabular-nums align-top">
+                            {idx + 1}
+                          </td>
+                          <td className="border border-slate-300 py-1.5 px-2.5 font-semibold text-slate-900 align-top break-words">
+                            {p.judul}
+                          </td>
+                          <td className="border border-slate-300 py-1.5 px-2.5 text-emerald-800 font-medium align-top break-words">
+                            {p.jenis}
+                          </td>
+                          <td className="border border-slate-300 py-1.5 px-2.5 text-slate-700 align-top break-words">
+                            <div>{p.keteranganSingkat || '—'}</div>
+                            {projectUrl && (
+                              <div className="mt-0.5">
+                                <a
+                                  href={projectUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  data-pdf-link="true"
+                                  className="text-[9px] font-semibold text-sky-700 underline break-all leading-tight"
+                                >
+                                  {projectUrl}
+                                </a>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1496,7 +1588,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   <a
                     href={portfolioUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
+                    data-pdf-link="true"
                     className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[10.5px] px-3.5 py-1.5 rounded-lg"
                   >
                     Buka Portofolio Online ↗
@@ -1517,7 +1610,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   <a
                     href={portfolioUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
+                    data-pdf-link="true"
                     className="text-[10.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug"
                   >
                     {portfolioUrl}
