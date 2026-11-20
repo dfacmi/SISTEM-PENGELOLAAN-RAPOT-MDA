@@ -228,10 +228,14 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
 
   return (
     <div
-      className={isPublicStandalone ? 'min-h-screen py-6 sm:py-8 px-4 sm:px-8' : ''}
+      className={
+        isPublicStandalone
+          ? 'min-h-screen py-5 sm:py-8 px-3 sm:px-8 max-w-full overflow-x-hidden'
+          : 'min-w-0 max-w-full overflow-x-hidden'
+      }
       style={isPublicStandalone ? { backgroundColor: theme.pageTint } : undefined}
     >
-      <div className={isPublicStandalone ? 'max-w-5xl mx-auto space-y-6' : 'space-y-6'}>
+      <div className={isPublicStandalone ? 'max-w-5xl mx-auto space-y-6 min-w-0' : 'space-y-6 min-w-0'}>
         {isPublicStandalone && (
           <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-emerald-200">
             <MdaLogo size="md" customLogoUrl={tpl.customLogoUrl} />
@@ -258,14 +262,14 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             <span className="font-mono text-[#1DF27A]">{student.nisnMda}</span>
           </div>
 
-          <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+          <div className="p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left min-w-0 flex-1">
               <StudentAvatar
                 name={student.nama}
                 fotoUrl={student.fotoUrl}
                 className="w-20 h-24 text-xl shrink-0"
               />
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0 w-full">
                 {!isPublicStandalone && onSelectStudent ? (
                   <select
                     value={student.id}
@@ -273,7 +277,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       onSelectStudent(e.target.value);
                       setTypeFilter('Semua');
                     }}
-                    className="font-display font-bold text-2xl text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-emerald-600 pr-4 max-w-full"
+                    className="font-display font-bold text-xl sm:text-2xl text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-emerald-600 pr-4 w-full sm:w-auto max-w-full min-w-0 truncate"
                   >
                     {db.students.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -282,11 +286,11 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     ))}
                   </select>
                 ) : (
-                  <h1 className="font-display font-bold text-2xl text-slate-900">
+                  <h1 className="font-display font-bold text-xl sm:text-2xl text-slate-900 break-words">
                     {student.nama}
                   </h1>
                 )}
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium break-words">
                   {student.program} · {tpl.namaPesantren}
                 </p>
                 {latestReport && (
@@ -304,7 +308,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             </div>
 
             <div
-              className="flex flex-col justify-between gap-3 text-white rounded-xl p-4 sm:min-w-[290px] max-w-full lg:max-w-[360px] shrink-0"
+              className="flex flex-col justify-between gap-3 text-white rounded-xl p-4 w-full lg:w-auto lg:min-w-[290px] min-w-0 max-w-full lg:max-w-[360px] shrink-0"
               style={{ backgroundColor: theme.darkPill }}
             >
               <div className="space-y-1.5">
@@ -350,7 +354,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       placeholder="https://drive.google.com/... atau slug"
                       className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-emerald-400/50 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
                     />
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         type="submit"
                         className="px-2.5 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
@@ -462,10 +466,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         {canEdit && editingProject && (
           <form
             onSubmit={handleSubmitProject}
-            className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4"
+            className="bg-white border border-emerald-200 rounded-2xl p-4 sm:p-6 space-y-4 min-w-0"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="font-display font-bold text-slate-900 text-base">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <h2 className="font-display font-bold text-slate-900 text-base break-words">
                 {db.portfolios.some((p) => p.id === editingProject.id)
                   ? 'Edit Karya Portofolio'
                   : 'Tambah Karya / Proyek Santri'}
@@ -473,7 +477,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               <button
                 type="button"
                 onClick={() => setEditingProject(null)}
-                className="text-xs text-slate-500 hover:text-slate-800"
+                className="text-xs text-slate-500 hover:text-slate-800 shrink-0"
               >
                 Tutup
               </button>
@@ -662,17 +666,17 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setEditingProject(null)}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
               >
                 Simpan Karya Portofolio
               </button>
@@ -783,8 +787,8 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                 </div>
 
                 {/* 3-Slot Bento Media Showcase */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-6">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 min-w-0">
+                  <div className="md:col-span-6 min-w-0">
                     {proj.mediaItems[0] &&
                       renderMediaFrame(
                         proj.mediaItems[0],
@@ -793,7 +797,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                         'h-60 md:h-72'
                       )}
                   </div>
-                  <div className="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+                  <div className="md:col-span-6 min-w-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
                     {proj.mediaItems[1] &&
                       renderMediaFrame(
                         proj.mediaItems[1],
@@ -812,13 +816,13 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                 </div>
 
                 {/* Competence, Technology & Description */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-2">
-                  <div className="md:col-span-5 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-2 min-w-0">
+                  <div className="md:col-span-5 min-w-0 space-y-3">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-bold text-slate-900 mb-1">
                         Student Competence
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed break-words">
                         {proj.competence}
                       </p>
                     </div>
@@ -829,17 +833,17 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       <div className="text-xs font-bold text-slate-900 mb-1">
                         Technology &amp; Tools
                       </div>
-                      <p className="text-xs font-mono font-semibold text-emerald-800">
+                      <p className="text-xs font-mono font-semibold text-emerald-800 break-words">
                         {proj.technology}
                       </p>
                     </div>
                   </div>
 
-                  <div className="md:col-span-7 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="md:col-span-7 min-w-0 p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <div className="text-xs font-bold text-slate-900 mb-1">
                       Description
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed break-words">
                       {proj.description}
                     </p>
                   </div>
@@ -853,34 +857,34 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
       {/* Fullscreen Lightbox */}
       {lightboxMedia && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={() => setLightboxMedia(null)}
         >
           <div
-            className="relative w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-3xl max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-2xl shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
-              <div>
+            <div className="flex items-start justify-between gap-2 px-4 sm:px-5 py-3.5 border-b border-slate-200">
+              <div className="min-w-0 flex-1">
                 <div className="text-[11px] font-bold text-emerald-700 uppercase">
                   {lightboxMedia.jenis}
                 </div>
-                <div className="font-display font-bold text-sm text-slate-900">
+                <div className="font-display font-bold text-sm text-slate-900 break-words">
                   {lightboxMedia.projectTitle}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-slate-500 break-words">
                   {lightboxMedia.item.caption}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setLightboxMedia(null)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="h-[420px] bg-slate-900 flex items-center justify-center">
+            <div className="h-[280px] sm:h-[420px] shrink-0 bg-slate-900 flex items-center justify-center">
               {lightboxMedia.item.url ? (
                 lightboxMedia.item.type === 'video' ? (
                   <iframe

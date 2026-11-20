@@ -167,7 +167,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
       {/* Authentic MDA Branded Competence Hero Banner */}
       <div
         className="relative rounded-2xl p-5 sm:p-6 text-white overflow-hidden shadow-sm"
@@ -208,9 +208,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 {cohortStats.totalProjects} Proyek
               </div>
             </div>
-            <div className="col-span-2 sm:col-span-1 bg-[#1DF27A] text-slate-950 rounded-xl px-3.5 py-2.5 shadow-xs">
+            <div className="col-span-2 sm:col-span-1 bg-[#1DF27A] text-slate-950 rounded-xl px-3.5 py-2.5 shadow-xs min-w-0">
               <div className="text-[11px] font-bold">Total Income Santri</div>
-              <div className="font-[Arial] font-extrabold text-base tabular-nums">
+              <div className="font-[Arial] font-extrabold text-sm sm:text-base tabular-nums break-words">
                 {formatRupiah(cohortStats.totalIncome)}
               </div>
             </div>
@@ -293,8 +293,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       </div>
 
       {/* Cohort 5-Pillar Overview + MDA PDF Mint Bars */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
           <div className="mb-3">
             <div
               className="inline-block text-slate-950 font-display font-extrabold text-[11px] px-3 py-1 rounded-full mb-2"
@@ -317,7 +317,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
 
         <div
-          className="lg:col-span-7 border border-emerald-200 rounded-2xl p-5 flex flex-col justify-between"
+          className="lg:col-span-7 min-w-0 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between"
           style={{ backgroundColor: theme.pageTint }}
         >
           <div>
@@ -521,7 +521,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenGradeEditor(student.id)}
-                      className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
+                      className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
                     >
                       <PenSquare className="w-3.5 h-3.5" />
                       <span>Nilai</span>
@@ -529,7 +529,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenStudentPortal(student.id)}
-                      className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold"
+                      className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Rapor</span>
@@ -537,7 +537,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenPortfolio(student.id)}
-                      className="px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700"
+                      className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700"
                       title="Portofolio"
                     >
                       <FolderGit2 className="w-4 h-4" />
@@ -545,7 +545,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <button
                       type="button"
                       onClick={() => handleCopyParentAccess(student)}
-                      className="px-2.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800"
+                      className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center px-2.5 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800"
                       title="Salin Link Akses Privat Wali"
                     >
                       {copiedStudentId === student.id ? (
@@ -557,7 +557,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onOpenPrintReport(student.id)}
-                      className="px-2.5 py-2 rounded-lg bg-[#0E2228] text-white"
+                      className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center px-2.5 py-2 rounded-lg bg-[#0E2228] text-white"
                       title="Cetak PDF"
                     >
                       <Printer className="w-4 h-4" />

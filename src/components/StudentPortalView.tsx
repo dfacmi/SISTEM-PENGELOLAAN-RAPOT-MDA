@@ -179,7 +179,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 pb-4">
+    <div className="space-y-4 sm:space-y-6 pb-4 min-w-0 max-w-full">
       {/* Mobile Quick Section Jump Bar */}
       <div className="sm:hidden -mx-1 px-1 flex items-center gap-1.5 overflow-x-auto pb-1">
         {[
@@ -212,12 +212,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           className="px-4 sm:px-5 py-3.5 sm:py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
           style={{ background: theme.bannerGradient }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="inline-flex items-center justify-center bg-white rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 shadow-xs shrink-0">
               <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
             </div>
-            <div className="min-w-0">
-              <div className="font-display font-extrabold text-sm sm:text-base leading-tight">
+            <div className="min-w-0 flex-1">
+              <div className="font-display font-extrabold text-sm sm:text-base leading-tight break-words">
                 {tpl.subjudulCompetence}
               </div>
               <div className="text-[11px] sm:text-xs text-emerald-100 truncate">
@@ -259,7 +259,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             </div>
 
             {/* Identity Details Grid */}
-            <div className="w-full space-y-3 text-left">
+            <div className="w-full min-w-0 space-y-3 text-left">
               <div className="text-center sm:text-left">
                 <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
                   Nama Lengkap Santri
@@ -268,7 +268,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                   <select
                     value={student.id}
                     onChange={(e) => onSelectStudent(e.target.value)}
-                    className="mt-0.5 font-display font-extrabold text-xl sm:text-2xl text-slate-950 bg-transparent border-b border-dashed border-emerald-400 focus:outline-none focus:border-emerald-600 pr-4 max-w-full"
+                    className="mt-0.5 font-display font-extrabold text-xl sm:text-2xl text-slate-950 bg-transparent border-b border-dashed border-emerald-400 focus:outline-none focus:border-emerald-600 pr-4 w-full sm:w-auto max-w-full min-w-0 truncate"
                   >
                     {db.students.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -277,7 +277,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     ))}
                   </select>
                 ) : (
-                  <h1 className="font-display font-extrabold text-xl sm:text-2xl text-slate-950 leading-tight mt-0.5">
+                  <h1 className="font-display font-extrabold text-xl sm:text-2xl text-slate-950 leading-tight mt-0.5 break-words">
                     {student.nama}
                   </h1>
                 )}
@@ -343,18 +343,18 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenPrint(student.id)}
-              className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E2228] text-white hover:bg-slate-800 text-xs font-semibold whitespace-nowrap"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E2228] text-white hover:bg-slate-800 text-xs font-semibold"
             >
-              <Printer className="w-4 h-4 text-[#1DF27A]" />
+              <Printer className="w-4 h-4 text-[#1DF27A] shrink-0" />
               <span>Cetak / Ekspor PDF Rapor</span>
             </button>
 
             <button
               type="button"
               onClick={() => onOpenPortfolio(student.id)}
-              className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 hover:bg-emerald-50 text-xs font-semibold whitespace-nowrap"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 hover:bg-emerald-50 text-xs font-semibold"
             >
-              <FolderGit2 className="w-4 h-4 text-emerald-600" />
+              <FolderGit2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Buka Semua Portofolio ({studentProjects.length})</span>
             </button>
           </div>
@@ -439,8 +439,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       </div>
 
       {/* 5 Pillars Radar + Multi-Semester Growth Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
           <h2 className="font-display font-bold text-slate-900 text-base">
             Grafik Radar 5 Pilar
           </h2>
@@ -459,8 +459,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           />
         </div>
 
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between">
-          <div>
+        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div className="min-w-0">
             <h2 className="font-display font-bold text-slate-900 text-base">
               {tpl.portalTrendTitle}
             </h2>
@@ -473,8 +473,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       </div>
 
       {/* Tahfidz + Sikap & Character Building */}
-      <div id="sec-tahfidz" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20">
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+      <div id="sec-tahfidz" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
+        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-bold text-slate-900 text-base inline-flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-emerald-600" />
@@ -524,7 +524,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           </p>
         </div>
 
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
           <h2 className="font-display font-bold text-slate-900 text-base">
             Sikap, Karakter &amp; Program Character Building
           </h2>
@@ -593,8 +593,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       </div>
 
       {/* Diniyah & Skill Digital (Responsive Mobile Cards + Desktop Tables) */}
-      <div id="sec-akademik" className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 scroll-mt-20">
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <div id="sec-akademik" className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden min-w-0">
           <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <h3 className="font-display font-bold text-slate-900 text-sm">
               Mata Pelajaran Diniyah
@@ -734,8 +734,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       </div>
 
       {/* Catatan Wali Kelas + Integrated QR Code Portfolio */}
-      <div id="sec-catatan" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20">
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm">
+      <div id="sec-catatan" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
+        <div className="lg:col-span-8 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <h3 className="font-display font-bold text-slate-900 text-base">
               Catatan Wali Kelas &amp; Kehadiran
@@ -767,7 +767,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
         </div>
 
         <div
-          className="lg:col-span-4 text-white rounded-2xl p-5 flex flex-col justify-between gap-4"
+          className="lg:col-span-4 min-w-0 text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
           style={{ backgroundColor: theme.darkPill }}
         >
           <div className="space-y-2.5">
@@ -939,31 +939,31 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       {/* Inline Media Lightbox Modal */}
       {previewMedia && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={() => setPreviewMedia(null)}
         >
           <div
-            className="relative w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-3xl max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-2xl shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
-              <div>
+            <div className="flex items-start justify-between gap-2 px-4 sm:px-5 py-3.5 border-b border-slate-200">
+              <div className="min-w-0 flex-1">
                 <div className="text-[11px] font-bold text-emerald-700 uppercase">
                   {previewMedia.jenis}
                 </div>
-                <div className="font-display font-bold text-sm text-slate-900">
+                <div className="font-display font-bold text-sm text-slate-900 break-words">
                   {previewMedia.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="h-[400px] bg-slate-900 flex items-center justify-center">
+            <div className="h-[280px] sm:h-[400px] shrink-0 bg-slate-900 flex items-center justify-center">
               {previewMedia.item.url ? (
                 previewMedia.item.type === 'video' ? (
                   <iframe

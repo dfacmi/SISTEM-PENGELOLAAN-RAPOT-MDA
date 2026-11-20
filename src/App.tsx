@@ -1505,13 +1505,13 @@ export default function App() {
     const isRaporLocked = Boolean(tpl.lockRaporDuringExam);
     return (
       <div
-        className="min-h-screen flex flex-col justify-between p-4 sm:p-8"
+        className="min-h-screen flex flex-col justify-between p-3 sm:p-8 max-w-full overflow-x-hidden"
         style={{ backgroundColor: theme.pageTint }}
       >
-        <div className="max-w-5xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
+        <div className="max-w-5xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-stretch min-w-0">
           {/* Left MDA Branding Panel */}
           <div
-            className="lg:col-span-6 rounded-3xl p-6 sm:p-8 text-white flex flex-col justify-between shadow-lg relative overflow-hidden"
+            className="lg:col-span-6 min-w-0 rounded-3xl p-5 sm:p-8 text-white flex flex-col justify-between shadow-lg relative overflow-hidden"
             style={{ background: theme.bannerGradient }}
           >
             {tpl.coverPhotoUrl && (
@@ -1549,16 +1549,16 @@ export default function App() {
           </div>
 
           {/* Right Sign-In Card */}
-          <div className="lg:col-span-6 bg-white border border-emerald-200 rounded-3xl p-5 sm:p-8 flex flex-col justify-center space-y-5 shadow-xs">
+          <div className="lg:col-span-6 min-w-0 bg-white border border-emerald-200 rounded-3xl p-4 sm:p-8 flex flex-col justify-center space-y-5 shadow-xs">
             {/* 3 Entry Doors Switcher */}
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl min-w-0">
               <button
                 type="button"
                 onClick={() => {
                   setLoginTab('cbt');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
                   loginTab === 'cbt'
                     ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1572,7 +1572,7 @@ export default function App() {
                   setLoginTab('parent');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
                   loginTab === 'parent'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1586,7 +1586,7 @@ export default function App() {
                   setLoginTab('admin');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] py-2 px-2 rounded-lg font-[Arial] text-[11px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
                   loginTab === 'admin'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1746,13 +1746,13 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
                       <input
                         type="checkbox"
                         checked={rememberLoginOnDevice}
                         onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
                       />
                       <span>Isi otomatis PIN saat mengetik nama di perangkat ini</span>
                     </label>
@@ -1888,13 +1888,13 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600">
-                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
+                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
                         <input
                           type="checkbox"
                           checked={rememberLoginOnDevice}
                           onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
                         />
                         <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
                       </label>
@@ -2025,7 +2025,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col md:flex-row"
+      className="min-h-screen flex flex-col md:flex-row max-w-full overflow-x-hidden"
       style={{ backgroundColor: theme.pageTint }}
     >
       {/* Mobile Sidebar Backdrop */}
@@ -2181,9 +2181,9 @@ export default function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 max-w-full flex flex-col">
         {/* Top Header */}
-        <header className="h-14 sm:h-16 bg-white/95 backdrop-blur-xs border-b border-emerald-200/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 shrink-0 sticky top-0 z-20">
+        <header className="w-full min-w-0 h-14 sm:h-16 bg-white/95 backdrop-blur-xs border-b border-emerald-200/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 shrink-0 sticky top-0 z-20">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
@@ -2282,7 +2282,7 @@ export default function App() {
               type="button"
               onClick={() => setPrintMode(true)}
               disabled={db.students.length === 0 || db.reports.length === 0}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
+              className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
             >
               <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
               <span>Cetak PDF</span>
@@ -2291,7 +2291,7 @@ export default function App() {
         </header>
 
         {/* Mobile Quick Period, Refresh & Tab Switcher */}
-        <div className="sm:hidden bg-white border-b border-emerald-100 px-3 py-2 flex items-center justify-between gap-2">
+        <div className="sm:hidden bg-white border-b border-emerald-100 px-3 py-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {uniqueYears.length > 0 && (
               <>
@@ -2392,7 +2392,7 @@ export default function App() {
         )}
 
         {/* Active Viewport */}
-        <main className="flex-1 p-3 sm:p-6 max-w-[1360px] w-full mx-auto space-y-4">
+        <main className="flex-1 min-w-0 max-w-[1360px] w-full mx-auto p-3 sm:p-6 space-y-4">
           {/* Explicit Alwan Hanif Preview Sample Mode Banner */}
           {previewSampleMode && (
             <div className="p-3.5 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
@@ -2798,38 +2798,28 @@ export default function App() {
       {/* Optimistic Concurrency Conflict Resolution Dialog */}
       {conflictDialog && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={() => setConflictDialog(null)}
         >
           <div
-            className="w-full max-w-md bg-white border border-amber-200 rounded-2xl p-5 space-y-4 shadow-xl"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto bg-white border border-amber-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
-              <div>
-                <h3 className="font-display font-bold text-sm text-slate-900">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display font-bold text-sm text-slate-900 break-words leading-snug">
                   Konflik Pembaruan Bersamaan Terdeteksi
                 </h3>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words">
                   {conflictDialog.message}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={async () => {
-                  setConflictDialog(null);
-                  await refreshFromServer(false);
-                }}
-                className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
-              >
-                Muat Data Terbaru dari Sheets
-              </button>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() =>
@@ -2839,9 +2829,19 @@ export default function App() {
                     true
                   )
                 }
-                className="py-2 px-3 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold"
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 py-2 px-3 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold"
               >
                 Timpa Paksa
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setConflictDialog(null);
+                  await refreshFromServer(false);
+                }}
+                className="w-full sm:flex-1 min-h-[42px] sm:min-h-0 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+              >
+                Muat Data Terbaru dari Sheets
               </button>
             </div>
           </div>

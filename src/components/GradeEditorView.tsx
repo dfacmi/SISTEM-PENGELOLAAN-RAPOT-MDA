@@ -165,21 +165,21 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 min-w-0 max-w-full">
       {/* Top Santri Selector & Save Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
+      <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <StudentAvatar
             name={student.nama}
             fotoUrl={student.fotoUrl}
             className="w-12 h-12 text-sm shrink-0"
           />
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <select
                 value={student.id}
                 onChange={(e) => onSelectStudent(e.target.value)}
-                className="font-display font-bold text-slate-900 text-base bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full sm:w-auto max-w-full min-w-0 truncate font-display font-bold text-slate-900 text-sm sm:text-base bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
               >
                 {db.students.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -191,17 +191,17 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 {student.nisnMda}
               </span>
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-slate-500 mt-1 break-words">
               Semester {selectedSemester} {selectedYear} · Wali Kelas: {student.waliKelasNama}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
           <button
             type="button"
             onClick={() => updateDraft((prev) => ({ ...prev, pilar: { ...prev.pilar, autoCalculate: true } }))}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold whitespace-nowrap"
+            className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold whitespace-nowrap"
           >
             <Calculator className="w-3.5 h-3.5 text-emerald-600" />
             <span>Hitung Pilar Otomatis</span>
@@ -210,7 +210,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
           <button
             type="button"
             onClick={() => onOpenPrint(student.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold whitespace-nowrap"
+            className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold whitespace-nowrap"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Pratinjau PDF</span>
@@ -224,7 +224,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 updatedAt: new Date().toISOString(),
               })
             }
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold whitespace-nowrap"
+            className="min-[420px]:col-span-2 sm:col-span-1 w-full sm:w-auto min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold whitespace-nowrap"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Simpan Nilai Rapor</span>
@@ -233,7 +233,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
       </div>
 
       {/* Editor Section Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+      <div className="w-full max-w-full flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
         {[
           { id: 'ringkasan' as const, label: '5 Pilar & KPI MDA' },
           { id: 'sikap' as const, label: 'A. Sikap & Character Building' },
@@ -258,9 +258,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
       {/* TAB 1: 5 PILAR & KPI MDA */}
       {tab === 'ringkasan' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+          <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="font-display font-bold text-slate-900 text-sm">
                   Ringkasan Capaian 5 Pilar (%)
@@ -479,9 +479,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
       {/* TAB 2: SIKAP & CHARACTER BUILDING */}
       {tab === 'sikap' && (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="font-display font-bold text-slate-900 text-sm">
                 A. Sikap dan Karakter
               </h3>
@@ -489,8 +489,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 A = Sangat Baik · B = Baik · C = Cukup · D = Perlu Bimbingan
               </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="w-full min-w-[600px] text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-900 text-white">
                     <th className="py-2.5 px-4 w-1/3">Aspek Penilaian</th>
@@ -573,8 +573,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
       {/* TAB 3: TAHFIDZ AL-QUR'AN */}
       {tab === 'tahfidz' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+          <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
             <h3 className="font-display font-bold text-slate-900 text-sm">
               Capaian Hafalan Al-Qur’an
             </h3>
@@ -615,8 +615,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="font-display font-bold text-slate-900 text-sm">
                 Aspek Penilaian Tahfidz (Otomatis)
               </h3>
@@ -680,10 +680,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
       {/* TAB 4: DINIYAH & SKILL DIGITAL */}
       {tab === 'akademik' && (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* C. DINIYAH */}
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="font-display font-bold text-slate-900 text-sm">
                 C. Mata Pelajaran Diniyah
               </h3>
@@ -691,8 +691,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 Rata-rata Diniyah: {diniyahAvg}
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-900 text-white">
                     <th className="py-2.5 px-3 w-10">No</th>
@@ -772,7 +772,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
           {/* D. SKILL DIGITAL */}
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="font-display font-bold text-slate-900 text-sm">
                 D. Skill Digital (Otomatis Nilai Akhir & Predikat)
               </h3>
@@ -780,8 +780,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 Rata-rata Skill Digital: {digitalAvg}
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="w-full min-w-[680px] text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-900 text-white">
                     <th className="py-2.5 px-3 w-10">No</th>
@@ -876,8 +876,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
       {/* TAB 5: KEHADIRAN, CATATAN & KEPUTUSAN */}
       {tab === 'catatan' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+          <div className="lg:col-span-4 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
             <h3 className="font-display font-bold text-slate-900 text-sm">
               E. Kehadiran Santri (Hari)
             </h3>
@@ -944,7 +944,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <div className="lg:col-span-8 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
             <h3 className="font-display font-bold text-slate-900 text-sm">
               F. Catatan & Pesan Wali Kelas
             </h3>

@@ -338,32 +338,32 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
   ).length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 min-w-0 max-w-full">
       {/* Header & Mode Pekan Ujian (Lock Rapor Toggle) */}
       <div className="bg-white border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Modul Ujian CBT Pilihan Ganda (Anti-AI &amp; Web Lockdown)</span>
+              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+              <span className="break-words">Modul Ujian CBT Pilihan Ganda (Anti-AI &amp; Web Lockdown)</span>
             </div>
-            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl mt-0.5">
+            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl mt-0.5 break-words">
               Manajemen 7 Paket Mapel Ujian Mandiri &amp; Pengawasan Live
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5 break-words">
               Setiap mata pelajaran memiliki token, bank soal, durasi, acak soal/opsi, monitoring pelanggaran, dan pemetaan nilai rapor tersendiri.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
             {exams.length < 7 && (
               <button
                 type="button"
                 disabled={isBusy}
                 onClick={() => void onSeedDefaultExams()}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span>Buat 7 Paket Mapel Standar MDA</span>
               </button>
             )}
@@ -371,9 +371,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
               type="button"
               disabled={isBusy}
               onClick={() => void handleCreateBlankExam()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold disabled:opacity-50"
+              className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold disabled:opacity-50"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 shrink-0" />
               <span>Tambah Mapel Ujian</span>
             </button>
           </div>
@@ -388,14 +388,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 : 'bg-slate-50 border-slate-200'
             }`}
           >
-            <div className="flex-1 space-y-1.5">
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-start sm:items-center gap-2">
                 {raporLocked ? (
-                  <Lock className="w-4 h-4 text-amber-700 shrink-0" />
+                  <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
                 ) : (
-                  <LockOpen className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <LockOpen className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5 sm:mt-0" />
                 )}
-                <span className="text-xs font-bold text-slate-900">
+                <span className="text-xs font-bold text-slate-900 break-words">
                   Kunci Sementara Akses Rapor (Mode Pekan Ujian):{' '}
                   <span className={raporLocked ? 'text-amber-700' : 'text-emerald-700'}>
                     {raporLocked ? 'AKTIF (Portal Rapor Ditutup Sementara)' : 'NONAKTIF (Portal Rapor Terbuka)'}
@@ -407,15 +407,15 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 value={raporLockMsg}
                 onChange={(e) => setRaporLockMsg(e.target.value)}
                 placeholder="Pesan pemberitahuan saat Portal Rapor dikunci..."
-                className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-700"
+                className="w-full min-w-0 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-700"
               />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
               <button
                 type="button"
                 disabled={isBusy}
                 onClick={() => void onToggleRaporLock(!raporLocked, raporLockMsg)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 ${
+                className={`w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 ${
                   raporLocked
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     : 'bg-amber-600 hover:bg-amber-700 text-white'
@@ -423,12 +423,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
               >
                 {raporLocked ? (
                   <>
-                    <Unlock className="w-3.5 h-3.5" />
+                    <Unlock className="w-3.5 h-3.5 shrink-0" />
                     <span>Buka Kembali Portal Rapor</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="w-3.5 h-3.5" />
+                    <Lock className="w-3.5 h-3.5 shrink-0" />
                     <span>Aktifkan Kunci Rapor</span>
                   </>
                 )}
@@ -438,7 +438,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   type="button"
                   disabled={isBusy}
                   onClick={() => void onToggleRaporLock(true, raporLockMsg)}
-                  className="px-3 py-2 rounded-xl border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 text-xs font-semibold"
+                  className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-2 rounded-xl border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 text-xs font-semibold text-center"
                 >
                   Simpan Pesan
                 </button>
@@ -522,53 +522,53 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
           {/* Active Subject Workspace */}
           {selectedExam && examDraft && (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs min-w-0">
               {/* Subtabs Bar */}
-              <div className="p-3 sm:px-5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div>
+              <div className="p-3 sm:px-5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="min-w-0">
                   <div className="text-[11px] font-semibold text-emerald-700">
                     Paket Aktif: {selectedExam.mapelCode || 'CBT'}
                   </div>
-                  <h3 className="font-display font-bold text-slate-900 text-base">
+                  <h3 className="font-display font-bold text-slate-900 text-base break-words">
                     {selectedExam.title}
                   </h3>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto">
                   <button
                     type="button"
                     onClick={() => setSubTab('settings')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
                       subTab === 'settings'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <Settings2 className="w-3.5 h-3.5" />
+                    <Settings2 className="w-3.5 h-3.5 shrink-0" />
                     <span>Pengaturan &amp; Pemetaan Rapor</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSubTab('questions')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
                       subTab === 'questions'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <FileText className="w-3.5 h-3.5" />
+                    <FileText className="w-3.5 h-3.5 shrink-0" />
                     <span>Bank Soal &amp; Import ({questionDrafts.length})</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSubTab('monitor')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
                       subTab === 'monitor'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                     <span>Monitoring Pengawas</span>
                   </button>
                 </div>
@@ -624,11 +624,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       </select>
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
                         Token Ujian (6 Karakter)
                       </label>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-1.5 min-w-0">
                         <input
                           type="text"
                           value={examDraft.token}
@@ -638,7 +638,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               token: e.target.value.toUpperCase(),
                             })
                           }
-                          className="flex-1 px-3 py-2 text-xs font-mono font-bold tracking-widest border border-slate-200 rounded-xl uppercase"
+                          className="flex-1 min-w-0 px-3 py-2 text-xs font-mono font-bold tracking-widest border border-slate-200 rounded-xl uppercase"
                         />
                         <button
                           type="button"
@@ -648,7 +648,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               token: generateRandomCbtToken(6),
                             })
                           }
-                          className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold inline-flex items-center gap-1"
+                          className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold inline-flex items-center gap-1 shrink-0"
                         >
                           <Shuffle className="w-3.5 h-3.5" />
                           <span>Acak</span>
@@ -877,12 +877,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
                     <button
                       type="button"
                       disabled={isBusy}
                       onClick={() => void onDeleteExam(selectedExam.id)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold disabled:opacity-50"
+                      className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold disabled:opacity-50"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Hapus Paket Mapel Ini</span>
@@ -892,7 +892,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       type="button"
                       disabled={isBusy}
                       onClick={() => void onSaveExam(examDraft)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                      className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
                     >
                       <Save className="w-4 h-4" />
                       <span>Simpan Pengaturan Paket Mapel</span>
@@ -903,14 +903,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
               {/* SUBTAB 2: QUESTION BANK & BULK IMPORT */}
               {subTab === 'questions' && (
-                <div className="p-4 sm:p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-5 min-w-0">
                   {/* Bulk Import Cards */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
                     {/* File Upload Card */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 min-w-0">
                       <div className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-emerald-700" />
-                        <span>Upload File Soal (Excel / CSV / Word .docx / TXT)</span>
+                        <Upload className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="break-words">Upload File Soal (Excel / CSV / Word .docx / TXT)</span>
                       </div>
                       <p className="text-[11px] text-slate-600 leading-relaxed">
                         Untuk Excel/CSV gunakan kolom: <strong>Pertanyaan, Opsi A, Opsi B, Opsi C, Opsi D, Opsi E (opsional), Kunci Jawaban, URL Gambar (opsional)</strong>. Mendukung teks Arab RTL.
@@ -948,10 +948,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                     </div>
 
                     {/* Paste & Bulk Keys Card */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2.5">
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2.5 min-w-0">
                       <div className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
-                        <ClipboardPaste className="w-4 h-4 text-emerald-700" />
-                        <span>Copy-Paste Soal + Kunci Jawaban Massal</span>
+                        <ClipboardPaste className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="break-words">Copy-Paste Soal + Kunci Jawaban Massal</span>
                       </div>
                       <textarea
                         rows={4}
@@ -960,25 +960,25 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         placeholder={'Tempel soal di sini, contoh:\n1. Rukun iman yang pertama adalah...\nA. Iman kepada Allah\nB. Iman kepada Malaikat\nC. Iman kepada Kitab\nD. Iman kepada Rasul\nKunci: A'}
                         className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"
                       />
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                         <input
                           type="text"
                           value={bulkKeysText}
                           onChange={(e) => setBulkKeysText(e.target.value)}
                           placeholder="Kunci Massal (opsional): 1.A, 2.C, 3.B atau ABCD..."
-                          className="flex-1 px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-white"
+                          className="flex-1 min-w-0 px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-white"
                         />
                         <button
                           type="button"
                           onClick={handleParsePasteBox}
-                          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0"
+                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0"
                         >
                           Ekstrak Soal Paste
                         </button>
                         <button
                           type="button"
                           onClick={handleApplyBulkKeysToPreviewOrBank}
-                          className="px-3 py-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold shrink-0"
+                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold shrink-0"
                         >
                           Cocokkan Kunci
                         </button>
@@ -988,13 +988,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                   {/* Preview Table Before Adding to Bank */}
                   {parsedPreview && parsedPreview.length > 0 && (
-                    <div className="p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 space-y-3">
+                    <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 space-y-3 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-xs font-bold text-emerald-900">
                             Pratinjau Import: {parsedPreview.length} Soal Terdeteksi
                           </div>
-                          <div className="text-[11px] text-slate-600">
+                          <div className="text-[11px] text-slate-600 break-words">
                             Periksa kelengkapan opsi, kunci jawaban, dan tampilan Arab RTL sebelum dimasukkan ke Bank Soal.
                           </div>
                         </div>
@@ -1004,7 +1004,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             onChange={(e) =>
                               setImportMode(e.target.value as 'append' | 'replace')
                             }
-                            className="px-2.5 py-1.5 text-xs font-semibold border border-emerald-300 rounded-lg bg-white"
+                            className="w-full sm:w-auto max-w-full min-w-0 px-2.5 py-1.5 text-xs font-semibold border border-emerald-300 rounded-lg bg-white"
                           >
                             <option value="append">Tambahkan ke Bank Soal</option>
                             <option value="replace">Ganti Seluruh Soal Mapel Ini</option>
@@ -1012,7 +1012,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           <button
                             type="button"
                             onClick={handleCommitParsedPreview}
-                            className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                            className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
                           >
                             Terapkan {parsedPreview.length} Soal
                           </button>
@@ -1030,12 +1030,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         {parsedPreview.map((q, idx) => (
                           <div
                             key={q.id}
-                            className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5"
+                            className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5 min-w-0"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div
                                 dir={hasArabicText(q.pertanyaan) ? 'rtl' : 'ltr'}
-                                className={`font-semibold text-slate-900 flex-1 ${
+                                className={`font-semibold text-slate-900 flex-1 min-w-0 break-words ${
                                   hasArabicText(q.pertanyaan) ? 'text-right text-sm' : ''
                                 }`}
                               >
@@ -1100,7 +1100,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() =>
@@ -1116,7 +1116,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             kunciJawaban: 'A',
                           })
                         }
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
+                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Tambah Soal Manual</span>
@@ -1127,7 +1127,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         onClick={() =>
                           void onSaveQuestions(selectedExam.id, questionDrafts)
                         }
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
                       >
                         <Save className="w-3.5 h-3.5" />
                         <span>Simpan Bank Soal Mapel Ini</span>
@@ -1224,18 +1224,18 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           />
                         </div>
                       </div>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => setEditingQuestion(null)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
                         >
                           Batal
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSaveManualOrEditedQuestion(editingQuestion)}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold"
+                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold"
                         >
                           Simpan Butir Soal
                         </button>
@@ -1258,7 +1258,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           <div className="flex-1 space-y-1.5 min-w-0">
                             <div
                               dir={hasArabicText(q.pertanyaan) ? 'rtl' : 'ltr'}
-                              className={`text-xs font-bold text-slate-900 whitespace-pre-line ${
+                              className={`text-xs font-bold text-slate-900 whitespace-pre-line break-words ${
                                 hasArabicText(q.pertanyaan) ? 'text-right text-sm' : ''
                               }`}
                             >
@@ -1282,7 +1282,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                   <div
                                     key={opt}
                                     dir={hasArabicText(text) ? 'rtl' : 'ltr'}
-                                    className={`px-2 py-1 rounded-md ${
+                                    className={`px-2 py-1 rounded-md break-words ${
                                       isKey
                                         ? 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-200'
                                         : 'bg-slate-50'
@@ -1340,8 +1340,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer min-h-[38px]">
                         <input
                           type="checkbox"
                           checked={autoRefreshMonitor}
@@ -1354,7 +1354,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         type="button"
                         disabled={isBusy}
                         onClick={() => void onRefreshLive()}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
+                        className="flex-1 sm:flex-initial min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`} />
                         <span>Muat Status Terbaru</span>
@@ -1368,16 +1368,16 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             examId: selectedExam.id,
                           })
                         }
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                         <span>Sinkronkan Semua Nilai ke Rapor</span>
                       </button>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table className="w-full text-left text-xs">
+                  <div className="w-full max-w-full overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table className="w-full min-w-[760px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                         <tr>
                           <th className="py-2.5 px-3 font-bold">Santri</th>
