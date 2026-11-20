@@ -78,20 +78,20 @@ async function waitForImagesInElement(el: HTMLElement): Promise<void> {
 }
 
 function normalizePdfLinkUrl(rawUrl: string | undefined | null): string {
-  const trimmed = (rawUrl || '').trim();
-  if (!trimmed || trimmed.startsWith('#') || /^javascript:/i.test(trimmed)) {
+  const cleanUrl = (rawUrl || '').replace(/[\r\n\t]+/g, '').trim();
+  if (!cleanUrl || cleanUrl.startsWith('#') || /^javascript:/i.test(cleanUrl)) {
     return '';
   }
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
+  if (/^https?:\/\//i.test(cleanUrl)) {
+    return cleanUrl;
   }
-  if (trimmed.startsWith('//')) {
-    return `https:${trimmed}`;
+  if (cleanUrl.startsWith('//')) {
+    return `https:${cleanUrl}`;
   }
-  if (trimmed.startsWith('/') && typeof window !== 'undefined') {
-    return new URL(trimmed, window.location.origin).toString();
+  if (cleanUrl.startsWith('/') && typeof window !== 'undefined') {
+    return new URL(cleanUrl, window.location.origin).toString();
   }
-  return `https://${trimmed}`;
+  return `https://${cleanUrl}`;
 }
 
 interface PrintableReportViewProps {
@@ -232,6 +232,67 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         const pageEl = pages[i];
         await waitForImagesInElement(pageEl);
 
+        // Ukur koordinat link pada ukuran A4 murni (1:1 tanpa pengaruh scale/zoom layar HP)
+        interface MeasuredPdfLink {
+          cleanUrl: string;
+          rects: Array<{ x: number; y: number; w: number; h: number }>;
+        }
+        const pageLinks: MeasuredPdfLink[] = [];
+        const scaleContainer = pageEl.closest('.a4-scale-inner') as HTMLElement | null;
+        const prevTransform = scaleContainer ? scaleContainer.style.transform : '';
+        if (scaleContainer) {
+          scaleContainer.style.transform = 'none';
+          void pageEl.offsetWidth;
+        }
+
+        try {
+          const pageRect = pageEl.getBoundingClientRect();
+          if (pageRect.width > 0 && pageRect.height > 0) {
+            const linkElements = Array.from(
+              pageEl.querySelectorAll<HTMLElement>('a[href], [data-pdf-link]')
+            );
+            for (const linkEl of linkElements) {
+              const cleanUrl = normalizePdfLinkUrl(
+                linkEl.getAttribute('href') || linkEl.getAttribute('data-pdf-link-url')
+              );
+              if (!cleanUrl) continue;
+
+              const clientRects = linkEl.getClientRects();
+              const rawRects =
+                clientRects.length > 0
+                  ? Array.from(clientRects)
+                  : [linkEl.getBoundingClientRect()];
+
+              const mappedRects: Array<{ x: number; y: number; w: number; h: number }> = [];
+              for (const rect of rawRects) {
+                const x = imgX + ((rect.left - pageRect.left) / pageRect.width) * imgWidth;
+                const y = imgY + ((rect.top - pageRect.top) / pageRect.height) * imgHeight;
+                const w = (rect.width / pageRect.width) * imgWidth;
+                const h = (rect.height / pageRect.height) * imgHeight;
+
+                if (
+                  w > 0 &&
+                  h > 0 &&
+                  x + w > imgX &&
+                  y + h > imgY &&
+                  x < imgX + imgWidth &&
+                  y < imgY + imgHeight
+                ) {
+                  mappedRects.push({ x, y, w, h });
+                }
+              }
+
+              if (mappedRects.length > 0) {
+                pageLinks.push({ cleanUrl, rects: mappedRects });
+              }
+            }
+          }
+        } finally {
+          if (scaleContainer) {
+            scaleContainer.style.transform = prevTransform;
+          }
+        }
+
         const pngDataUrl = await toPng(pageEl, {
           width: A4_WIDTH_PX,
           height: A4_HEIGHT_PX,
@@ -254,42 +315,28 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
         }
+
+        // 1. Lapisan teks URL asli di bawah gambar agar viewer PDF HP (Android/iOS/Drive/WA) mengenali URL
+        for (const linkItem of pageLinks) {
+          const primaryRect = linkItem.rects[0];
+          const textX = Math.max(0, Math.min(imgWidth - 10, primaryRect.x));
+          const textY = Math.max(3, Math.min(imgHeight - 2, primaryRect.y + primaryRect.h * 0.7));
+          pdf.setFontSize(8);
+          pdf.text(linkItem.cleanUrl, textX, textY);
+        }
+
+        // 2. Gambar halaman A4 penuh di atas lapisan teks
         pdf.addImage(pngDataUrl, 'PNG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
 
-        // Tambahkan anotasi link PDF yang dapat diklik berdasarkan posisi elemen link terukur di halaman A4
-        const pageRect = pageEl.getBoundingClientRect();
-        if (pageRect.width > 0 && pageRect.height > 0) {
-          const linkElements = Array.from(
-            pageEl.querySelectorAll<HTMLElement>('a[href], [data-pdf-link]')
-          );
-          for (const linkEl of linkElements) {
-            const url = normalizePdfLinkUrl(
-              linkEl.getAttribute('href') || linkEl.getAttribute('data-pdf-link-url')
-            );
-            if (!url) continue;
-
-            const clientRects = linkEl.getClientRects();
-            const rects =
-              clientRects.length > 0
-                ? Array.from(clientRects)
-                : [linkEl.getBoundingClientRect()];
-
-            for (const rect of rects) {
-              const x = imgX + ((rect.left - pageRect.left) / pageRect.width) * imgWidth;
-              const y = imgY + ((rect.top - pageRect.top) / pageRect.height) * imgHeight;
-              const w = (rect.width / pageRect.width) * imgWidth;
-              const h = (rect.height / pageRect.height) * imgHeight;
-
-              if (
-                w > 0 &&
-                h > 0 &&
-                x + w > imgX &&
-                y + h > imgY &&
-                x < imgX + imgWidth &&
-                y < imgY + imgHeight
-              ) {
-                pdf.link(x, y, w, h, { url });
-              }
+        // 3. Anotasi link PDF interaktif dengan area sentuh lebih lebar untuk jari di layar HP
+        for (const linkItem of pageLinks) {
+          for (const rect of linkItem.rects) {
+            const linkX = Math.max(0, rect.x - 1.5);
+            const linkY = Math.max(0, rect.y - 1.5);
+            const linkW = Math.min(imgWidth - linkX, rect.w + 3);
+            const linkH = Math.min(imgHeight - linkY, Math.max(rect.h + 3, 9));
+            if (linkW > 0 && linkH > 0) {
+              pdf.link(linkX, linkY, linkW, linkH, { url: linkItem.cleanUrl });
             }
           }
         }
@@ -526,20 +573,20 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                     <span>{student.kelas}</span>
                   </div>
                 </div>
-                <div className="pt-3 border-t border-white/15 flex flex-col gap-1">
+                <a
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-pdf-link="true"
+                  className="pt-3 border-t border-white/15 flex flex-col gap-1 no-underline"
+                >
                   <span className="text-[10px] uppercase tracking-wider text-emerald-200 font-bold">
                     Link Portofolio Online Santri:
                   </span>
-                  <a
-                    href={portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-pdf-link="true"
-                    className="text-[11px] font-bold text-[#1DF27A] break-all underline decoration-emerald-300/50 leading-snug"
-                  >
+                  <span className="text-[11px] font-bold text-[#1DF27A] break-all underline decoration-emerald-300/50 leading-snug">
                     {portfolioUrl}
-                  </a>
-                </div>
+                  </span>
+                </a>
               </div>
 
               {/* 4. Student Name Plaque */}
@@ -1603,20 +1650,20 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                     {tpl.qrBannerDescription}
                   </p>
                 </div>
-                <div className="bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3.5 py-2">
+                <a
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-pdf-link="true"
+                  className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3.5 py-2 no-underline"
+                >
                   <div className="text-[9.5px] uppercase tracking-wide text-slate-300 font-bold">
                     Link Resmi Portofolio &amp; Sidang Karya:
                   </div>
-                  <a
-                    href={portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-pdf-link="true"
-                    className="text-[10.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug"
-                  >
+                  <div className="text-[10.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug">
                     {portfolioUrl}
-                  </a>
-                </div>
+                  </div>
+                </a>
               </div>
             </div>
 
