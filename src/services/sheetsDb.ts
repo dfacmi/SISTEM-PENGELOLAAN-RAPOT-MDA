@@ -703,7 +703,7 @@ export async function loadDatabaseFromSheet(
       tanggalRapor: String(r[3] || '19 Desember 2026'),
       kkmDiniyah: Number(r[4] || 60),
       kkmTahfidz: Number(r[5] || 70),
-      kkmDigital: Number(r[6] || 60),
+      kkmDigital: Number(r[6] || 70),
       kepalaUnitMda: String(r[7] || 'Ustadz Azmuhu Syahid, S. Pd'),
       mudirPesantren: String(r[8] || 'Ustadz Yahya Setiyawan, S. Pd.I, M. Pd'),
       isActive: String(r[9]).toUpperCase() === 'YA',

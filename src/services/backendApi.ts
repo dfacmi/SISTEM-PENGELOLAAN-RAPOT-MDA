@@ -313,6 +313,22 @@ export async function saveReportOnServer(params: {
   });
 }
 
+export async function saveReportsBatchOnServer(params: {
+  reports: SemesterReport[];
+  googleAccessToken?: string | null;
+  spreadsheetId?: string | null;
+}): Promise<{ reports: SemesterReport[]; data: MdaDatabase }> {
+  return apiFetch('/api/reports/batch-upsert', {
+    method: 'POST',
+    body: {
+      reports: params.reports,
+      spreadsheetId: params.spreadsheetId,
+    },
+    googleAccessToken: params.googleAccessToken,
+    spreadsheetId: params.spreadsheetId,
+  });
+}
+
 export async function upsertStudentOnServer(params: {
   student: Student;
   googleAccessToken?: string | null;

@@ -13,8 +13,9 @@ import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import { BrandingTemplateConfig, MdaDatabase } from '../types/mda';
 import {
   formatRupiah,
+  getKkmPredicateBounds,
   getPortfolioUrl,
-  hitungPredikat,
+  hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
   resolveTanggalRapor,
@@ -190,9 +191,16 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
   const portfolioUrl = normalizePdfLinkUrl(
     getPortfolioUrl(student.portfolioSlug, db.spreadsheetId)
   );
+  const kkmDiniyah = period?.kkmDiniyah || 60;
+  const kkmTahfidz = period?.kkmTahfidz || 70;
+  const kkmDigital = period?.kkmDigital || 70;
+  const boundsDigital = getKkmPredicateBounds(kkmDigital);
+  const boundsDiniyah = getKkmPredicateBounds(kkmDiniyah);
+
   const diniyahAvg = hitungRataRataDiniyah(report.diniyah);
+  const diniyahPredikat = hitungPredikatByKkm(diniyahAvg, kkmDiniyah);
   const digitalAvg = hitungRataRataDigital(report.skillDigital);
-  const digitalPredikat = hitungPredikat(digitalAvg);
+  const digitalPredikat = hitungPredikatByKkm(digitalAvg, kkmDigital);
   const effectiveTanggalRapor = resolveTanggalRapor(
     report.tanggalRapor || period?.tanggalRapor,
     report.semester,
@@ -947,7 +955,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                             {val}
                           </td>
                           <td className="border border-slate-300 py-1.5 px-2 text-center font-bold tabular-nums">
-                            {hitungPredikat(Number(val))}
+                            {hitungPredikatByKkm(Number(val), kkmTahfidz)}
                           </td>
                         </tr>
                       ))}
@@ -981,7 +989,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               >
                 KETERANGAN PENILAIAN
               </div>
-              <table className="w-full border-collapse text-[11px] bg-white text-center">
+              <table className="w-full border-collapse text-[10.5px] bg-white text-center">
                 <thead>
                   <tr className="bg-slate-950 text-white">
                     <th className="border border-slate-700 py-1 px-2 text-left">Predikat</th>
@@ -994,12 +1002,37 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 <tbody>
                   <tr>
                     <td className="border border-slate-300 py-1 px-2 text-left font-semibold">
-                      Rentang nilai
+                      Tahfidz &amp; Digital (KKM {boundsDigital.kkm})
                     </td>
-                    <td className="border border-slate-300 py-1 px-2 tabular-nums">90–100</td>
-                    <td className="border border-slate-300 py-1 px-2 tabular-nums">80–89</td>
-                    <td className="border border-slate-300 py-1 px-2 tabular-nums">70–79</td>
-                    <td className="border border-slate-300 py-1 px-2">di bawah 70</td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDigital.minA}–100
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDigital.minB}–{boundsDigital.minA - 1}
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDigital.minC}–{boundsDigital.minB - 1}
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      &lt; {boundsDigital.minC}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-slate-300 py-1 px-2 text-left font-semibold">
+                      Diniyah (KKM {boundsDiniyah.kkm})
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDiniyah.minA}–100
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDiniyah.minB}–{boundsDiniyah.minA - 1}
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      {boundsDiniyah.minC}–{boundsDiniyah.minB - 1}
+                    </td>
+                    <td className="border border-slate-300 py-1 px-2 tabular-nums">
+                      &lt; {boundsDiniyah.minC}
+                    </td>
                   </tr>
                   <tr>
                     <td className="border border-slate-300 py-1 px-2 text-left font-semibold">
@@ -1014,9 +1047,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               </table>
               <div className="text-[11px] text-slate-700 tabular-nums">
                 <span className="font-bold">KKM (Kriteria Ketuntasan Minimal):</span> Diniyah{' '}
-                <span className="font-bold">{period?.kkmDiniyah || 60}</span> · Tahfidz{' '}
-                <span className="font-bold">{period?.kkmTahfidz || 70}</span> · Skill Digital{' '}
-                <span className="font-bold">{period?.kkmDigital || 60}</span>
+                <span className="font-bold">{kkmDiniyah}</span> · Tahfidz{' '}
+                <span className="font-bold">{kkmTahfidz}</span> · Skill Digital{' '}
+                <span className="font-bold">{kkmDigital}</span>
               </div>
             </div>
           </section>
@@ -1117,7 +1150,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                         {diniyahAvg}
                       </td>
                       <td className="border border-slate-300 py-1.5 px-2.5 tabular-nums">
-                        Predikat: {hitungPredikat(diniyahAvg)}
+                        Predikat: {diniyahPredikat}
                       </td>
                     </tr>
                   </tbody>

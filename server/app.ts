@@ -22,6 +22,7 @@ import {
   upsertPeriodInSheet,
   upsertPortfolioInSheet,
   upsertReportInSheet,
+  upsertReportsBatchInSheet,
   upsertStudentInSheet,
   upsertTeacherInSheet,
 } from './googleSheetsService.ts';
@@ -49,6 +50,7 @@ import {
   upsertPeriodInAppsScript,
   upsertPortfolioInAppsScript,
   upsertReportInAppsScript,
+  upsertReportsBatchInAppsScript,
   upsertStudentInAppsScript,
   upsertTeacherInAppsScript,
 } from './appsScriptService.ts';
@@ -1049,6 +1051,63 @@ export function createApiApp(): express.Express {
         return;
       }
       res.status(502).json({ error: err.message || 'Gagal menyimpan rapor ke Google Sheets.' });
+    }
+  });
+
+  // 9B. Batch Upsert Reports for Bulk Subject Grade Entry ("Nilai Mata Pelajaran")
+  app.post('/api/reports/batch-upsert', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Wali santri hanya memiliki akses membaca rapor.' });
+        return;
+      }
+      const storage = await resolveBackendStorage(req);
+      if (storage.mode === 'none') {
+        res.status(503).json({ error: 'Google Sheets belum terhubung.' });
+        return;
+      }
+
+      const { reports } = req.body as { reports?: SemesterReport[] };
+      if (!Array.isArray(reports) || reports.length === 0) {
+        res.status(400).json({ error: 'Daftar rapor yang akan disimpan tidak ditemukan.' });
+        return;
+      }
+
+      for (const r of reports) {
+        if (!r?.id || !r?.studentId) {
+          res.status(400).json({ error: 'Setiap item rapor wajib memiliki ID rapor dan ID santri.' });
+          return;
+        }
+      }
+
+      if (session.role === 'guru') {
+        const snapshot = await loadDbFromStorage(storage);
+        const teacher = snapshot.teachers.find((t) => t.id === session.teacherId);
+        for (const r of reports) {
+          const targetStudent = snapshot.students.find((s) => s.id === r.studentId);
+          if (!isTeacherAuthorizedForStudent(teacher, targetStudent)) {
+            res.status(403).json({
+              error: 'Anda tidak memiliki kewenangan mengubah nilai santri di luar kelas yang Anda ampu.',
+            });
+            return;
+          }
+        }
+      }
+
+      const saved =
+        storage.mode === 'apps_script'
+          ? await upsertReportsBatchInAppsScript(storage.apiUrl, storage.secret, reports)
+          : await upsertReportsBatchInSheet(storage.token, storage.spreadsheetId, reports);
+
+      res.json({
+        reports: saved.reports,
+        data: scopeDatabaseForSession(saved.db, session),
+      });
+    } catch (err: any) {
+      res.status(502).json({
+        error: err.message || 'Gagal menyimpan nilai massal ke Google Sheets.',
+      });
     }
   });
 

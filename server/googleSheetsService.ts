@@ -543,7 +543,21 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
   ];
 
   const diniyahRows: (string | number | boolean)[][] = [
-    ['ID_Rapor', 'No', 'Mata_Pelajaran', 'Kitab_Materi', 'KKM', 'Nilai', 'Predikat', 'Deskripsi_Capaian'],
+    [
+      'ID_Rapor',
+      'No',
+      'Mata_Pelajaran',
+      'Kitab_Materi',
+      'KKM',
+      'Nilai',
+      'Predikat',
+      'Deskripsi_Capaian',
+      'SK',
+      'TG',
+      'UL',
+      'UAS',
+      'UAS_From_CBT',
+    ],
   ];
   db.reports.forEach((r) => {
     r.diniyah.forEach((d) => {
@@ -556,6 +570,11 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
         d.nilai,
         d.predikat,
         d.deskripsi,
+        typeof d.sk === 'number' ? d.sk : '',
+        typeof d.tg === 'number' ? d.tg : '',
+        typeof d.ul === 'number' ? d.ul : '',
+        typeof d.uas === 'number' ? d.uas : '',
+        d.uasFromCbt ? 'YA' : '',
       ]);
     });
   });
@@ -570,6 +589,11 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
       'Keterampilan',
       'Nilai_Akhir',
       'Predikat',
+      'SK',
+      'TG',
+      'UL',
+      'UAS',
+      'UAS_From_CBT',
     ],
   ];
   db.reports.forEach((r) => {
@@ -583,6 +607,11 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
         s.keterampilan,
         s.nilaiAkhir,
         s.predikat,
+        typeof s.sk === 'number' ? s.sk : '',
+        typeof s.tg === 'number' ? s.tg : '',
+        typeof s.ul === 'number' ? s.ul : '',
+        typeof s.uas === 'number' ? s.uas : '',
+        s.uasFromCbt ? 'YA' : '',
       ]);
     });
   });
@@ -776,7 +805,7 @@ export async function readDatabaseFromSheet(
       tanggalRapor: String(r[3] || ''),
       kkmDiniyah: Number(r[4] || 60),
       kkmTahfidz: Number(r[5] || 70),
-      kkmDigital: Number(r[6] || 60),
+      kkmDigital: Number(r[6] || 70),
       kepalaUnitMda: String(r[7] || ''),
       mudirPesantren: String(r[8] || ''),
       isActive: String(r[9] || '').toUpperCase() === 'YA',
@@ -846,6 +875,11 @@ export async function readDatabaseFromSheet(
           keterangan: String(s[4] || ''),
         }));
       const tRow = tahfidzRows.find((t) => String(t[0]) === reportId);
+      const parseOptNum = (cell: unknown): number | undefined => {
+        if (cell === undefined || cell === null || String(cell).trim() === '') return undefined;
+        const n = Number(cell);
+        return Number.isFinite(n) ? n : undefined;
+      };
       const rDiniyah = diniyahRows
         .filter((d) => String(d[0]) === reportId)
         .map((d) => ({
@@ -856,17 +890,27 @@ export async function readDatabaseFromSheet(
           nilai: Number(d[5] || 0),
           predikat: (['A', 'B', 'C', 'D'].includes(String(d[6])) ? d[6] : 'C') as Predikat,
           deskripsi: String(d[7] || ''),
+          sk: parseOptNum(d[8]),
+          tg: parseOptNum(d[9]),
+          ul: parseOptNum(d[10]),
+          uas: parseOptNum(d[11]),
+          uasFromCbt: String(d[12] || '').toUpperCase() === 'YA',
         }));
       const rDigital = digitalRows
         .filter((d) => String(d[0]) === reportId)
         .map((d) => ({
           no: Number(d[1] || 1),
           materiSkill: String(d[2] || ''),
-          kkm: Number(d[3] || 60),
+          kkm: Number(d[3] || 70),
           pengetahuan: Number(d[4] || 0),
           keterampilan: Number(d[5] || 0),
           nilaiAkhir: Number(d[6] || 0),
           predikat: (['A', 'B', 'C', 'D'].includes(String(d[7])) ? d[7] : 'C') as Predikat,
+          sk: parseOptNum(d[8]),
+          tg: parseOptNum(d[9]),
+          ul: parseOptNum(d[10]),
+          uas: parseOptNum(d[11]),
+          uasFromCbt: String(d[12] || '').toUpperCase() === 'YA',
         }));
 
       return {
@@ -1107,6 +1151,48 @@ export async function upsertReportInSheet(
     ]);
 
     return { report: stampedReport, db: nextDb };
+  });
+}
+
+export async function upsertReportsBatchInSheet(
+  accessToken: string,
+  spreadsheetId: string,
+  incomingReports: SemesterReport[]
+): Promise<{ reports: SemesterReport[]; db: MdaDatabase }> {
+  return enqueueSheetOperation(spreadsheetId, async () => {
+    const currentDb = await readDatabaseFromSheet(accessToken, spreadsheetId);
+    const now = new Date().toISOString();
+    const stampedMap = new Map<string, SemesterReport>();
+    incomingReports.forEach((r) => {
+      stampedMap.set(r.id, { ...r, updatedAt: now });
+    });
+
+    const nextReports = currentDb.reports.map((r) => stampedMap.get(r.id) || r);
+    const existingIds = new Set(currentDb.reports.map((r) => r.id));
+    incomingReports.forEach((r) => {
+      if (!existingIds.has(r.id)) {
+        nextReports.push(stampedMap.get(r.id)!);
+      }
+    });
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      reports: nextReports,
+      lastSyncedAt: now,
+    };
+
+    await writeSpecificTabs(accessToken, spreadsheetId, nextDb, [
+      'Rapor_Semester',
+      'Sikap_Character',
+      'Tahfidz',
+      'Nilai_Diniyah',
+      'Nilai_Digital',
+    ]);
+
+    return {
+      reports: Array.from(stampedMap.values()),
+      db: nextDb,
+    };
   });
 }
 

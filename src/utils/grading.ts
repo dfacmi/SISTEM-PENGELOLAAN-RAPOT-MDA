@@ -1,17 +1,273 @@
 import {
   DiniyahSubject,
   DigitalSkillSubject,
+  GradeWeights,
   PillarSummary,
   Predikat,
   SemesterReport,
+  Student,
   TahfidzAssessment,
+  TeacherClass,
 } from '../types/mda';
 
-export function hitungPredikat(nilai: number): Predikat {
-  if (nilai >= 90) return 'A';
-  if (nilai >= 80) return 'B';
-  if (nilai >= 70) return 'C';
+export const DEFAULT_GRADE_WEIGHTS: GradeWeights = {
+  sk: 25,
+  tg: 25,
+  ul: 25,
+  uas: 25,
+};
+
+export interface KkmPredicateBounds {
+  kkm: number;
+  minC: number;
+  minB: number;
+  minA: number;
+}
+
+export function getKkmPredicateBounds(kkm = 70): KkmPredicateBounds {
+  const safeKkm = Math.max(1, Math.min(97, Math.round(Number(kkm) || 70)));
+  const interval = (100 - safeKkm) / 3;
+  const minB = Math.round(safeKkm + interval);
+  const minA = Math.round(safeKkm + 2 * interval);
+  return {
+    kkm: safeKkm,
+    minC: safeKkm,
+    minB,
+    minA,
+  };
+}
+
+export function hitungPredikatByKkm(nilai: number, kkm = 70): Predikat {
+  const val = Number(nilai || 0);
+  const { minC, minB, minA } = getKkmPredicateBounds(kkm);
+  if (val >= minA) return 'A';
+  if (val >= minB) return 'B';
+  if (val >= minC) return 'C';
   return 'D';
+}
+
+export function hitungPredikat(nilai: number, kkm = 70): Predikat {
+  return hitungPredikatByKkm(nilai, kkm);
+}
+
+export function isValidScore(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+export function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value * 100) / 100));
+}
+
+export function parseScoreInput(raw: string): number | undefined {
+  const trimmed = raw.trim();
+  if (trimmed === '') return undefined;
+  const num = Number(trimmed.replace(',', '.'));
+  if (!Number.isFinite(num)) return undefined;
+  return clampScore(num);
+}
+
+export interface ComponentScoreInput {
+  sk?: number;
+  tg?: number;
+  ul?: number;
+  uas?: number;
+}
+
+export function hasSubjectComponents(subject: ComponentScoreInput): boolean {
+  return (
+    isValidScore(subject.sk) ||
+    isValidScore(subject.tg) ||
+    isValidScore(subject.ul) ||
+    isValidScore(subject.uas)
+  );
+}
+
+export function hitungNrFromComponents(
+  subject: ComponentScoreInput,
+  weights: GradeWeights = DEFAULT_GRADE_WEIGHTS
+): number | null {
+  const entries: Array<{ value: number; weight: number }> = [];
+  if (isValidScore(subject.sk)) {
+    entries.push({ value: clampScore(subject.sk), weight: Math.max(0, Number(weights.sk) || 0) });
+  }
+  if (isValidScore(subject.tg)) {
+    entries.push({ value: clampScore(subject.tg), weight: Math.max(0, Number(weights.tg) || 0) });
+  }
+  if (isValidScore(subject.ul)) {
+    entries.push({ value: clampScore(subject.ul), weight: Math.max(0, Number(weights.ul) || 0) });
+  }
+  if (isValidScore(subject.uas)) {
+    entries.push({ value: clampScore(subject.uas), weight: Math.max(0, Number(weights.uas) || 0) });
+  }
+
+  if (entries.length === 0) return null;
+
+  const totalWeight = entries.reduce((acc, item) => acc + item.weight, 0);
+  if (totalWeight <= 0) {
+    const avg = entries.reduce((acc, item) => acc + item.value, 0) / entries.length;
+    return Math.round(avg * 100) / 100;
+  }
+
+  const weightedSum = entries.reduce((acc, item) => acc + item.value * item.weight, 0);
+  return Math.round((weightedSum / totalWeight) * 100) / 100;
+}
+
+export function hitungPengetahuanFromComponents(
+  subject: ComponentScoreInput,
+  weights: GradeWeights = DEFAULT_GRADE_WEIGHTS
+): number | null {
+  const entries: Array<{ value: number; weight: number }> = [];
+  if (isValidScore(subject.sk)) {
+    entries.push({ value: clampScore(subject.sk), weight: Math.max(0, Number(weights.sk) || 0) });
+  }
+  if (isValidScore(subject.tg)) {
+    entries.push({ value: clampScore(subject.tg), weight: Math.max(0, Number(weights.tg) || 0) });
+  }
+  if (isValidScore(subject.uas)) {
+    entries.push({ value: clampScore(subject.uas), weight: Math.max(0, Number(weights.uas) || 0) });
+  }
+
+  if (entries.length === 0) return null;
+
+  const totalWeight = entries.reduce((acc, item) => acc + item.weight, 0);
+  if (totalWeight <= 0) {
+    const avg = entries.reduce((acc, item) => acc + item.value, 0) / entries.length;
+    return Math.round(avg * 100) / 100;
+  }
+
+  const weightedSum = entries.reduce((acc, item) => acc + item.value * item.weight, 0);
+  return Math.round((weightedSum / totalWeight) * 100) / 100;
+}
+
+export function syncDiniyahSubjectWithComponents(
+  d: DiniyahSubject,
+  weights: GradeWeights = DEFAULT_GRADE_WEIGHTS,
+  fallbackKkm = 60
+): DiniyahSubject {
+  const kkm = Number(d.kkm || fallbackKkm || 60);
+  if (hasSubjectComponents(d)) {
+    const nr = hitungNrFromComponents(d, weights);
+    const nilai = nr !== null ? nr : Number(d.nilai || 0);
+    return {
+      ...d,
+      kkm,
+      nilai,
+      predikat: hitungPredikatByKkm(nilai, kkm),
+    };
+  }
+  const nilai = Number(d.nilai || 0);
+  return {
+    ...d,
+    kkm,
+    nilai,
+    predikat: hitungPredikatByKkm(nilai, kkm),
+  };
+}
+
+export function syncDigitalSkillWithComponents(
+  s: DigitalSkillSubject,
+  weights: GradeWeights = DEFAULT_GRADE_WEIGHTS,
+  fallbackKkm = 70
+): DigitalSkillSubject {
+  const kkm = Number(s.kkm || fallbackKkm || 70);
+  if (hasSubjectComponents(s)) {
+    const pengetahuan =
+      hitungPengetahuanFromComponents(s, weights) ?? Number(s.pengetahuan || 0);
+    const keterampilan = isValidScore(s.ul)
+      ? clampScore(s.ul)
+      : Number(s.keterampilan || 0);
+    const nr =
+      hitungNrFromComponents(s, weights) ??
+      hitungNilaiAkhirSkill(pengetahuan, keterampilan);
+    return {
+      ...s,
+      kkm,
+      pengetahuan,
+      keterampilan,
+      nilaiAkhir: nr,
+      predikat: hitungPredikatByKkm(nr, kkm),
+    };
+  }
+  const nilaiAkhir = hitungNilaiAkhirSkill(s.pengetahuan, s.keterampilan);
+  return {
+    ...s,
+    kkm,
+    nilaiAkhir,
+    predikat: hitungPredikatByKkm(nilaiAkhir, kkm),
+  };
+}
+
+export function normalizeClassName(raw?: string): string {
+  const cleaned = String(raw || '').trim().replace(/\s+/g, ' ');
+  if (!cleaned) return '';
+  return cleaned
+    .split(' ')
+    .map((word) => {
+      if (/^mda$/i.test(word)) return 'MDA';
+      if (/^(it|cbt|xii|xi|ix|viii|vii|vi|iv|iii|ii)$/i.test(word)) {
+        return word.toUpperCase();
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
+
+export interface ClassFilterOption {
+  name: string;
+  key: string;
+  count: number;
+}
+
+const CLASS_ORDER_PRIORITY = ['mda senior', 'mda intermediate', 'mda junior'];
+
+export function extractUniqueClasses(
+  students: Student[],
+  teachers: TeacherClass[] = []
+): ClassFilterOption[] {
+  const map = new Map<string, { name: string; count: number }>();
+
+  students.forEach((s) => {
+    const normalized = normalizeClassName(s.kelas);
+    if (!normalized) return;
+    const key = normalized.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      map.set(key, { name: normalized, count: 1 });
+    }
+  });
+
+  teachers.forEach((t) => {
+    const normalized = normalizeClassName(t.kelasDiampu);
+    if (!normalized || /^semua\s*kelas$/i.test(normalized)) return;
+    const key = normalized.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, { name: normalized, count: 0 });
+    }
+  });
+
+  return Array.from(map.entries())
+    .map(([key, val]) => ({ key, name: val.name, count: val.count }))
+    .sort((a, b) => {
+      const idxA = CLASS_ORDER_PRIORITY.indexOf(a.key);
+      const idxB = CLASS_ORDER_PRIORITY.indexOf(b.key);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.name.localeCompare(b.name, 'id');
+    });
+}
+
+export function matchesClassFilter(
+  studentKelas: string,
+  selectedClassFilter: string
+): boolean {
+  if (!selectedClassFilter || selectedClassFilter === 'ALL') return true;
+  return (
+    normalizeClassName(studentKelas).toLowerCase() ===
+    normalizeClassName(selectedClassFilter).toLowerCase()
+  );
 }
 
 export function getKategoriPredikat(predikat: Predikat): string {
@@ -116,7 +372,11 @@ export function hitungPilarOtomatis(report: SemesterReport): PillarSummary {
   };
 }
 
-export function recalculateReport(report: SemesterReport): SemesterReport {
+export function recalculateReport(
+  report: SemesterReport,
+  weights: GradeWeights = DEFAULT_GRADE_WEIGHTS,
+  kkmOverrides?: { kkmDiniyah?: number; kkmTahfidz?: number; kkmDigital?: number }
+): SemesterReport {
   const t: TahfidzAssessment = { ...report.tahfidz };
   t.nilaiAkhir = hitungNilaiAkhirTahfidz(
     t.kelancaran,
@@ -124,21 +384,15 @@ export function recalculateReport(report: SemesterReport): SemesterReport {
     t.makhrajFashahah,
     t.ketepatanAyat
   );
-  t.predikat = hitungPredikat(t.nilaiAkhir);
+  t.predikat = hitungPredikatByKkm(t.nilaiAkhir, kkmOverrides?.kkmTahfidz || 70);
 
-  const diniyah = report.diniyah.map((d) => ({
-    ...d,
-    predikat: hitungPredikat(d.nilai),
-  }));
+  const diniyah = report.diniyah.map((d) =>
+    syncDiniyahSubjectWithComponents(d, weights, kkmOverrides?.kkmDiniyah || 60)
+  );
 
-  const skillDigital = report.skillDigital.map((s) => {
-    const nilaiAkhir = hitungNilaiAkhirSkill(s.pengetahuan, s.keterampilan);
-    return {
-      ...s,
-      nilaiAkhir,
-      predikat: hitungPredikat(nilaiAkhir),
-    };
-  });
+  const skillDigital = report.skillDigital.map((s) =>
+    syncDigitalSkillWithComponents(s, weights, kkmOverrides?.kkmDigital || 70)
+  );
 
   const updated: SemesterReport = {
     ...report,
@@ -238,4 +492,3 @@ export function resolveTanggalRapor(
   }
   return raw;
 }
-

@@ -49,6 +49,7 @@ import {
   parseWordOrTextFileQuestions,
   validateQuestionDraft,
 } from '../utils/cbtImportParser';
+import { extractUniqueClasses, matchesClassFilter } from '../utils/grading';
 
 interface CbtAdminViewProps {
   db: MdaDatabase;
@@ -153,10 +154,16 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [editingQuestion, setEditingQuestion] = useState<CbtQuestion | null>(null);
 
-  // Live Monitor auto-refresh
+  // Live Monitor auto-refresh & dynamic class filter
   const [autoRefreshMonitor, setAutoRefreshMonitor] = useState(false);
+  const [monitorClassFilter, setMonitorClassFilter] = useState<string>('ALL');
   const [expandedViolationId, setExpandedViolationId] = useState<string | null>(null);
   const [nowTick, setNowTick] = useState(Date.now());
+
+  const dynamicClasses = useMemo(
+    () => extractUniqueClasses(db.students, db.teachers),
+    [db.students, db.teachers]
+  );
 
   useEffect(() => {
     if (subTab !== 'monitor') return;
@@ -327,11 +334,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
         byStudent.set(att.studentId, att);
       }
     }
-    return db.students.map((stu) => ({
-      student: stu,
-      attempt: byStudent.get(stu.id) || null,
-    }));
-  }, [allAttempts, db.students, selectedExam]);
+    return db.students
+      .filter((stu) => matchesClassFilter(stu.kelas, monitorClassFilter))
+      .map((stu) => ({
+        student: stu,
+        attempt: byStudent.get(stu.id) || null,
+      }));
+  }, [allAttempts, db.students, selectedExam, monitorClassFilter]);
 
   const submittedCountForSelected = examAttempts.filter(
     (row) => row.attempt?.status === 'submitted'
@@ -765,8 +774,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                   {/* Target Rapor Mapping */}
                   <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-3">
-                    <div className="text-xs font-bold text-emerald-950">
-                      Pemetaan Target Nilai Rapor Semester (Sinkronisasi Aman ke 5 Pilar &amp; KKM)
+                    <div>
+                      <div className="text-xs font-bold text-emerald-950">
+                        Pemetaan Target Nilai Rapor Semester (Sinkronisasi Aman ke UAS, 5 Pilar &amp; KKM)
+                      </div>
+                      <p className="text-[11px] text-emerald-800/90 mt-0.5">
+                        Untuk mapel Diniyah &amp; Skill Digital, skor CBT masuk khusus ke komponen <strong>UAS</strong> tanpa menimpa nilai SK (Sikap), TG (Tugas), atau UL, lalu NR dihitung otomatis.
+                      </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
@@ -1331,12 +1345,25 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 <div className="p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <select
+                        value={monitorClassFilter}
+                        onChange={(e) => setMonitorClassFilter(e.target.value)}
+                        aria-label="Filter Kelas Monitoring CBT"
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                      >
+                        <option value="ALL">Semua Kelas ({db.students.length})</option>
+                        {dynamicClasses.map((cls) => (
+                          <option key={cls.key} value={cls.name}>
+                            {cls.name} ({cls.count})
+                          </option>
+                        ))}
+                      </select>
                       <span className="px-2.5 py-1 rounded-lg bg-slate-100 font-mono font-bold text-slate-800 inline-flex items-center gap-1">
                         <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
-                        Token Aktif: {selectedExam.token}
+                        Token: {selectedExam.token}
                       </span>
                       <span className="text-slate-500">
-                        Selesai: <strong>{submittedCountForSelected}</strong> / {db.students.length} santri
+                        Selesai: <strong>{submittedCountForSelected}</strong> / {examAttempts.length} santri
                       </span>
                     </div>
 

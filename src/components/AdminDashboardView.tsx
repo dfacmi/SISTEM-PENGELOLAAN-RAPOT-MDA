@@ -20,11 +20,13 @@ import {
   Student,
 } from '../types/mda';
 import {
+  extractUniqueClasses,
   formatRupiah,
   generateSmartAccessPin,
-  hitungPredikat,
+  hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
+  matchesClassFilter,
 } from '../utils/grading';
 import { getParentPortalAccessUrl, getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { RadarFivePillarsChart } from './Charts';
@@ -53,22 +55,34 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onOpenPortfolio,
   onOpenNarrativeEditor,
 }) => {
-  const [classFilter, setClassFilter] = useState<string>('Semua');
+  const [classFilter, setClassFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedStudentId, setCopiedStudentId] = useState<string | null>(null);
 
   const tpl = mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG);
   const theme = getThemeStyles(tpl.accentTheme);
 
-  const classOptions = useMemo(() => {
-    const set = new Set<string>(['Semua']);
-    db.students.forEach((s) => set.add(s.kelas));
-    return Array.from(set);
-  }, [db.students]);
+  const activePeriod = useMemo(
+    () =>
+      db.periods.find(
+        (p) => p.tahunAkademik === selectedYear && p.semester === selectedSemester
+      ) || db.periods.find((p) => p.isActive),
+    [db.periods, selectedYear, selectedSemester]
+  );
+  const kkmDiniyah = activePeriod?.kkmDiniyah || 60;
+  const kkmDigital = activePeriod?.kkmDigital || 70;
+
+  const classOptions = useMemo(
+    () => extractUniqueClasses(db.students, db.teachers),
+    [db.students, db.teachers]
+  );
+
+  const activeClassLabel =
+    classFilter === 'ALL' ? 'Semua Kelas' : classFilter;
 
   const filteredStudents = useMemo(() => {
     return db.students.filter((s) => {
-      const matchClass = classFilter === 'Semua' || s.kelas === classFilter;
+      const matchClass = matchesClassFilter(s.kelas, classFilter);
       const q = searchQuery.trim().toLowerCase();
       const matchSearch =
         q === '' ||
@@ -245,7 +259,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             {cohortStats.avgTahfidz || '—'}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            Predikat {hitungPredikat(cohortStats.avgTahfidz || 0)} · KKM 70
+            Predikat {hitungPredikatByKkm(cohortStats.avgTahfidz || 0, activePeriod?.kkmTahfidz || 70)} · KKM {activePeriod?.kkmTahfidz || 70}
           </div>
         </div>
 
@@ -306,13 +320,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               {tpl.dashboardRadarTitle}
             </h2>
             <p className="text-xs text-slate-500">
-              Rata-rata kelas {classFilter} · {selectedSemester} {selectedYear}
+              Rata-rata {activeClassLabel} · {selectedSemester} {selectedYear}
             </p>
           </div>
 
           <RadarFivePillarsChart
             current={cohortStats.avgPilar}
-            currentLabel={`Rata-rata ${classFilter}`}
+            currentLabel={`Rata-rata ${activeClassLabel}`}
           />
         </div>
 
@@ -385,7 +399,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
           <div className="mt-5 pt-3 border-t border-emerald-200/70 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
             <span className="font-[Arial] italic">
-              Predikat: A (90–100) · B (80–89) · C (70–79) · D (&lt;70)
+              Tahfidz &amp; Digital (KKM {kkmDigital}): A (90–100) · B (80–89) · C (70–79) · D (&lt;70) | Diniyah (KKM {kkmDiniyah}): A (87–100) · B (73–86) · C (60–72) · D (&lt;60)
             </span>
             <span className="italic">{tpl.dashboardPillarNote}</span>
           </div>
@@ -414,23 +428,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              aria-label="Filter Kelas"
+              className="w-full sm:w-auto px-3 py-1.5 text-xs font-semibold bg-slate-100 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            >
+              <option value="ALL">Semua Kelas ({db.students.length})</option>
               {classOptions.map((cls) => (
-                <button
-                  key={cls}
-                  type="button"
-                  onClick={() => setClassFilter(cls)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                    classFilter === cls
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {cls}
-                </button>
+                <option key={cls.key} value={cls.name}>
+                  {cls.name} ({cls.count})
+                </option>
               ))}
-            </div>
+            </select>
 
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -502,7 +513,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                           idx === 0 ? 'font-[Arial]' : 'font-mono'
                         } font-bold text-slate-900 tabular-nums`}
                       >
-                        {rep ? `${diniyahAvg} (${hitungPredikat(diniyahAvg)})` : '—'}
+                        {rep ? `${diniyahAvg} (${hitungPredikatByKkm(diniyahAvg, kkmDiniyah)})` : '—'}
                       </div>
                     </div>
                     <div>
@@ -512,7 +523,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                           idx === 0 ? 'font-[Arial]' : 'font-mono'
                         } font-bold text-slate-900 tabular-nums`}
                       >
-                        {rep ? `${digitalAvg} (${hitungPredikat(digitalAvg)})` : '—'}
+                        {rep ? `${digitalAvg} (${hitungPredikatByKkm(digitalAvg, kkmDigital)})` : '—'}
                       </div>
                     </div>
                   </div>
@@ -663,7 +674,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                               idx === 0 ? 'font-[Arial] ' : ''
                             }font-semibold text-slate-900`}
                           >
-                            {diniyahAvg} ({hitungPredikat(diniyahAvg)})
+                            {diniyahAvg} ({hitungPredikatByKkm(diniyahAvg, kkmDiniyah)})
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>
@@ -676,7 +687,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                               idx === 0 ? 'font-[Arial] ' : ''
                             }font-semibold text-slate-900`}
                           >
-                            {digitalAvg} ({hitungPredikat(digitalAvg)})
+                            {digitalAvg} ({hitungPredikatByKkm(digitalAvg, kkmDigital)})
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>

@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   CloudOff,
   Database,
+  Download,
   Eye,
   EyeOff,
   FileSpreadsheet,
@@ -16,11 +17,15 @@ import {
   Lock,
   LogOut,
   Menu,
+  Monitor,
   Palette,
   PenSquare,
+  PlusSquare,
   Printer,
   RefreshCw,
+  Share,
   ShieldAlert,
+  Smartphone,
   Sparkles,
   Users,
   WifiOff,
@@ -64,6 +69,7 @@ import {
   saveCbtExamOnServer,
   saveCbtQuestionsOnServer,
   saveReportOnServer,
+  saveReportsBatchOnServer,
   saveTemplateOnServer,
   seedDefaultCbtExamsOnServer,
   ServerHealthStatus,
@@ -91,6 +97,7 @@ import {
   UserRole,
 } from './types/mda';
 import { getThemeStyles, mergeTemplateConfig } from './utils/theme';
+import { usePwaInstall } from './utils/usePwaInstall';
 
 type NavSection =
   | 'overview'
@@ -256,6 +263,9 @@ export default function App() {
     confirmLabel: 'Konfirmasi',
     onConfirm: () => {},
   });
+
+  const pwa = usePwaInstall();
+  const [showPwaModal, setShowPwaModal] = useState(false);
 
   const showToast = useCallback((type: 'ok' | 'err', text: string) => {
     setToast({ type, text });
@@ -807,6 +817,52 @@ export default function App() {
       confirmLabel: 'Simpan ke Google Sheets',
       onConfirm: async () => {
         await executeReportSave(report, existing?.updatedAt, false);
+      },
+    });
+  };
+
+  const handleSaveBatchReports = (reports: SemesterReport[], summaryLabel?: string) => {
+    if (reports.length === 0) return;
+
+    if (previewSampleMode) {
+      setDb((prev) => {
+        const nextMap = new Map(prev.reports.map((r) => [r.id, r]));
+        reports.forEach((r) => nextMap.set(r.id, r));
+        return { ...prev, reports: Array.from(nextMap.values()) };
+      });
+      showToast(
+        'ok',
+        `Pratinjau ${reports.length} nilai rapor (${summaryLabel || 'Mapel'}) diperbarui.`
+      );
+      return;
+    }
+
+    setConfirmDialog({
+      open: true,
+      title: 'Simpan Nilai Mata Pelajaran ke Google Sheets?',
+      message: `${reports.length} rapor santri${summaryLabel ? ` (${summaryLabel})` : ''} akan diperbarui dan disinkronkan secara otomatis ke Google Sheets.`,
+      confirmLabel: 'Simpan Semua Nilai',
+      onConfirm: async () => {
+        if (!ensureOnlineForWrite()) return;
+        setIsSyncing(true);
+        setSyncState('saving');
+        try {
+          const res = await saveReportsBatchOnServer({
+            reports,
+            spreadsheetId: db.spreadsheetId || preferredSheetId,
+          });
+          applyServerDatabase(res.data);
+          setSyncState('saved');
+          showToast(
+            'ok',
+            `${res.reports.length || reports.length} nilai rapor santri berhasil disimpan & tersinkron ke Google Sheets.`
+          );
+        } catch (err: any) {
+          setSyncState('error');
+          showToast('err', `Gagal menyimpan massal ke Google Sheets: ${err.message}`);
+        } finally {
+          setIsSyncing(false);
+        }
       },
     });
   };
@@ -1926,11 +1982,159 @@ export default function App() {
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed">
-              {tpl.alamat} · {tpl.instagram}
+            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <span className="text-[11px] text-slate-500 leading-relaxed min-w-0 break-words">
+                {tpl.alamat} · {tpl.instagram}
+              </span>
+              {!pwa.isInstalled && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (pwa.canNativeInstall) {
+                      const outcome = await pwa.triggerNativeInstall();
+                      if (outcome === 'unavailable') setShowPwaModal(true);
+                    } else {
+                      setShowPwaModal(true);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 bg-[#E8FAF3] hover:bg-emerald-100 text-emerald-900 text-[11px] font-bold shrink-0 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span>Pasang Aplikasi</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Cross-Platform PWA Install Guide Modal (Android, iOS, Windows) */}
+        {showPwaModal && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+            onClick={() => setShowPwaModal(false)}
+          >
+            <div
+              className="w-full max-w-md max-h-[90dvh] overflow-y-auto my-auto bg-white border border-emerald-200 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                    Aplikasi Lintas Perangkat (PWA)
+                  </div>
+                  <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 break-words">
+                    Pasang Rapor &amp; CBT MDA di Perangkat Anda
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPwaModal(false)}
+                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed break-words">
+                Buka portal Rapor, Ujian CBT, dan Pengelolaan Nilai lebih cepat langsung dari layar utama HP atau Desktop tanpa harus membuka tab browser berulang kali.
+              </p>
+
+              <div className="space-y-2.5 text-xs">
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-1.5 ${
+                    pwa.platform === 'android'
+                      ? 'bg-emerald-50 border-emerald-300'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Android (Google Chrome)</span>
+                    {pwa.platform === 'android' && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                        Perangkat Anda
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    Ketuk menu titik tiga (<strong>⋮</strong>) di kanan atas Chrome, lalu pilih{' '}
+                    <strong>Instal aplikasi</strong> atau <strong>Tambahkan ke layar utama</strong>.
+                  </p>
+                </div>
+
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-1.5 ${
+                    pwa.platform === 'ios'
+                      ? 'bg-emerald-50 border-emerald-300'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    <Share className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>iPhone / iPad (Safari iOS)</span>
+                    {pwa.platform === 'ios' && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                        Perangkat Anda
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    Buka di browser <strong>Safari</strong>, ketuk ikon{' '}
+                    <strong>Bagikan (Share)</strong> di bilah Safari, lalu gulir dan pilih{' '}
+                    <span className="inline-flex items-center gap-1 font-semibold text-slate-900">
+                      <PlusSquare className="w-3.5 h-3.5 text-emerald-700" />
+                      Tambah ke Layar Utama
+                    </span>
+                    .
+                  </p>
+                </div>
+
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-1.5 ${
+                    pwa.platform === 'windows'
+                      ? 'bg-emerald-50 border-emerald-300'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    <Monitor className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Microsoft Windows (Chrome / Edge)</span>
+                    {pwa.platform === 'windows' && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                        Perangkat Anda
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    Klik ikon <strong>Install App</strong> di ujung kanan kolom alamat browser (address bar), atau buka menu browser lalu pilih <strong>Simpan &amp; Bagikan → Instal Aplikasi MDA</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {pwa.canNativeInstall && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await pwa.triggerNativeInstall();
+                    setShowPwaModal(false);
+                  }}
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Pasang Aplikasi Sekarang</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowPwaModal(false)}
+                className="w-full min-h-[42px] py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"
+              >
+                Tutup Panduan
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -2527,8 +2731,10 @@ export default function App() {
               selectedStudentId={selectedStudentId}
               selectedYear={selectedYear}
               selectedSemester={selectedSemester}
+              isBusy={isSyncing}
               onSelectStudent={setSelectedStudentId}
               onSaveReport={handleSaveReport}
+              onSaveBatchReports={handleSaveBatchReports}
               onOpenPrint={(id) => {
                 setSelectedStudentId(id);
                 setPrintMode(true);

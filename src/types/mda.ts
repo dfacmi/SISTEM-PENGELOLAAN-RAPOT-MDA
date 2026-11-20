@@ -221,11 +221,23 @@ export interface TahfidzAssessment {
   deskripsi: string;
 }
 
+export interface GradeWeights {
+  sk: number;
+  tg: number;
+  ul: number;
+  uas: number;
+}
+
 export interface DiniyahSubject {
   no: number;
   mataPelajaran: string;
   kitabMateri: string;
   kkm: number;
+  sk?: number;
+  tg?: number;
+  ul?: number;
+  uas?: number;
+  uasFromCbt?: boolean;
   nilai: number;
   predikat: Predikat;
   deskripsi: string;
@@ -235,6 +247,11 @@ export interface DigitalSkillSubject {
   no: number;
   materiSkill: string;
   kkm: number;
+  sk?: number;
+  tg?: number;
+  ul?: number;
+  uas?: number;
+  uasFromCbt?: boolean;
   pengetahuan: number;
   keterampilan: number;
   nilaiAkhir: number;

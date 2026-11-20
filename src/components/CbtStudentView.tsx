@@ -93,10 +93,20 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
     syncedToRapor: boolean;
   } | null>(null);
 
-  // Web Lockdown state
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(
-    () => Boolean(typeof document !== 'undefined' && document.fullscreenElement)
+  // Web Lockdown state (detect native Fullscreen API support so iOS Safari uses CSS full-viewport lockdown)
+  const supportsNativeFullscreen = useMemo(
+    () =>
+      typeof document !== 'undefined' &&
+      Boolean(document.fullscreenEnabled && document.documentElement?.requestFullscreen),
+    []
   );
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() => {
+    if (typeof document === 'undefined') return true;
+    const supported = Boolean(
+      document.fullscreenEnabled && document.documentElement?.requestFullscreen
+    );
+    return supported ? Boolean(document.fullscreenElement) : true;
+  });
   const [lockdownWarning, setLockdownWarning] = useState<string | null>(null);
   const [clockLabel, setClockLabel] = useState(() =>
     new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -151,6 +161,10 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   }, [loadOverview]);
 
   const requestFullscreenSafe = async () => {
+    if (!supportsNativeFullscreen) {
+      setIsFullscreen(true);
+      return;
+    }
     try {
       if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
@@ -162,6 +176,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   };
 
   const exitFullscreenSafe = async () => {
+    if (!supportsNativeFullscreen) return;
     try {
       if (document.fullscreenElement && document.exitFullscreen) {
         await document.exitFullscreen();
@@ -302,6 +317,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
     };
 
     const onFullscreenChange = () => {
+      if (!supportsNativeFullscreen) return;
       const fs = Boolean(document.fullscreenElement);
       setIsFullscreen(fs);
       if (!fs) {
@@ -319,6 +335,13 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           'Berpindah tab atau meminimalkan browser saat ujian berlangsung'
         );
       }
+    };
+
+    const onPageHide = () => {
+      recordViolation(
+        'tab_switch',
+        'Meninggalkan halaman atau beralih ke aplikasi lain saat ujian berlangsung'
+      );
     };
 
     const onWindowBlur = () => {
@@ -363,8 +386,11 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
       e.preventDefault();
     };
 
-    document.addEventListener('fullscreenchange', onFullscreenChange);
+    if (supportsNativeFullscreen) {
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+    }
     document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', onPageHide);
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', onKeyDown, true);
@@ -374,8 +400,11 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
     document.addEventListener('dragstart', blockEvent);
 
     return () => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      if (supportsNativeFullscreen) {
+        document.removeEventListener('fullscreenchange', onFullscreenChange);
+      }
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKeyDown, true);
@@ -384,7 +413,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
       document.removeEventListener('cut', blockEvent);
       document.removeEventListener('dragstart', blockEvent);
     };
-  }, [stage, recordViolation]);
+  }, [stage, recordViolation, supportsNativeFullscreen]);
 
   const handleStartExam = async (exam: StudentCbtExamSummary, existingAttempt?: CbtAttempt) => {
     setBusy(true);
@@ -610,7 +639,13 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
       fontScale === 'sm' ? 'text-xs' : fontScale === 'lg' ? 'text-base' : 'text-sm';
 
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col select-none font-[Arial] relative overflow-x-hidden">
+      <div
+        className={`cbt-lockdown-surface bg-slate-100 flex flex-col select-none font-[Arial] overflow-x-hidden ${
+          !supportsNativeFullscreen
+            ? 'fixed inset-0 z-[9999] overflow-y-auto pwa-safe-top pwa-safe-bottom'
+            : 'min-h-screen relative'
+        }`}
+      >
         {/* Diagonal Repeating Anti-Screenshot/Anti-AI Watermark */}
         <div
           aria-hidden="true"
@@ -628,8 +663,8 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           </div>
         </div>
 
-        {/* Fullscreen Re-entry Blocker Overlay if student exits fullscreen mid-exam */}
-        {!isFullscreen && (
+        {/* Fullscreen Re-entry Blocker Overlay if student exits fullscreen mid-exam (desktop/Android) */}
+        {supportsNativeFullscreen && !isFullscreen && (
           <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
             <div className="max-w-md w-full max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-3xl p-5 sm:p-7 text-center space-y-4 shadow-2xl">
               <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center mx-auto">
@@ -1139,7 +1174,11 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               <span>Peraturan Web Lockdown &amp; Anti-AI:</span>
             </div>
             <ul className="list-disc pl-5 space-y-1 text-[11px]">
-              <li>Ujian wajib berjalan dalam mode layar penuh (Fullscreen).</li>
+              <li>
+                {supportsNativeFullscreen
+                  ? 'Ujian wajib berjalan dalam mode layar penuh (Fullscreen).'
+                  : 'Ujian berjalan dalam mode Layar Penuh Lockdown (Full-Viewport) khusus perangkat iOS/mobile.'}
+              </li>
               <li>Dilarang berpindah tab, membuka aplikasi lain, atau split-screen.</li>
               <li>Fitur Copy, Paste, Klik Kanan, dan Inspect Element dinonaktifkan.</li>
               <li>
@@ -1184,8 +1223,12 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               {busy
                 ? 'Menyiapkan Lembar Soal...'
                 : isResuming
-                  ? 'Lanjutkan Ujian (Masuk Fullscreen)'
-                  : 'Mulai Kerjakan (Masuk Fullscreen)'}
+                  ? supportsNativeFullscreen
+                    ? 'Lanjutkan Ujian (Masuk Fullscreen)'
+                    : 'Lanjutkan Ujian (Mode Lockdown)'
+                  : supportsNativeFullscreen
+                    ? 'Mulai Kerjakan (Masuk Fullscreen)'
+                    : 'Mulai Kerjakan (Mode Lockdown)'}
             </span>
           </button>
         </div>

@@ -237,6 +237,42 @@ export async function upsertReportInAppsScript(
   });
 }
 
+export async function upsertReportsBatchInAppsScript(
+  apiUrl: string,
+  secret: string,
+  incomingReports: SemesterReport[]
+): Promise<{ reports: SemesterReport[]; db: MdaDatabase }> {
+  return enqueueSheetOperation(`apps_script:${apiUrl}`, async () => {
+    const currentDb = await readDatabaseFromAppsScript(apiUrl);
+    const now = new Date().toISOString();
+    const stampedMap = new Map<string, SemesterReport>();
+    incomingReports.forEach((r) => {
+      stampedMap.set(r.id, { ...r, updatedAt: now });
+    });
+
+    const nextReports = currentDb.reports.map((r) => stampedMap.get(r.id) || r);
+    const existingIds = new Set(currentDb.reports.map((r) => r.id));
+    incomingReports.forEach((r) => {
+      if (!existingIds.has(r.id)) {
+        nextReports.push(stampedMap.get(r.id)!);
+      }
+    });
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      reports: nextReports,
+      lastSyncedAt: now,
+    };
+
+    const saved = await saveAllToAppsScript(apiUrl, secret, nextDb);
+    nextDb.lastSyncedAt = saved.updatedAt;
+    return {
+      reports: Array.from(stampedMap.values()),
+      db: nextDb,
+    };
+  });
+}
+
 export async function upsertStudentInAppsScript(
   apiUrl: string,
   secret: string,
@@ -699,17 +735,17 @@ export function applyCbtScoreToReport(
         diniyah: DEFAULT_DINIYAH_MAPEL.map((m) => ({
           ...m,
           kkm: periodConfig?.kkmDiniyah || 60,
-          nilai: 75,
-          predikat: 'C',
+          nilai: 0,
+          predikat: 'D',
           deskripsi: '',
         })),
         skillDigital: DEFAULT_DIGITAL_SKILLS.map((s) => ({
           ...s,
-          kkm: periodConfig?.kkmDigital || 60,
-          pengetahuan: 75,
-          keterampilan: 75,
-          nilaiAkhir: 75,
-          predikat: 'C',
+          kkm: periodConfig?.kkmDigital || 70,
+          pengetahuan: 0,
+          keterampilan: 0,
+          nilaiAkhir: 0,
+          predikat: 'D',
         })),
         kehadiran: { sakit: 0, izin: 0, alpa: 0 },
         catatanWali: {
@@ -733,7 +769,8 @@ export function applyCbtScoreToReport(
     if (idx >= 0) {
       baselineReport.diniyah[idx] = {
         ...baselineReport.diniyah[idx],
-        nilai: clampedScore,
+        uas: clampedScore,
+        uasFromCbt: true,
       };
     } else {
       baselineReport.diniyah.push({
@@ -741,30 +778,23 @@ export function applyCbtScoreToReport(
         mataPelajaran: mapping.subjectName.trim(),
         kitabMateri: '-',
         kkm: periodConfig?.kkmDiniyah || 60,
+        uas: clampedScore,
+        uasFromCbt: true,
         nilai: clampedScore,
         predikat: 'C',
         deskripsi: '',
       });
     }
   } else if (mapping.category === 'skillDigital') {
-    const field = mapping.digitalField || 'pengetahuan';
     const idx = baselineReport.skillDigital.findIndex(
       (s) => s.materiSkill.trim().toLowerCase() === targetNameNorm
     );
-    const patchSkill = (prev: typeof baselineReport.skillDigital[number]) => {
-      if (field === 'keterampilan') {
-        return { ...prev, keterampilan: clampedScore };
-      }
-      if (field === 'nilaiAkhir') {
-        return {
-          ...prev,
-          pengetahuan: clampedScore,
-          keterampilan: clampedScore,
-          nilaiAkhir: clampedScore,
-        };
-      }
-      return { ...prev, pengetahuan: clampedScore };
-    };
+    const patchSkill = (prev: typeof baselineReport.skillDigital[number]) => ({
+      ...prev,
+      kkm: prev.kkm || periodConfig?.kkmDigital || 70,
+      uas: clampedScore,
+      uasFromCbt: true,
+    });
     if (idx >= 0) {
       baselineReport.skillDigital[idx] = patchSkill(baselineReport.skillDigital[idx]);
     } else {
@@ -772,9 +802,9 @@ export function applyCbtScoreToReport(
         patchSkill({
           no: baselineReport.skillDigital.length + 1,
           materiSkill: mapping.subjectName.trim(),
-          kkm: periodConfig?.kkmDigital || 60,
+          kkm: periodConfig?.kkmDigital || 70,
           pengetahuan: clampedScore,
-          keterampilan: clampedScore,
+          keterampilan: 0,
           nilaiAkhir: clampedScore,
           predikat: 'C',
         })
@@ -797,10 +827,18 @@ export function applyCbtScoreToReport(
     }
   }
 
-  const recalculated = recalculateReport({
-    ...baselineReport,
-    updatedAt: new Date().toISOString(),
-  });
+  const recalculated = recalculateReport(
+    {
+      ...baselineReport,
+      updatedAt: new Date().toISOString(),
+    },
+    undefined,
+    {
+      kkmDiniyah: periodConfig?.kkmDiniyah || 60,
+      kkmTahfidz: periodConfig?.kkmTahfidz || 70,
+      kkmDigital: periodConfig?.kkmDigital || 70,
+    }
+  );
 
   const exists = db.reports.some((r) => r.id === recalculated.id);
   const nextReports = exists

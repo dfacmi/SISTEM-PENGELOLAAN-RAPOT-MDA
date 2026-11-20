@@ -19,7 +19,13 @@ import {
   Student,
   TeacherClass,
 } from '../types/mda';
-import { generateSmartAccessPin, slugifyName } from '../utils/grading';
+import {
+  extractUniqueClasses,
+  generateSmartAccessPin,
+  matchesClassFilter,
+  normalizeClassName,
+  slugifyName,
+} from '../utils/grading';
 import { compressImageToDataUrl, processLogoImageToDataUrl } from '../utils/imageHelper';
 import { getParentPortalAccessUrl } from '../utils/theme';
 import { StudentAvatar } from './MdaLogo';
@@ -49,6 +55,20 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
   const [uploadingTtd, setUploadingTtd] = useState<'guru' | 'kepala' | 'mudir' | null>(null);
   const [shareModalStudent, setShareModalStudent] = useState<Student | null>(null);
   const [copiedType, setCopiedType] = useState<'url' | 'wa' | null>(null);
+  const [santriClassFilter, setSantriClassFilter] = useState<string>('ALL');
+  const [santriSearch, setSantriSearch] = useState<string>('');
+
+  const dynamicClasses = extractUniqueClasses(db.students, db.teachers);
+  const filteredSantri = db.students.filter((s) => {
+    if (!matchesClassFilter(s.kelas, santriClassFilter)) return false;
+    const q = santriSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      s.nama.toLowerCase().includes(q) ||
+      s.nisnMda.toLowerCase().includes(q) ||
+      s.kelas.toLowerCase().includes(q)
+    );
+  });
 
   const handleNewStudent = () => {
     const defaultTeacher = db.teachers[0];
@@ -80,8 +100,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
         ? `https://${rawPortfolio}`
         : slugifyName(rawPortfolio) || slugifyName(editingStudent.nama);
 
+    const normalizedKelas = normalizeClassName(editingStudent.kelas) || 'MDA Senior';
     const cleaned: Student = {
       ...editingStudent,
+      kelas: normalizedKelas,
+      program:
+        editingStudent.program.trim() ||
+        `Muslim Digital Academy – ${normalizedKelas.replace(/^MDA\s+/i, '')}`,
       waliKelasNama: wali ? wali.nama : editingStudent.waliKelasNama,
       portfolioSlug: normalizedPortfolio,
       accessPin:
@@ -195,7 +220,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
       tanggalRapor: '19 Desember 2026',
       kkmDiniyah: 60,
       kkmTahfidz: 70,
-      kkmDigital: 60,
+      kkmDigital: 70,
       kepalaUnitMda: 'Ustadz Azmuhu Syahid, S. Pd',
       mudirPesantren: 'Ustadz Yahya Setiyawan, S. Pd.I, M. Pd',
       isActive: false,
@@ -427,24 +452,68 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Kelas
+                    Kelas (Pilih atau Ketik Kelas Baru)
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    required
+                    list="mda-class-suggestions"
                     disabled={!canManageAll}
                     value={editingStudent.kelas}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = e.target.value;
                       setEditingStudent({
                         ...editingStudent,
-                        kelas: e.target.value,
-                        program: `Muslim Digital Academy – ${e.target.value.replace('MDA ', '')}`,
-                      })
-                    }
+                        kelas: val,
+                        program: `Muslim Digital Academy – ${val.replace(/^MDA\s+/i, '')}`,
+                      });
+                    }}
+                    placeholder="Contoh: MDA Senior / MDA Junior / Kelas Baru"
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500"
-                  >
-                    <option value="MDA Junior">MDA Junior</option>
-                    <option value="MDA Intermediate">MDA Intermediate</option>
-                    <option value="MDA Senior">MDA Senior</option>
-                  </select>
+                  />
+                  <datalist id="mda-class-suggestions">
+                    {Array.from(
+                      new Set([
+                        'MDA Junior',
+                        'MDA Intermediate',
+                        'MDA Senior',
+                        ...dynamicClasses.map((c) => c.name),
+                      ])
+                    ).map((cls) => (
+                      <option key={cls} value={cls} />
+                    ))}
+                  </datalist>
+                  {canManageAll && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {Array.from(
+                        new Set([
+                          'MDA Junior',
+                          'MDA Intermediate',
+                          'MDA Senior',
+                          ...dynamicClasses.map((c) => c.name),
+                        ])
+                      ).map((cls) => (
+                        <button
+                          key={cls}
+                          type="button"
+                          onClick={() =>
+                            setEditingStudent({
+                              ...editingStudent,
+                              kelas: cls,
+                              program: `Muslim Digital Academy – ${cls.replace(/^MDA\s+/i, '')}`,
+                            })
+                          }
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors ${
+                            editingStudent.kelas.trim().toLowerCase() === cls.toLowerCase()
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {cls}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -598,8 +667,51 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             </form>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {db.students.map((student) => (
+          {/* Filter Kelas Dinamis + Pencarian Santri */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+              <button
+                type="button"
+                onClick={() => setSantriClassFilter('ALL')}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  santriClassFilter === 'ALL'
+                    ? 'bg-[#0E2228] text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Semua Kelas ({db.students.length})
+              </button>
+              {dynamicClasses.map((cls) => (
+                <button
+                  key={cls.key}
+                  type="button"
+                  onClick={() => setSantriClassFilter(cls.name)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    santriClassFilter.toLowerCase() === cls.key
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {cls.name} ({cls.count})
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={santriSearch}
+              onChange={(e) => setSantriSearch(e.target.value)}
+              placeholder="Cari nama / NISN / kelas..."
+              className="w-full sm:w-56 px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            />
+          </div>
+
+          {filteredSantri.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-xs text-slate-500">
+              Tidak ada data santri pada filter kelas ini.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSantri.map((student) => (
               <div
                 key={student.id}
                 className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-4 hover:border-emerald-300 transition-colors"
@@ -680,8 +792,9 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
