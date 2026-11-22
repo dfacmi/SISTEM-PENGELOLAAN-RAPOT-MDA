@@ -2544,7 +2544,15 @@ export default function App() {
     },
   ];
 
-  const visibleNavItems = navItems.filter((n) => n.roles.includes(effectiveRole));
+  const santriNavOrder: NavSection[] = ['portal', 'portfolio', 'internship'];
+  const visibleNavItems =
+    effectiveRole === 'santri_ortu'
+      ? santriNavOrder
+          .map((id) => navItems.find((n) => n.id === id))
+          .filter(
+            (n): n is (typeof navItems)[number] => Boolean(n && n.roles.includes(effectiveRole))
+          )
+      : navItems.filter((n) => n.roles.includes(effectiveRole));
   const uniqueYears = Array.from(new Set(db.periods.map((p) => p.tahunAkademik)));
 
   return (
@@ -2665,7 +2673,13 @@ export default function App() {
               </div>
               <select
                 value={previewRole}
-                onChange={(e) => setPreviewRole(e.target.value as UserRole)}
+                onChange={(e) => {
+                  const nextRole = e.target.value as UserRole;
+                  setPreviewRole(nextRole);
+                  if (nextRole === 'santri_ortu') {
+                    setActiveNav(tpl.lockRaporDuringExam ? 'internship' : 'portal');
+                  }
+                }}
                 className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-md px-2 py-1"
               >
                 <option value="admin">Dashboard Admin</option>
@@ -2816,21 +2830,24 @@ export default function App() {
                 <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
                 <span>PDF Magang</span>
               </button>
+            ) : isRaporLockedForStudent ? (
+              <button
+                type="button"
+                onClick={() => setActiveNav('internship')}
+                className="min-h-[38px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold whitespace-nowrap shrink-0 shadow-xs"
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>Buka Magang &amp; Jurnal</span>
+              </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setPrintMode(true)}
-                disabled={
-                  isRaporLockedForStudent || db.students.length === 0 || db.reports.length === 0
-                }
+                disabled={db.students.length === 0 || db.reports.length === 0}
                 className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
               >
-                {isRaporLockedForStudent ? (
-                  <Lock className="w-3.5 h-3.5 text-amber-400" />
-                ) : (
-                  <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
-                )}
-                <span>{isRaporLockedForStudent ? 'Rapor Terkunci' : 'Cetak PDF'}</span>
+                <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                <span>Cetak PDF</span>
               </button>
             )}
           </div>
@@ -2984,7 +3001,7 @@ export default function App() {
                   onClick={() => {
                     setPreviewRole('santri_ortu');
                     setSelectedStudentId('std-alwan');
-                    setActiveNav('portal');
+                    setActiveNav(tpl.lockRaporDuringExam ? 'internship' : 'portal');
                   }}
                   className={`px-2.5 py-1.5 rounded-lg font-semibold ${
                     previewRole === 'santri_ortu'
@@ -3284,9 +3301,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveNav('internship')}
-                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
                 >
-                  <Briefcase className="w-4 h-4" />
+                  <Briefcase className="w-4 h-4 shrink-0" />
                   <span>Buka Magang &amp; Jurnal Harian</span>
                 </button>
               </div>
@@ -3342,9 +3359,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveNav('internship')}
-                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
                 >
-                  <Briefcase className="w-4 h-4" />
+                  <Briefcase className="w-4 h-4 shrink-0" />
                   <span>Buka Magang &amp; Jurnal Harian</span>
                 </button>
               </div>
