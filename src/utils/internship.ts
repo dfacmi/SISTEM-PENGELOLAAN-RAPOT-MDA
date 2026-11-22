@@ -209,3 +209,145 @@ export function computeInternTrackerStats(
       otherAnsweredTotal > 0 ? Math.round((otherYesTotal / otherAnsweredTotal) * 100) : 0,
   };
 }
+
+export const INDONESIAN_MONTHS_SHORT: { value: string; label: string }[] = [
+  { value: '01', label: 'Jan' },
+  { value: '02', label: 'Feb' },
+  { value: '03', label: 'Mar' },
+  { value: '04', label: 'Apr' },
+  { value: '05', label: 'Mei' },
+  { value: '06', label: 'Jun' },
+  { value: '07', label: 'Jul' },
+  { value: '08', label: 'Agu' },
+  { value: '09', label: 'Sep' },
+  { value: '10', label: 'Okt' },
+  { value: '11', label: 'Nov' },
+  { value: '12', label: 'Des' },
+];
+
+export function getYearPickerOptions(centerYear = new Date().getFullYear()): string[] {
+  const start = Math.min(2024, centerYear - 2);
+  const end = Math.max(2030, centerYear + 4);
+  const years: string[] = [];
+  for (let y = start; y <= end; y++) {
+    years.push(String(y));
+  }
+  return years;
+}
+
+export function parseIsoDateParts(iso?: string): { day: string; month: string; year: string } {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso.trim())) {
+    return { day: '', month: '', year: '' };
+  }
+  const [year, month, day] = iso.trim().split('-');
+  return { day, month, year };
+}
+
+export function buildIsoDateFromParts(day: string, month: string, year: string): string {
+  if (!day || !month || !year) return '';
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return '';
+  if (m < 1 || m > 12 || d < 1 || d > 31) return '';
+  const maxDayInMonth = new Date(y, m, 0).getDate();
+  const safeDay = Math.min(d, maxDayInMonth);
+  return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
+}
+
+export function countInclusiveDays(startIso?: string, endIso?: string): number {
+  if (!startIso || !endIso) return 0;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startIso) || !/^\d{4}-\d{2}-\d{2}$/.test(endIso)) return 0;
+  const [sy, sm, sd] = startIso.split('-').map(Number);
+  const [ey, em, ed] = endIso.split('-').map(Number);
+  const startMs = Date.UTC(sy, sm - 1, sd);
+  const endMs = Date.UTC(ey, em - 1, ed);
+  if (endMs < startMs) return 0;
+  return Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+export function formatMagangPeriodRange(
+  mulaiTanggal?: string,
+  selesaiTanggal?: string,
+  jamKerjaHarian?: string,
+  fallbackWaktu?: string
+): string {
+  const hasStart = Boolean(mulaiTanggal && /^\d{4}-\d{2}-\d{2}$/.test(mulaiTanggal));
+  const hasEnd = Boolean(selesaiTanggal && /^\d{4}-\d{2}-\d{2}$/.test(selesaiTanggal));
+  const jamClean = (jamKerjaHarian || '').trim();
+
+  if (hasStart || hasEnd) {
+    const startLabel = hasStart ? formatTanggalShort(mulaiTanggal!) : '...';
+    const endLabel = hasEnd ? formatTanggalShort(selesaiTanggal!) : '...';
+    const days = hasStart && hasEnd ? countInclusiveDays(mulaiTanggal, selesaiTanggal) : 0;
+    const base =
+      hasStart && hasEnd
+        ? `${startLabel} – ${endLabel}${days > 0 ? ` (${days} Hari)` : ''}`
+        : hasStart
+          ? `Mulai ${startLabel}`
+          : `Selesai ${endLabel}`;
+    return jamClean ? `${base} · ${jamClean}` : base;
+  }
+  return (fallbackWaktu || '').trim();
+}
+
+export function resolveInternLembarPerJuz(
+  templateConfig?: BrandingTemplateConfig | null
+): number {
+  const raw = Number(templateConfig?.internLembarPerJuz);
+  if (Number.isFinite(raw) && raw >= 1 && raw <= 100) {
+    return Math.round(raw);
+  }
+  return 10;
+}
+
+export interface TilawahProgressSummary {
+  totalLembar: number;
+  lembarPerJuz: number;
+  totalJuz: number;
+  targetJuz: number;
+  targetLembar: number;
+  pct: number;
+  logsWithTilawahCount: number;
+}
+
+export function computeTilawahProgress(
+  logs: InternDailyLog[],
+  lembarPerJuz = 10
+): TilawahProgressSummary {
+  const safePerJuz =
+    Number.isFinite(lembarPerJuz) && lembarPerJuz >= 1 && lembarPerJuz <= 100
+      ? Math.round(lembarPerJuz)
+      : 10;
+  const targetJuz = 30;
+  const targetLembar = targetJuz * safePerJuz;
+
+  let totalLembar = 0;
+  let logsWithTilawahCount = 0;
+
+  for (const log of logs) {
+    const raw = Number(log.tilawahLembar || 0);
+    if (Number.isFinite(raw) && raw > 0) {
+      totalLembar += raw;
+      logsWithTilawahCount += 1;
+    }
+  }
+
+  const roundedLembar = Math.round(totalLembar * 10) / 10;
+  const totalJuz = Math.round((roundedLembar / safePerJuz) * 10) / 10;
+  const pct =
+    targetLembar > 0
+      ? Math.min(100, Math.round((roundedLembar / targetLembar) * 100))
+      : 0;
+
+  return {
+    totalLembar: roundedLembar,
+    lembarPerJuz: safePerJuz,
+    totalJuz,
+    targetJuz,
+    targetLembar,
+    pct,
+    logsWithTilawahCount,
+  };
+}
+

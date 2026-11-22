@@ -6,7 +6,7 @@ import {
   Calendar,
   Check,
   ClipboardList,
-  Eye,
+  Edit3,
   Lock,
   Plus,
   Printer,
@@ -21,6 +21,7 @@ import { DEFAULT_INTERN_TRACKER_ITEMS, DEFAULT_TEMPLATE_CONFIG } from '../data/s
 import {
   BrandingTemplateConfig,
   InternDailyLog,
+  InternHourlyBlocks,
   InternProfile,
   InternTrackerGroup,
   InternTrackerItem,
@@ -30,16 +31,21 @@ import {
 import { extractUniqueClasses, formatRupiah, matchesClassFilter } from '../utils/grading';
 import {
   computeInternTrackerStats,
+  computeTilawahProgress,
   EMPTY_HOURLY_BLOCKS,
+  formatMagangPeriodRange,
   formatTanggalIndonesia,
   formatTanggalShort,
   getTodayIsoDateLocal,
   getTrackerButtonLabels,
   getTrackerGroupLabel,
   INTERN_HOURLY_BLOCK_DEFS,
+  resolveInternLembarPerJuz,
   resolveInternTrackerItems,
 } from '../utils/internship';
 import { mergeTemplateConfig } from '../utils/theme';
+import { MagangPeriodPicker } from './MagangPeriodPicker';
+import { TilawahDonutChart } from './TilawahDonutChart';
 
 interface InternAdminViewProps {
   db: MdaDatabase;
@@ -48,7 +54,10 @@ interface InternAdminViewProps {
   isBusy?: boolean;
   onSaveInternProfile: (profile: InternProfile) => Promise<boolean> | boolean;
   onSaveDailyLog: (log: InternDailyLog) => Promise<boolean> | boolean;
-  onSaveTrackerItems: (items: InternTrackerItem[]) => Promise<boolean> | boolean;
+  onSaveTrackerItems: (
+    items: InternTrackerItem[],
+    lembarPerJuz?: number
+  ) => Promise<boolean> | boolean;
   onOpenPrintInternReport: (studentId: string) => void;
 }
 
@@ -81,15 +90,25 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'filled' | 'missing'>('all');
 
+  const lembarPerJuzConfig = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+
   // Detail & Pembimbing modal state
   const [inspectedStudentId, setInspectedStudentId] = useState<string | null>(null);
   const [modalDate, setModalDate] = useState<string>(() => getTodayIsoDateLocal());
+  const [modalTrackerDraft, setModalTrackerDraft] = useState<Record<string, 'yes' | 'no'>>({});
+  const [modalTilawahLembar, setModalTilawahLembar] = useState('');
+  const [modalBlocksDraft, setModalBlocksDraft] = useState<InternHourlyBlocks>({
+    ...EMPTY_HOURLY_BLOCKS,
+  });
+  const [modalKejadianPenting, setModalKejadianPenting] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
   // Modal Profile Edit state
   const [editTempat, setEditTempat] = useState('');
-  const [editWaktu, setEditWaktu] = useState('');
+  const [editMulaiTanggal, setEditMulaiTanggal] = useState('');
+  const [editSelesaiTanggal, setEditSelesaiTanggal] = useState('');
+  const [editJamKerja, setEditJamKerja] = useState('');
   const [editKompetensi, setEditKompetensi] = useState('');
   const [editIncome, setEditIncome] = useState('0');
   const [editPembimbing, setEditPembimbing] = useState('');
@@ -97,6 +116,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
   // Sub-tab 2: Tracker Items Config state
   const [draftItems, setDraftItems] = useState<InternTrackerItem[]>(trackerItems);
+  const [draftLembarPerJuz, setDraftLembarPerJuz] = useState<number>(lembarPerJuzConfig);
   const [newLabel, setNewLabel] = useState('');
   const [newGroup, setNewGroup] = useState<InternTrackerGroup>('lainnya');
   const [newMode, setNewMode] = useState<InternTrackerMode>('terlaksana');
@@ -107,6 +127,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     // Only resync draftItems when the serialized server/template tracker config actually changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackerConfigSignature]);
+
+  useEffect(() => {
+    setDraftLembarPerJuz(lembarPerJuzConfig);
+  }, [lembarPerJuzConfig]);
 
   const profileMap = useMemo(() => {
     const map = new Map<string, InternProfile>();
@@ -157,13 +181,44 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     }
 
     const trackerStatsOnDate = computeInternTrackerStats(logsForFilteredOnDate, trackerItems);
+    const scopeStudentIds = new Set(studentsInClass.map((s) => s.id));
+    const allLogsInScope = (db.internDailyLogs || []).filter((l) =>
+      scopeStudentIds.has(l.studentId)
+    );
+    const totalScopeTilawah = computeTilawahProgress(allLogsInScope, lembarPerJuzConfig);
+    const avgLembarPerStudent =
+      studentsInClass.length > 0
+        ? Math.round((totalScopeTilawah.totalLembar / studentsInClass.length) * 10) / 10
+        : 0;
+    const avgJuzPerStudent =
+      Math.round((avgLembarPerStudent / lembarPerJuzConfig) * 10) / 10;
+    const avgTilawahSummary = {
+      ...totalScopeTilawah,
+      totalLembar: avgLembarPerStudent,
+      totalJuz: avgJuzPerStudent,
+      pct:
+        totalScopeTilawah.targetLembar > 0
+          ? Math.min(100, Math.round((avgLembarPerStudent / totalScopeTilawah.targetLembar) * 100))
+          : 0,
+    };
+
     return {
       totalStudentsInScope: studentsInClass.length,
       filledCount,
       missingCount: Math.max(0, studentsInClass.length - filledCount),
       trackerStatsOnDate,
+      totalScopeTilawah,
+      avgTilawahSummary,
     };
-  }, [db.students, classFilter, logsByStudentDate, selectedDate, trackerItems]);
+  }, [
+    db.students,
+    db.internDailyLogs,
+    classFilter,
+    logsByStudentDate,
+    selectedDate,
+    trackerItems,
+    lembarPerJuzConfig,
+  ]);
 
   const sholatItems = useMemo(
     () => trackerItems.filter((it) => it.group === 'sholat'),
@@ -187,6 +242,11 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
   }, [db.internDailyLogs, inspectedStudent]);
 
+  const inspectedStudentTilawah = useMemo(
+    () => computeTilawahProgress(inspectedStudentLogs, lembarPerJuzConfig),
+    [inspectedStudentLogs, lembarPerJuzConfig]
+  );
+
   const activeModalLog = useMemo(() => {
     if (!inspectedStudent) return undefined;
     return logsByStudentDate.get(`${inspectedStudent.id}_${modalDate}`);
@@ -195,13 +255,26 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   useEffect(() => {
     if (!inspectedStudent) return;
     setEditTempat(inspectedProfile?.tempatMagang || '');
-    setEditWaktu(inspectedProfile?.waktuMagang || '');
+    setEditMulaiTanggal(inspectedProfile?.mulaiTanggal || '');
+    setEditSelesaiTanggal(inspectedProfile?.selesaiTanggal || '');
+    setEditJamKerja(inspectedProfile?.jamKerjaHarian || '');
     setEditKompetensi(inspectedProfile?.kompetensiMagang || '');
     setEditIncome(String(inspectedProfile?.incomeMagangRp ?? 0));
     setEditPembimbing(inspectedProfile?.pembimbingNama || '');
   }, [inspectedStudent, inspectedProfile]);
 
   useEffect(() => {
+    setModalTrackerDraft({ ...(activeModalLog?.trackerResults || {}) });
+    setModalTilawahLembar(
+      typeof activeModalLog?.tilawahLembar === 'number' && activeModalLog.tilawahLembar > 0
+        ? String(activeModalLog.tilawahLembar)
+        : ''
+    );
+    setModalBlocksDraft({
+      ...EMPTY_HOURLY_BLOCKS,
+      ...(activeModalLog?.hourlyBlocks || {}),
+    });
+    setModalKejadianPenting(activeModalLog?.kejadianPenting || '');
     setNoteDraft(activeModalLog?.catatanPembimbing || '');
   }, [activeModalLog, modalDate]);
 
@@ -218,12 +291,37 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     }
   };
 
-  const handleSaveSupervisorNote = async () => {
-    if (!inspectedStudent || !activeModalLog) return;
+  const handleSaveModalDailyLog = async () => {
+    if (!inspectedStudent || !/^\d{4}-\d{2}-\d{2}$/.test(modalDate)) return;
+    const cleanResults: Record<string, 'yes' | 'no'> = {};
+    for (const item of trackerItems) {
+      const v = modalTrackerDraft[item.id];
+      if (v === 'yes' || v === 'no') {
+        cleanResults[item.id] = v;
+      }
+    }
+    const parsedLembar = Number(String(modalTilawahLembar).replace(',', '.'));
+    const tilawahLembar =
+      Number.isFinite(parsedLembar) && parsedLembar >= 0
+        ? Math.min(1000, Math.round(parsedLembar * 10) / 10)
+        : 0;
+
     setSavingNote(true);
     try {
       await onSaveDailyLog({
-        ...activeModalLog,
+        id: `${inspectedStudent.id}_${modalDate}`,
+        studentId: inspectedStudent.id,
+        tanggal: modalDate,
+        trackerResults: cleanResults,
+        tilawahLembar,
+        hourlyBlocks: {
+          block_05_08: (modalBlocksDraft.block_05_08 || '').trim(),
+          block_08_12: (modalBlocksDraft.block_08_12 || '').trim(),
+          block_13_17: (modalBlocksDraft.block_13_17 || '').trim(),
+          block_18_21: (modalBlocksDraft.block_18_21 || '').trim(),
+          block_22_03: (modalBlocksDraft.block_22_03 || '').trim(),
+        },
+        kejadianPenting: modalKejadianPenting.trim(),
         catatanPembimbing: noteDraft.trim(),
         updatedAt: new Date().toISOString(),
       });
@@ -237,11 +335,20 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     if (!inspectedStudent) return;
     setSavingModalProfile(true);
     try {
+      const formattedWaktu = formatMagangPeriodRange(
+        editMulaiTanggal,
+        editSelesaiTanggal,
+        editJamKerja,
+        inspectedProfile?.waktuMagang
+      );
       await onSaveInternProfile({
         id: inspectedStudent.id,
         studentId: inspectedStudent.id,
         tempatMagang: editTempat.trim(),
-        waktuMagang: editWaktu.trim(),
+        waktuMagang: formattedWaktu,
+        mulaiTanggal: editMulaiTanggal,
+        selesaiTanggal: editSelesaiTanggal,
+        jamKerjaHarian: editJamKerja.trim(),
         kompetensiMagang: editKompetensi.trim(),
         incomeMagangRp: Math.max(0, Number(editIncome.replace(/[^\d]/g, '')) || 0),
         pembimbingNama: editPembimbing.trim(),
@@ -292,9 +399,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       .map((it) => ({ ...it, label: it.label.trim(), active: true }))
       .filter((it) => it.label.length > 0);
     if (cleaned.length === 0) return;
+    const safePerJuz = Math.max(1, Math.min(100, Math.round(Number(draftLembarPerJuz) || 10)));
     setSavingTrackerConfig(true);
     try {
-      await onSaveTrackerItems(cleaned);
+      await onSaveTrackerItems(cleaned, safePerJuz);
     } finally {
       setSavingTrackerConfig(false);
     }
@@ -468,32 +576,42 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
           </div>
 
-          {/* Rekapitulasi Per Item Tracker Pada Tanggal Ini */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
-            <div className="text-xs font-bold text-slate-900 flex items-center justify-between gap-2">
-              <span>
-                Rekapitulasi ✓ vs ✗ Per Item ({formatTanggalShort(selectedDate)})
-              </span>
-              <span className="text-[11px] font-normal text-slate-500 tabular-nums">
-                Dari {summaryStats.filledCount} santri yang mengisi
-              </span>
+          {/* Rekapitulasi Tilawah 30 Juz & Item Tracker Pada Tanggal Ini */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+            <div className="lg:col-span-5">
+              <TilawahDonutChart
+                summary={summaryStats.avgTilawahSummary}
+                title="Rata-rata Capaian Tilawah (Target 30 Juz)"
+                subtitle={`Total kelas/filter: ${summaryStats.totalScopeTilawah.totalLembar.toLocaleString('id-ID')} lembar (${summaryStats.totalScopeTilawah.totalJuz.toLocaleString('id-ID')} Juz) dari ${summaryStats.totalStudentsInScope} santri.`}
+              />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-              {summaryStats.trackerStatsOnDate.itemStats.map((st) => (
-                <div
-                  key={st.item.id}
-                  className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1"
-                >
-                  <div className="text-[11px] font-bold text-slate-800 truncate">
-                    {st.item.label}
+
+            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-2.5 flex flex-col justify-between">
+              <div className="text-xs font-bold text-slate-900 flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  Rekapitulasi ✓ vs ✗ Per Item ({formatTanggalShort(selectedDate)})
+                </span>
+                <span className="text-[11px] font-normal text-slate-500 tabular-nums">
+                  Dari {summaryStats.filledCount} santri yang mengisi
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {summaryStats.trackerStatsOnDate.itemStats.map((st) => (
+                  <div
+                    key={st.item.id}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1"
+                  >
+                    <div className="text-[11px] font-bold text-slate-800 truncate">
+                      {st.item.label}
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] tabular-nums">
+                      <span className="font-bold text-emerald-700">✓ {st.yesCount}</span>
+                      <span className="font-bold text-rose-600">✗ {st.noCount}</span>
+                      <span className="font-semibold text-slate-600">{st.yesPct}%</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] tabular-nums">
-                    <span className="font-bold text-emerald-700">✓ {st.yesCount}</span>
-                    <span className="font-bold text-rose-600">✗ {st.noCount}</span>
-                    <span className="font-semibold text-slate-600">{st.yesPct}%</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -551,9 +669,19 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                   <span className="text-slate-400 italic">Belum diisi</span>
                                 )}
                               </div>
-                              {prof?.kompetensiMagang && (
-                                <div className="text-[11px] text-slate-500 truncate max-w-[200px]">
-                                  {prof.kompetensiMagang}
+                              {formatMagangPeriodRange(
+                                prof?.mulaiTanggal,
+                                prof?.selesaiTanggal,
+                                prof?.jamKerjaHarian,
+                                prof?.waktuMagang
+                              ) && (
+                                <div className="text-[11px] text-slate-500 truncate max-w-[210px]">
+                                  {formatMagangPeriodRange(
+                                    prof?.mulaiTanggal,
+                                    prof?.selesaiTanggal,
+                                    prof?.jamKerjaHarian,
+                                    prof?.waktuMagang
+                                  )}
                                 </div>
                               )}
                               <div className="text-[11px] font-bold text-emerald-800 mt-0.5 tabular-nums">
@@ -563,10 +691,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
                             <td className="py-3 px-3 align-top">
                               {log ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]">
-                                  <Check className="w-3 h-3" />
-                                  <span>Sudah Mengisi</span>
-                                </span>
+                                <div className="space-y-1">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]">
+                                    <Check className="w-3 h-3" />
+                                    <span>Sudah Mengisi</span>
+                                  </span>
+                                  {Number(log.tilawahLembar || 0) > 0 && (
+                                    <div className="text-[10px] font-semibold text-emerald-700 tabular-nums">
+                                      Tilawah: {log.tilawahLembar} Lbr
+                                    </div>
+                                  )}
+                                </div>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-bold text-[11px]">
                                   Belum Mengisi
@@ -610,12 +745,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
                             <td className="py-3 px-3 align-top tabular-nums">
                               {log ? (
-                                <div>
+                                <div className="space-y-0.5">
                                   <span className="font-bold text-emerald-700">
                                     ✓ {otherYes}/{nonSholatItems.length}
                                   </span>
+                                  {(log.kejadianPenting || '').trim() && (
+                                    <div className="text-[10px] text-amber-800 font-semibold">
+                                      Ada kejadian penting
+                                    </div>
+                                  )}
                                   {(log.catatanPembimbing || '').trim() && (
-                                    <div className="text-[10px] text-emerald-800 font-semibold mt-0.5">
+                                    <div className="text-[10px] text-emerald-800 font-semibold">
                                       Ada catatan pembimbing
                                     </div>
                                   )}
@@ -632,8 +772,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                   onClick={() => openStudentDetail(st.id)}
                                   className="px-3 py-1.5 rounded-lg bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 font-bold inline-flex items-center gap-1"
                                 >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span>Detail</span>
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <span>Detail &amp; Edit</span>
                                 </button>
                                 <button
                                   type="button"
@@ -709,8 +849,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                           onClick={() => openStudentDetail(st.id)}
                           className="min-h-[42px] px-3 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-1.5"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Detail &amp; Catatan</span>
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Detail &amp; Edit</span>
                         </button>
                         <button
                           type="button"
@@ -761,13 +901,44 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
           )}
 
+          {/* Konversi Lembar ke Juz (Target 30 Juz) */}
+          <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-slate-900">
+                Pengaturan Konversi Tilawah (Target 30 Juz)
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                Dipakai menghitung persentase diagram lingkaran 30 Juz di dashboard Admin, Santri, &amp; PDF Magang.
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-semibold text-slate-700">1 Juz =</span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                disabled={!canManageTrackerItems}
+                value={draftLembarPerJuz}
+                onChange={(e) =>
+                  setDraftLembarPerJuz(
+                    Math.max(1, Math.min(100, Math.round(Number(e.target.value) || 10)))
+                  )
+                }
+                className="w-20 min-h-[38px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl text-center disabled:bg-slate-100"
+              />
+              <span className="text-xs font-semibold text-slate-700">
+                Lembar (30 Juz = {draftLembarPerJuz * 30} Lbr)
+              </span>
+            </div>
+          </div>
+
           {/* Add New Item Form (Admin Only) */}
           {canManageTrackerItems && (
             <form
               onSubmit={handleAddTrackerItem}
               className="p-3.5 rounded-2xl bg-[#E8FAF3]/60 border border-emerald-200 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
             >
-              <div className="sm:col-span-5">
+              <div className="sm:col-span-4">
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Nama Item Ibadah / Amal Baru
                 </label>
@@ -792,15 +963,15 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   <option value="lainnya">Amal &amp; Ibadah Tambahan</option>
                 </select>
               </div>
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">Label ✓ / ✗</label>
                 <select
                   value={newMode}
                   onChange={(e) => setNewMode(e.target.value as InternTrackerMode)}
                   className="w-full min-h-[40px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
                 >
-                  <option value="terlaksana">Terlaksana / Tidak</option>
-                  <option value="jamaah">Berjamaah / Tdk Jamaah</option>
+                  <option value="terlaksana">✓ Terlaksana / ✗ Tidak</option>
+                  <option value="jamaah">✓ Berjamaah / ✗ Tidak Jamaah</option>
                 </select>
               </div>
               <div className="sm:col-span-2">
@@ -817,108 +988,111 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
           {/* Items List */}
           <div className="space-y-2">
-            {draftItems.map((item, idx) => {
-              const labels = getTrackerButtonLabels(item.mode);
-              return (
-                <div
-                  key={item.id}
-                  className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center"
-                >
-                  <div className="md:col-span-5">
-                    <input
-                      type="text"
-                      disabled={!canManageTrackerItems}
-                      value={item.label}
-                      onChange={(e) =>
-                        setDraftItems((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, label: e.target.value } : p))
-                        )
-                      }
-                      className="w-full min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
-                    />
-                  </div>
-
-                  <div className="md:col-span-3">
-                    <select
-                      disabled={!canManageTrackerItems}
-                      value={item.group}
-                      onChange={(e) =>
-                        setDraftItems((prev) =>
-                          prev.map((p, i) =>
-                            i === idx
-                              ? { ...p, group: e.target.value as InternTrackerGroup }
-                              : p
-                          )
-                        )
-                      }
-                      className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
-                    >
-                      <option value="sholat">{getTrackerGroupLabel('sholat')}</option>
-                      <option value="tilawah">{getTrackerGroupLabel('tilawah')}</option>
-                      <option value="kebersihan">{getTrackerGroupLabel('kebersihan')}</option>
-                      <option value="lainnya">{getTrackerGroupLabel('lainnya')}</option>
-                    </select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <select
-                      disabled={!canManageTrackerItems}
-                      value={item.mode}
-                      onChange={(e) =>
-                        setDraftItems((prev) =>
-                          prev.map((p, i) =>
-                            i === idx ? { ...p, mode: e.target.value as InternTrackerMode } : p
-                          )
-                        )
-                      }
-                      className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
-                    >
-                      <option value="jamaah">✓ Berjamaah / ✗ Tdk Jamaah</option>
-                      <option value="terlaksana">✓ Terlaksana / ✗ Tidak</option>
-                    </select>
-                    <div className="text-[10px] text-slate-500 mt-0.5 md:hidden">
-                      Pilihan: ✓ {labels.yesLabel} / ✗ {labels.noLabel}
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 flex items-center justify-end gap-1">
-                    {canManageTrackerItems && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => handleMoveTrackerItem(idx, -1)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
-                          title="Naikkan"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === draftItems.length - 1}
-                          onClick={() => handleMoveTrackerItem(idx, 1)}
-                          className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
-                          title="Turunkan"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={draftItems.length <= 1}
-                          onClick={() =>
-                            setDraftItems((prev) => prev.filter((_, i) => i !== idx))
-                          }
-                          className="p-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-35"
-                          title="Hapus Item"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+            {draftItems.map((item, idx) => (
+              <div
+                key={item.id}
+                className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center"
+              >
+                <div className="md:col-span-4">
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                    Nama Item Tracker
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!canManageTrackerItems}
+                    value={item.label}
+                    onChange={(e) =>
+                      setDraftItems((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, label: e.target.value } : p))
+                      )
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                  />
                 </div>
-              );
-            })}
+
+                <div className="md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                    Kelompok
+                  </label>
+                  <select
+                    disabled={!canManageTrackerItems}
+                    value={item.group}
+                    onChange={(e) =>
+                      setDraftItems((prev) =>
+                        prev.map((p, i) =>
+                          i === idx
+                            ? { ...p, group: e.target.value as InternTrackerGroup }
+                            : p
+                        )
+                      )
+                    }
+                    className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                  >
+                    <option value="sholat">{getTrackerGroupLabel('sholat')}</option>
+                    <option value="tilawah">{getTrackerGroupLabel('tilawah')}</option>
+                    <option value="kebersihan">{getTrackerGroupLabel('kebersihan')}</option>
+                    <option value="lainnya">{getTrackerGroupLabel('lainnya')}</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                    Label Pilihan ✓ / ✗
+                  </label>
+                  <select
+                    disabled={!canManageTrackerItems}
+                    value={item.mode}
+                    onChange={(e) =>
+                      setDraftItems((prev) =>
+                        prev.map((p, i) =>
+                          i === idx ? { ...p, mode: e.target.value as InternTrackerMode } : p
+                        )
+                      )
+                    }
+                    className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                  >
+                    <option value="jamaah">✓ Berjamaah / ✗ Tidak Jamaah</option>
+                    <option value="terlaksana">✓ Terlaksana / ✗ Tidak</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2 flex items-center justify-end gap-1">
+                  {canManageTrackerItems && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveTrackerItem(idx, -1)}
+                        className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
+                        title="Naikkan"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === draftItems.length - 1}
+                        onClick={() => handleMoveTrackerItem(idx, 1)}
+                        className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
+                        title="Turunkan"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={draftItems.length <= 1}
+                        onClick={() =>
+                          setDraftItems((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="p-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-35"
+                        title="Hapus Item"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {canManageTrackerItems && (
@@ -983,6 +1157,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               </div>
             </div>
 
+            {/* Ringkasan Tilawah Personal Santri */}
+            <TilawahDonutChart
+              summary={inspectedStudentTilawah}
+              title={`Capaian Tilawah ${inspectedStudent.nama} (Target 30 Juz)`}
+              subtitle="Akumulasi lembar tilawah dari seluruh jurnal magang santri ini."
+            />
+
             {/* Edit Profil Magang oleh Admin / Guru */}
             <form
               onSubmit={handleSaveModalProfile}
@@ -990,66 +1171,69 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             >
               <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                 <Briefcase className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Profil Magang Santri</span>
+                <span>Edit Profil Magang Santri</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Tempat Magang
-                  </label>
-                  <input
-                    type="text"
-                    value={editTempat}
-                    onChange={(e) => setEditTempat(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Waktu Magang
-                  </label>
-                  <input
-                    type="text"
-                    value={editWaktu}
-                    onChange={(e) => setEditWaktu(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Kompetensi Magang
-                  </label>
-                  <input
-                    type="text"
-                    value={editKompetensi}
-                    onChange={(e) => setEditKompetensi(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="space-y-2.5">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Income (Rp)
+                      Tempat Magang
                     </label>
                     <input
                       type="text"
-                      inputMode="numeric"
-                      value={editIncome}
-                      onChange={(e) => setEditIncome(e.target.value.replace(/[^\d]/g, ''))}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono"
+                      value={editTempat}
+                      onChange={(e) => setEditTempat(e.target.value)}
+                      className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
                     />
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Pembimbing
+                      Kompetensi Magang
                     </label>
                     <input
                       type="text"
-                      value={editPembimbing}
-                      onChange={(e) => setEditPembimbing(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                      value={editKompetensi}
+                      onChange={(e) => setEditKompetensi(e.target.value)}
+                      className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Income (Rp)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={editIncome}
+                        onChange={(e) => setEditIncome(e.target.value.replace(/[^\d]/g, ''))}
+                        className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Pembimbing
+                      </label>
+                      <input
+                        type="text"
+                        value={editPembimbing}
+                        onChange={(e) => setEditPembimbing(e.target.value)}
+                        className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <MagangPeriodPicker
+                    mulaiTanggal={editMulaiTanggal}
+                    selesaiTanggal={editSelesaiTanggal}
+                    jamKerjaHarian={editJamKerja}
+                    legacyWaktuMagang={inspectedProfile?.waktuMagang}
+                    onChangeMulai={setEditMulaiTanggal}
+                    onChangeSelesai={setEditSelesaiTanggal}
+                    onChangeJamKerja={setEditJamKerja}
+                  />
                 </div>
               </div>
               <div className="flex justify-end">
@@ -1064,12 +1248,14 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               </div>
             </form>
 
-            {/* Date Selector & Journal Inspection */}
+            {/* Date Selector & Full Admin/Guru Daily Journal Editor */}
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Jurnal Tanggal: {formatTanggalIndonesia(modalDate)}</span>
+                  <span>
+                    Koreksi / Isi Jurnal Tanggal: {formatTanggalIndonesia(modalDate)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -1084,7 +1270,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                       onChange={(e) => setModalDate(e.target.value)}
                       className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
                     >
-                      <option value={modalDate}>Pilih riwayat ({inspectedStudentLogs.length} hari)</option>
+                      <option value={modalDate}>
+                        Riwayat ({inspectedStudentLogs.length} hari)
+                      </option>
                       {inspectedStudentLogs.map((l) => (
                         <option key={l.id} value={l.tanggal}>
                           {formatTanggalShort(l.tanggal)}
@@ -1095,89 +1283,167 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
               </div>
 
-              {!activeModalLog ? (
-                <div className="p-6 text-center border border-dashed border-slate-200 rounded-2xl text-xs text-slate-500">
-                  Santri belum mengisi jurnal harian untuk tanggal {formatTanggalShort(modalDate)}.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Tracker Results */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {trackerItems.map((it) => {
-                      const val = activeModalLog.trackerResults?.[it.id];
-                      const labels = getTrackerButtonLabels(it.mode);
-                      return (
-                        <div
-                          key={it.id}
-                          className={`p-2.5 rounded-xl border text-xs ${
-                            val === 'yes'
-                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                              : val === 'no'
-                                ? 'bg-rose-50 border-rose-200 text-rose-900'
-                                : 'bg-slate-50 border-slate-200 text-slate-500'
-                          }`}
-                        >
-                          <div className="font-bold truncate">{it.label}</div>
-                          <div className="text-[11px] mt-0.5 font-semibold">
-                            {val === 'yes'
-                              ? `✓ ${labels.yesLabel}`
-                              : val === 'no'
-                                ? `✗ ${labels.noLabel}`
-                                : 'Belum dipilih'}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* 5 Blok Jam */}
-                  <div className="space-y-2">
-                    {INTERN_HOURLY_BLOCK_DEFS.map((def) => {
-                      const txt = (
-                        (activeModalLog.hourlyBlocks || EMPTY_HOURLY_BLOCKS)[def.key] || ''
-                      ).trim();
-                      return (
-                        <div
-                          key={def.key}
-                          className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs"
-                        >
-                          <div className="font-bold font-mono text-emerald-800 text-[11px]">
-                            {def.timeRange} · {def.shortLabel}
-                          </div>
-                          <p className="text-slate-700 mt-0.5 leading-relaxed whitespace-pre-line">
-                            {txt || <span className="italic text-slate-400">Tidak diisi</span>}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Catatan Pembimbing */}
-                  <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-200 space-y-2">
-                    <label className="block text-xs font-bold text-emerald-950">
-                      Catatan Pembimbing untuk Tanggal {formatTanggalShort(modalDate)}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={noteDraft}
-                      onChange={(e) => setNoteDraft(e.target.value)}
-                      placeholder="Tulis apresiasi, evaluasi ibadah, atau arahan magang untuk santri..."
-                      className="w-full px-3 py-2 text-xs bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        disabled={savingNote || isBusy}
-                        onClick={() => void handleSaveSupervisorNote()}
-                        className="min-h-[40px] px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        <Save className="w-3.5 h-3.5 text-[#1DF27A]" />
-                        <span>{savingNote ? 'Menyimpan...' : 'Simpan Catatan Pembimbing'}</span>
-                      </button>
-                    </div>
-                  </div>
+              {!activeModalLog && (
+                <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                  Santri belum mengisi jurnal pada {formatTanggalShort(modalDate)}. Admin / Guru tetap dapat mengisikan atau mengoreksi tracker &amp; jurnal di bawah ini lalu klik Simpan.
                 </div>
               )}
+
+              <div className="space-y-3">
+                {/* Editable Tracker Results (✓ / ✗) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {trackerItems.map((it) => {
+                    const val = modalTrackerDraft[it.id];
+                    const labels = getTrackerButtonLabels(it.mode);
+                    return (
+                      <div
+                        key={it.id}
+                        className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 text-xs"
+                      >
+                        <div className="font-bold text-slate-900">{it.label}</div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalTrackerDraft((prev) => ({ ...prev, [it.id]: 'yes' }))
+                            }
+                            className={`min-h-[34px] px-2 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center justify-center gap-1 ${
+                              val === 'yes'
+                                ? 'bg-emerald-600 border-emerald-700 text-white'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50'
+                            }`}
+                          >
+                            <Check className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{labels.yesLabel}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalTrackerDraft((prev) => ({ ...prev, [it.id]: 'no' }))
+                            }
+                            className={`min-h-[34px] px-2 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center justify-center gap-1 ${
+                              val === 'no'
+                                ? 'bg-rose-600 border-rose-700 text-white'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-rose-50'
+                            }`}
+                          >
+                            <X className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{labels.noLabel}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Editable Tilawah Lembar */}
+                <div className="p-3 rounded-xl border border-emerald-200 bg-[#E8FAF3]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div>
+                    <div className="font-bold text-emerald-950">
+                      Lembar Tilawah Hari Ini (Opsional)
+                    </div>
+                    <div className="text-[11px] text-slate-600">
+                      1 Juz = {lembarPerJuzConfig} Lembar
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      step="0.5"
+                      value={modalTilawahLembar}
+                      onChange={(e) => setModalTilawahLembar(e.target.value)}
+                      placeholder="0"
+                      className="w-24 min-h-[36px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-emerald-200 rounded-lg"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">Lbr</span>
+                    {[1, 5, 10].map((inc) => (
+                      <button
+                        key={inc}
+                        type="button"
+                        onClick={() =>
+                          setModalTilawahLembar((prev) =>
+                            String(Math.min(1000, (Number(prev) || 0) + inc))
+                          )
+                        }
+                        className="min-h-[34px] px-2 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-[11px] font-bold"
+                      >
+                        +{inc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Editable 5 Blok Jam */}
+                <div className="space-y-2">
+                  {INTERN_HOURLY_BLOCK_DEFS.map((def) => (
+                    <div
+                      key={def.key}
+                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs space-y-1"
+                    >
+                      <div className="font-bold font-mono text-emerald-800 text-[11px]">
+                        {def.timeRange} · {def.shortLabel}
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={modalBlocksDraft[def.key]}
+                        onChange={(e) =>
+                          setModalBlocksDraft((prev) => ({
+                            ...prev,
+                            [def.key]: e.target.value,
+                          }))
+                        }
+                        placeholder={def.hint}
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Editable Kejadian Penting */}
+                <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5 text-xs">
+                  <label className="block font-bold text-amber-950">
+                    Kejadian Penting Hari Ini
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={modalKejadianPenting}
+                    onChange={(e) => setModalKejadianPenting(e.target.value)}
+                    placeholder="Catat momen penting, kendala, atau pencapaian hari ini..."
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-amber-200 rounded-lg"
+                  />
+                </div>
+
+                {/* Catatan Pembimbing */}
+                <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-200 space-y-2">
+                  <label className="block text-xs font-bold text-emerald-950">
+                    Catatan Pembimbing untuk Tanggal {formatTanggalShort(modalDate)}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    placeholder="Tulis apresiasi, evaluasi ibadah, atau arahan magang untuk santri..."
+                    className="w-full px-3 py-2 text-xs bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      disabled={savingNote || isBusy}
+                      onClick={() => void handleSaveModalDailyLog()}
+                      className="min-h-[40px] px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5 text-[#1DF27A]" />
+                      <span>
+                        {savingNote
+                          ? 'Menyimpan...'
+                          : 'Simpan Jurnal, Tracker & Catatan Pembimbing'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -98,6 +98,8 @@ export interface BrandingTemplateConfig {
   lockRaporMessage?: string;
   // Pengaturan Item Checklist Tracker Ibadah & Amal Magang (dikelola Admin)
   internTrackerItems?: InternTrackerItem[];
+  // Konversi jumlah lembar Al-Qur'an per 1 Juz (default 10 lembar)
+  internLembarPerJuz?: number;
 }
 
 export type InternTrackerMode = 'jamaah' | 'terlaksana';
@@ -116,6 +118,9 @@ export interface InternProfile {
   studentId: string;
   tempatMagang: string;
   waktuMagang: string;
+  mulaiTanggal?: string; // YYYY-MM-DD
+  selesaiTanggal?: string; // YYYY-MM-DD
+  jamKerjaHarian?: string;
   kompetensiMagang: string;
   incomeMagangRp: number;
   pembimbingNama?: string;
@@ -135,7 +140,9 @@ export interface InternDailyLog {
   studentId: string;
   tanggal: string; // YYYY-MM-DD
   trackerResults: Record<string, 'yes' | 'no'>;
+  tilawahLembar?: number;
   hourlyBlocks: InternHourlyBlocks;
+  kejadianPenting?: string;
   catatanPembimbing?: string;
   updatedAt: string;
 }

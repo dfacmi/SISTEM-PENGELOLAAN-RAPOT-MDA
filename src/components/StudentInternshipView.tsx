@@ -26,16 +26,21 @@ import {
 import { formatRupiah } from '../utils/grading';
 import {
   computeInternTrackerStats,
+  computeTilawahProgress,
   EMPTY_HOURLY_BLOCKS,
+  formatMagangPeriodRange,
   formatTanggalIndonesia,
   formatTanggalShort,
   getTodayIsoDateLocal,
   getTrackerButtonLabels,
   getTrackerGroupLabel,
   INTERN_HOURLY_BLOCK_DEFS,
+  resolveInternLembarPerJuz,
   resolveInternTrackerItems,
 } from '../utils/internship';
 import { mergeTemplateConfig } from '../utils/theme';
+import { MagangPeriodPicker } from './MagangPeriodPicker';
+import { TilawahDonutChart } from './TilawahDonutChart';
 
 interface StudentInternshipViewProps {
   db: MdaDatabase;
@@ -82,9 +87,13 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
     [db.internDailyLogs, student?.id]
   );
 
+  const lembarPerJuz = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+
   // Bagian A: Profil Magang form state
   const [tempatMagang, setTempatMagang] = useState('');
-  const [waktuMagang, setWaktuMagang] = useState('');
+  const [mulaiTanggal, setMulaiTanggal] = useState('');
+  const [selesaiTanggal, setSelesaiTanggal] = useState('');
+  const [jamKerjaHarian, setJamKerjaHarian] = useState('');
   const [kompetensiMagang, setKompetensiMagang] = useState('');
   const [incomeInput, setIncomeInput] = useState('0');
   const [pembimbingNama, setPembimbingNama] = useState('');
@@ -92,7 +101,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
   useEffect(() => {
     setTempatMagang(existingProfile?.tempatMagang || '');
-    setWaktuMagang(existingProfile?.waktuMagang || '');
+    setMulaiTanggal(existingProfile?.mulaiTanggal || '');
+    setSelesaiTanggal(existingProfile?.selesaiTanggal || '');
+    setJamKerjaHarian(existingProfile?.jamKerjaHarian || '');
     setKompetensiMagang(existingProfile?.kompetensiMagang || '');
     setIncomeInput(String(existingProfile?.incomeMagangRp ?? 0));
     setPembimbingNama(existingProfile?.pembimbingNama || '');
@@ -101,7 +112,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
   // Bagian B: Jurnaling Harian & Tracker state
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIsoDateLocal());
   const [trackerResults, setTrackerResults] = useState<Record<string, 'yes' | 'no'>>({});
+  const [tilawahLembarInput, setTilawahLembarInput] = useState('');
   const [hourlyBlocks, setHourlyBlocks] = useState<InternHourlyBlocks>({ ...EMPTY_HOURLY_BLOCKS });
+  const [kejadianPenting, setKejadianPenting] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [savingLog, setSavingLog] = useState(false);
 
@@ -116,20 +129,32 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
     setValidationError(null);
     if (logForSelectedDate) {
       setTrackerResults({ ...(logForSelectedDate.trackerResults || {}) });
+      setTilawahLembarInput(
+        typeof logForSelectedDate.tilawahLembar === 'number' && logForSelectedDate.tilawahLembar > 0
+          ? String(logForSelectedDate.tilawahLembar)
+          : ''
+      );
       setHourlyBlocks({
         ...EMPTY_HOURLY_BLOCKS,
         ...(logForSelectedDate.hourlyBlocks || {}),
       });
+      setKejadianPenting(logForSelectedDate.kejadianPenting || '');
     } else {
       // Fresh unlogged date: keep every tracker item unselected ("Belum dipilih")
       setTrackerResults({});
+      setTilawahLembarInput('');
       setHourlyBlocks({ ...EMPTY_HOURLY_BLOCKS });
+      setKejadianPenting('');
     }
   }, [logForSelectedDate, selectedDate, student?.id]);
 
   const stats = useMemo(
     () => computeInternTrackerStats(studentLogs, trackerItems),
     [studentLogs, trackerItems]
+  );
+  const tilawahProgress = useMemo(
+    () => computeTilawahProgress(studentLogs, lembarPerJuz),
+    [studentLogs, lembarPerJuz]
   );
 
   const groupedTrackerItems = useMemo(() => {
@@ -176,11 +201,20 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         0,
         Number(String(incomeInput).replace(/[^\d]/g, '')) || 0
       );
+      const formattedWaktu = formatMagangPeriodRange(
+        mulaiTanggal,
+        selesaiTanggal,
+        jamKerjaHarian,
+        existingProfile?.waktuMagang
+      );
       await onSaveInternProfile({
         id: student.id,
         studentId: student.id,
         tempatMagang: tempatMagang.trim(),
-        waktuMagang: waktuMagang.trim(),
+        waktuMagang: formattedWaktu,
+        mulaiTanggal,
+        selesaiTanggal,
+        jamKerjaHarian: jamKerjaHarian.trim(),
         kompetensiMagang: kompetensiMagang.trim(),
         incomeMagangRp: parsedIncome,
         pembimbingNama: pembimbingNama.trim(),
@@ -225,6 +259,12 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
       }
     }
 
+    const parsedLembar = Number(String(tilawahLembarInput).replace(',', '.'));
+    const tilawahLembar =
+      Number.isFinite(parsedLembar) && parsedLembar >= 0
+        ? Math.min(1000, Math.round(parsedLembar * 10) / 10)
+        : 0;
+
     setSavingLog(true);
     try {
       await onSaveDailyLog({
@@ -232,6 +272,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         studentId: student.id,
         tanggal: selectedDate,
         trackerResults: sanitizedResults,
+        tilawahLembar,
         hourlyBlocks: {
           block_05_08: (hourlyBlocks.block_05_08 || '').trim(),
           block_08_12: (hourlyBlocks.block_08_12 || '').trim(),
@@ -239,6 +280,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
           block_18_21: (hourlyBlocks.block_18_21 || '').trim(),
           block_22_03: (hourlyBlocks.block_22_03 || '').trim(),
         },
+        kejadianPenting: kejadianPenting.trim(),
         catatanPembimbing: logForSelectedDate?.catatanPembimbing || '',
         updatedAt: new Date().toISOString(),
       });
@@ -326,6 +368,40 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         </div>
       </div>
 
+      {/* Diagram Lingkaran Tilawah 30 Juz & Info Periode Aktif */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+        <div className="lg:col-span-7">
+          <TilawahDonutChart
+            summary={tilawahProgress}
+            title="Capaian Tilawah Al-Qur’an Selama Magang (Target 30 Juz)"
+            subtitle="Akumulasi lembar tilawah harian yang tercatat pada jurnal magang Anda."
+          />
+        </div>
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-2">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+              Periode &amp; Tempat Magang Aktif
+            </div>
+            <div className="text-sm font-bold text-slate-900 mt-1">
+              {existingProfile?.tempatMagang || 'Belum dilengkapi di form Profil Magang'}
+            </div>
+            <div className="text-xs text-slate-600 mt-1">
+              {formatMagangPeriodRange(
+                existingProfile?.mulaiTanggal,
+                existingProfile?.selesaiTanggal,
+                existingProfile?.jamKerjaHarian,
+                existingProfile?.waktuMagang
+              ) || 'Pilih tanggal mulai & selesai magang pada kartu Profil Magang.'}
+            </div>
+          </div>
+          {existingProfile?.pembimbingNama && (
+            <div className="text-[11px] text-slate-500 border-t border-slate-100 pt-2">
+              Pembimbing: <span className="font-semibold text-slate-800">{existingProfile.pembimbingNama}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Responsive Grid: Bagian A (Profil) + Bagian B (Jurnaling & Tracker) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Bagian A: Profil Magang */}
@@ -358,18 +434,15 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Waktu / Periode Magang
-              </label>
-              <input
-                type="text"
-                value={waktuMagang}
-                onChange={(e) => setWaktuMagang(e.target.value)}
-                placeholder="Contoh: 12 Jan – 12 Apr 2026 (Senin–Sabtu, 08.00–17.00)"
-                className="w-full min-h-[42px] px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-              />
-            </div>
+            <MagangPeriodPicker
+              mulaiTanggal={mulaiTanggal}
+              selesaiTanggal={selesaiTanggal}
+              jamKerjaHarian={jamKerjaHarian}
+              legacyWaktuMagang={existingProfile?.waktuMagang}
+              onChangeMulai={setMulaiTanggal}
+              onChangeSelesai={setSelesaiTanggal}
+              onChangeJamKerja={setJamKerjaHarian}
+            />
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -571,6 +644,64 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                   </div>
                 ))}
               </div>
+              {/* Input Opsional Jumlah Lembar Tilawah */}
+              <div className="p-3.5 rounded-2xl border border-emerald-200 bg-[#E8FAF3]/55 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-bold text-emerald-950">
+                      Jumlah Lembar Tilawah Hari Ini (Opsional)
+                    </div>
+                    <div className="text-[11px] text-slate-600">
+                      Dihitung ke diagram 30 Juz (Konversi aktif: 1 Juz = {lembarPerJuz} Lembar).
+                    </div>
+                  </div>
+                  {Number(tilawahLembarInput) > 0 && (
+                    <span className="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-[11px] font-bold text-emerald-800 tabular-nums">
+                      ≈ {(Number(tilawahLembarInput) / lembarPerJuz).toFixed(1).replace('.', ',')} Juz
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      step="0.5"
+                      value={tilawahLembarInput}
+                      onChange={(e) => setTilawahLembarInput(e.target.value)}
+                      placeholder="0"
+                      className="w-28 min-h-[40px] px-3 py-1.5 text-xs font-mono font-bold bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">Lembar</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[1, 5, 10].map((inc) => (
+                      <button
+                        key={inc}
+                        type="button"
+                        onClick={() =>
+                          setTilawahLembarInput((prev) =>
+                            String(Math.min(1000, (Number(prev) || 0) + inc))
+                          )
+                        }
+                        className="min-h-[36px] px-2.5 py-1 rounded-lg bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-[11px] font-bold tabular-nums"
+                      >
+                        +{inc} Lembar
+                      </button>
+                    ))}
+                    {tilawahLembarInput && (
+                      <button
+                        type="button"
+                        onClick={() => setTilawahLembarInput('')}
+                        className="min-h-[36px] px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 text-[11px] font-semibold"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* 2. 5 Blok Jam Aktivitas Harian */}
@@ -613,6 +744,25 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     />
                   </div>
                 ))}
+
+                {/* 3. Kolom Kejadian Penting Hari Ini */}
+                <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <span className="text-xs font-bold text-slate-900">
+                      Kejadian Penting Hari Ini
+                    </span>
+                    <span className="text-[11px] font-semibold text-amber-800">
+                      Momen, Kendala, atau Pencapaian Khusus
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={kejadianPenting}
+                    onChange={(e) => setKejadianPenting(e.target.value)}
+                    placeholder="Contoh: Presentasi desain disetujui klien, menemukan kendala teknis & cara mengatasinya, atau hal penting lainnya..."
+                    className="w-full px-3 py-2 text-xs bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  />
+                </div>
               </div>
             </div>
 
@@ -695,10 +845,18 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       <div className="text-xs sm:text-sm font-bold text-slate-900">
                         {formatTanggalIndonesia(log.tanggal)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 tabular-nums">
+                      <div className="text-[11px] text-slate-500 mt-0.5 tabular-nums flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <span className="font-bold text-emerald-700">✓ {yesCount} Terpenuhi</span>
-                        {' · '}
+                        <span>·</span>
                         <span className="font-bold text-rose-600">✗ {noCount} Tidak</span>
+                        {Number(log.tilawahLembar || 0) > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                              Tilawah: {log.tilawahLembar} Lembar
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -754,6 +912,13 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       );
                     })}
                   </div>
+
+                  {(log.kejadianPenting || '').trim() && (
+                    <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950">
+                      <span className="font-bold text-amber-900">Kejadian Penting: </span>
+                      <span className="whitespace-pre-line">{log.kejadianPenting}</span>
+                    </div>
+                  )}
 
                   {(log.catatanPembimbing || '').trim() && (
                     <div className="p-2.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs text-emerald-950">

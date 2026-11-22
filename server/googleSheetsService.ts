@@ -1070,6 +1070,11 @@ export async function readDatabaseFromSheet(
         } catch {
           // keep default
         }
+      } else if (key === 'internLembarPerJuz') {
+        const num = Number(r[1]);
+        if (Number.isFinite(num) && num >= 1 && num <= 100) {
+          templateConfig.internLembarPerJuz = Math.round(num);
+        }
       } else {
         (templateConfig as unknown as Record<string, string>)[key] = String(r[1]);
       }

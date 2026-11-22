@@ -655,10 +655,11 @@ export async function upsertInternDailyLogOnServer(
 }
 
 export async function saveInternTrackerConfigOnServer(
-  internTrackerItems: InternTrackerItem[]
+  internTrackerItems: InternTrackerItem[],
+  internLembarPerJuz?: number
 ): Promise<{ data: MdaDatabase }> {
   return apiFetch('/api/internship/tracker-config/save', {
     method: 'POST',
-    body: { internTrackerItems },
+    body: { internTrackerItems, internLembarPerJuz },
   });
 }

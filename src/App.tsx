@@ -1461,13 +1461,22 @@ export default function App() {
     }
   };
 
-  const handleSaveInternTrackerItems = async (items: InternTrackerItem[]): Promise<boolean> => {
+  const handleSaveInternTrackerItems = async (
+    items: InternTrackerItem[],
+    lembarPerJuz?: number
+  ): Promise<boolean> => {
+    const cleanPerJuz =
+      typeof lembarPerJuz === 'number' && Number.isFinite(lembarPerJuz) && lembarPerJuz >= 1
+        ? Math.round(lembarPerJuz)
+        : tpl.internLembarPerJuz || 10;
+
     if (previewSampleMode) {
       setDb((prev) => ({
         ...prev,
         templateConfig: {
           ...tpl,
           internTrackerItems: items,
+          internLembarPerJuz: cleanPerJuz,
         },
       }));
       showToast('ok', 'Item tracker ibadah diperbarui di mode pratinjau.');
@@ -1478,13 +1487,13 @@ export default function App() {
     setIsSyncing(true);
     setSyncState('saving');
     try {
-      const res = await saveInternTrackerConfigOnServer(items);
+      const res = await saveInternTrackerConfigOnServer(items, cleanPerJuz);
       applyServerDatabase(res.data);
       if (res.data.templateConfig) {
         setPublicTemplateConfig(res.data.templateConfig);
       }
       setSyncState('saved');
-      showToast('ok', 'Daftar item tracker ibadah berhasil disimpan ke Google Sheets.');
+      showToast('ok', 'Pengaturan tracker ibadah & target Juz berhasil disimpan ke Google Sheets.');
       return true;
     } catch (err: any) {
       setSyncState('error');
@@ -2487,14 +2496,8 @@ export default function App() {
     },
     {
       id: 'master',
-      label: 'Santri, Guru & Periode',
+      label: 'Periode, Daftar Santri & Guru',
       icon: Users,
-      roles: ['admin', 'guru'],
-    },
-    {
-      id: 'grading',
-      label: 'Input & Hitung Nilai',
-      icon: PenSquare,
       roles: ['admin', 'guru'],
     },
     {
@@ -2504,21 +2507,27 @@ export default function App() {
       roles: ['admin', 'guru'],
     },
     {
-      id: 'portal',
-      label: effectiveRole === 'santri_ortu' ? 'Rapor Digital Putra Saya' : 'Portal Santri & Ortu',
-      icon: GraduationCap,
-      roles: ['admin', 'guru', 'santri_ortu'],
+      id: 'grading',
+      label: 'Input & Hitung Nilai',
+      icon: PenSquare,
+      roles: ['admin', 'guru'],
     },
     {
       id: 'portfolio',
-      label: 'Student Portfolio',
+      label: 'Portofolio Santri',
       icon: FolderGit2,
       roles: ['admin', 'guru', 'santri_ortu'],
     },
     {
       id: 'internship',
-      label: effectiveRole === 'santri_ortu' ? 'Magang & Tracker Ibadah' : 'Magang & Ibadah',
+      label: 'Magang & Jurnal Harian',
       icon: Briefcase,
+      roles: ['admin', 'guru', 'santri_ortu'],
+    },
+    {
+      id: 'portal',
+      label: 'Portal Santri & Orang Tua',
+      icon: GraduationCap,
       roles: ['admin', 'guru', 'santri_ortu'],
     },
     {
@@ -2553,26 +2562,27 @@ export default function App() {
 
       {/* Left Sidebar (Desktop + Mobile/Tablet Drawer) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 h-dvh bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div>
-          <div
-            className="h-16 px-3.5 border-b border-emerald-200/80 flex items-center justify-between lg:justify-center gap-2 text-white"
-            style={{ background: theme.bannerGradient }}
-          >
-            <div className="flex-1 lg:w-full inline-flex items-center justify-center bg-white/95 rounded-xl px-3 py-1.5 shadow-xs">
-              <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
-            </div>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg text-white/90 hover:bg-white/15"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div
+          className="h-16 px-3.5 border-b border-emerald-200/80 flex items-center justify-between lg:justify-center gap-2 text-white shrink-0"
+          style={{ background: theme.bannerGradient }}
+        >
+          <div className="flex-1 lg:w-full inline-flex items-center justify-center bg-white/95 rounded-xl px-3 py-1.5 shadow-xs">
+            <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-white/90 hover:bg-white/15"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto pb-3">
 
           <nav className="p-3 space-y-1">
             {visibleNavItems.map((item) => {
@@ -2647,7 +2657,7 @@ export default function App() {
         </div>
 
         {/* Account & Role Footer */}
-        <div className="p-3 border-t border-slate-200 space-y-2">
+        <div className="p-3 border-t border-slate-200 space-y-2 shrink-0 bg-white">
           {actualRole === 'admin' && (
             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-[10px] font-semibold text-slate-500 mb-1">
@@ -3277,7 +3287,7 @@ export default function App() {
                   className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
                 >
                   <Briefcase className="w-4 h-4" />
-                  <span>Buka Magang &amp; Tracker Ibadah</span>
+                  <span>Buka Magang &amp; Jurnal Harian</span>
                 </button>
               </div>
             ) : (
@@ -3335,7 +3345,7 @@ export default function App() {
                   className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
                 >
                   <Briefcase className="w-4 h-4" />
-                  <span>Buka Magang &amp; Tracker Ibadah</span>
+                  <span>Buka Magang &amp; Jurnal Harian</span>
                 </button>
               </div>
             ) : (

@@ -7,14 +7,18 @@ import { BrandingTemplateConfig, InternDailyLog, InternTrackerItem, MdaDatabase 
 import { formatRupiah } from '../utils/grading';
 import {
   computeInternTrackerStats,
+  computeTilawahProgress,
+  formatMagangPeriodRange,
   formatTanggalIndonesia,
   formatTanggalShort,
   getTrackerButtonLabels,
   INTERN_HOURLY_BLOCK_DEFS,
+  resolveInternLembarPerJuz,
   resolveInternTrackerItems,
 } from '../utils/internship';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { MdaLogo } from './MdaLogo';
+import { TilawahDonutChart } from './TilawahDonutChart';
 
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
@@ -121,6 +125,7 @@ async function inlineExternalImagesForPdf(el: HTMLElement): Promise<() => void> 
 }
 
 function estimateDailyLogRowHeightPx(log: InternDailyLog, items: InternTrackerItem[]): number {
+  const dateColHeight = 48 + (Number(log.tilawahLembar || 0) > 0 ? 16 : 0);
   const trackerRows = Math.max(1, Math.ceil(items.length / 2));
   const trackerColHeight = trackerRows * 16 + 22;
 
@@ -133,10 +138,15 @@ function estimateDailyLogRowHeightPx(log: InternDailyLog, items: InternTrackerIt
   }
   if (blockLinesHeight === 0) blockLinesHeight = 24;
 
+  const kejadianText = (log.kejadianPenting || '').trim();
+  const kejadianHeight = kejadianText
+    ? Math.max(1, Math.ceil(kejadianText.length / 58)) * 12.5 + 18
+    : 0;
+
   const noteText = (log.catatanPembimbing || '').trim();
   const noteHeight = noteText ? Math.max(1, Math.ceil(noteText.length / 62)) * 12 + 18 : 0;
 
-  return Math.max(trackerColHeight, blockLinesHeight + noteHeight) + 18;
+  return Math.max(dateColHeight, trackerColHeight, blockLinesHeight + kejadianHeight + noteHeight) + 20;
 }
 
 interface LogPageChunk {
@@ -150,7 +160,7 @@ function paginateInternLogs(
   logs: InternDailyLog[],
   items: InternTrackerItem[]
 ): LogPageChunk[] {
-  const page1TableBudget = Math.max(200, 420 - Math.ceil(items.length / 3) * 26);
+  const page1TableBudget = Math.max(165, 390 - Math.ceil(items.length / 2) * 23);
   const nextPageTableBudget = 835;
   const signatureNeededPx = 170;
 
@@ -246,7 +256,10 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
   const autoScale = Math.min(1, Math.max(0.32, (viewportWidth - 24) / A4_WIDTH_PX));
   const activeScale = zoomMode === 'fit' ? autoScale : 1;
 
-  const tpl = mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG);
+  const tpl = useMemo(
+    () => mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG),
+    [templateConfig, db.templateConfig]
+  );
   const theme = getThemeStyles(tpl.accentTheme);
 
   const student = useMemo(
@@ -259,6 +272,17 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
     [db.internProfiles, student?.id]
   );
 
+  const formattedMagangPeriod = useMemo(
+    () =>
+      formatMagangPeriodRange(
+        profile?.mulaiTanggal,
+        profile?.selesaiTanggal,
+        profile?.jamKerjaHarian,
+        profile?.waktuMagang
+      ),
+    [profile?.mulaiTanggal, profile?.selesaiTanggal, profile?.jamKerjaHarian, profile?.waktuMagang]
+  );
+
   const studentLogs = useMemo(
     () =>
       (db.internDailyLogs || [])
@@ -268,9 +292,14 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
   );
 
   const trackerItems = useMemo(() => resolveInternTrackerItems(tpl), [tpl]);
+  const lembarPerJuz = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
   const stats = useMemo(
     () => computeInternTrackerStats(studentLogs, trackerItems),
     [studentLogs, trackerItems]
+  );
+  const tilawahProgress = useMemo(
+    () => computeTilawahProgress(studentLogs, lembarPerJuz),
+    [studentLogs, lembarPerJuz]
   );
 
   const activePeriod = useMemo(
@@ -535,8 +564,8 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-0.5 text-slate-500">Waktu Magang</td>
-                              <td className="py-0.5">: {profile?.waktuMagang || '-'}</td>
+                              <td className="py-0.5 text-slate-500">Periode Magang</td>
+                              <td className="py-0.5">: {formattedMagangPeriod || '-'}</td>
                             </tr>
                             <tr>
                               <td className="py-0.5 text-slate-500">Kompetensi</td>
@@ -552,38 +581,50 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                         </table>
                       </div>
 
-                      {/* Ringkasan Statistik Tracker Ibadah & Amal */}
-                      <div className="border border-slate-300 rounded-md overflow-hidden">
-                        <div
-                          className="px-3 py-1.5 text-[10.5px] font-bold text-white flex items-center justify-between"
-                          style={{ backgroundColor: theme.darkPill }}
-                        >
-                          <span>RINGKASAN MUTABAAH IBADAH &amp; AMAL HARIAN</span>
-                          <span className="tabular-nums">
-                            Sholat Berjamaah: {stats.sholatPct}% · Amal &amp; Tilawah:{' '}
-                            {stats.otherPct}%
-                          </span>
+                      {/* Ringkasan Mutabaah Ibadah & Diagram Tilawah 30 Juz */}
+                      <div className="grid grid-cols-12 gap-2.5 items-stretch">
+                        <div className="col-span-7 border border-slate-300 rounded-md overflow-hidden flex flex-col">
+                          <div
+                            className="px-2.5 py-1.5 text-[10px] font-bold text-white flex items-center justify-between gap-2"
+                            style={{ backgroundColor: theme.darkPill }}
+                          >
+                            <span>RINGKASAN MUTABAAH IBADAH</span>
+                            <span className="tabular-nums text-[9px]">
+                              Sholat: {stats.sholatPct}% · Amal: {stats.otherPct}%
+                            </span>
+                          </div>
+                          <div className="p-1.5 grid grid-cols-2 gap-1 text-[8.5px] bg-white flex-1">
+                            {stats.itemStats.map((st) => {
+                              const labels = getTrackerButtonLabels(st.item.mode);
+                              return (
+                                <div
+                                  key={st.item.id}
+                                  className="border border-slate-200 rounded px-1.5 py-1 flex items-center justify-between gap-1"
+                                >
+                                  <span className="font-semibold text-slate-800 truncate">
+                                    {st.item.label}
+                                  </span>
+                                  <span className="shrink-0 tabular-nums font-bold">
+                                    <span className="text-emerald-700">✓{st.yesCount}</span>{' '}
+                                    <span className="text-rose-600">✗{st.noCount}</span>{' '}
+                                    <span className="text-slate-500">({st.yesPct}%)</span>
+                                    <span className="sr-only">{labels.yesLabel}</span>
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="p-2 grid grid-cols-3 gap-1.5 text-[9.5px] bg-white">
-                          {stats.itemStats.map((st) => {
-                            const labels = getTrackerButtonLabels(st.item.mode);
-                            return (
-                              <div
-                                key={st.item.id}
-                                className="border border-slate-200 rounded px-2 py-1 flex items-center justify-between gap-1.5"
-                              >
-                                <span className="font-semibold text-slate-800 truncate">
-                                  {st.item.label}
-                                </span>
-                                <span className="shrink-0 tabular-nums font-bold">
-                                  <span className="text-emerald-700">✓{st.yesCount}</span>{' '}
-                                  <span className="text-rose-600">✗{st.noCount}</span>{' '}
-                                  <span className="text-slate-500">({st.yesPct}%)</span>
-                                  <span className="sr-only">{labels.yesLabel}</span>
-                                </span>
-                              </div>
-                            );
-                          })}
+
+                        <div className="col-span-5 flex items-stretch">
+                          <div className="w-full flex">
+                            <TilawahDonutChart
+                              compact
+                              summary={tilawahProgress}
+                              accentColor={theme.barFill}
+                              title="Capaian Tilawah (Target 30 Juz)"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -644,6 +685,11 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                                       <span className="text-emerald-700">✓ {yesTotal}</span> ·{' '}
                                       <span className="text-rose-600">✗ {noTotal}</span>
                                     </div>
+                                    {Number(log.tilawahLembar || 0) > 0 && (
+                                      <div className="mt-1 inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[8px] font-bold text-emerald-800 tabular-nums">
+                                        Tilawah: {log.tilawahLembar} Lbr
+                                      </div>
+                                    )}
                                   </td>
                                   <td className="border border-slate-300 px-2 py-1.5 align-top">
                                     <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
@@ -686,6 +732,11 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                                         </div>
                                       );
                                     })}
+                                    {(log.kejadianPenting || '').trim() && (
+                                      <div className="mt-1 pt-1 border-t border-amber-200 text-[8.5px] text-amber-950 bg-amber-50/70 px-1.5 py-0.5 rounded">
+                                        <strong>Kejadian Penting:</strong> {log.kejadianPenting}
+                                      </div>
+                                    )}
                                     {(log.catatanPembimbing || '').trim() && (
                                       <div className="mt-1 pt-1 border-t border-slate-200 text-[8.5px] text-emerald-900">
                                         <strong>Catatan Pembimbing:</strong> {log.catatanPembimbing}

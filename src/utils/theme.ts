@@ -67,5 +67,10 @@ export function mergeTemplateConfig(
   merged.internTrackerItems = Array.isArray(cfg?.internTrackerItems)
     ? cfg.internTrackerItems
     : fallback.internTrackerItems;
+  const rawPerJuz = Number(cfg?.internLembarPerJuz);
+  merged.internLembarPerJuz =
+    Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
+      ? Math.round(rawPerJuz)
+      : fallback.internLembarPerJuz || 10;
   return merged;
 }

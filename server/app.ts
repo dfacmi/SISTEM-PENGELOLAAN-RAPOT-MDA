@@ -1531,10 +1531,28 @@ export function createApiApp(): express.Express {
         res.status(400).json({ error: 'Konfigurasi template kosong.' });
         return;
       }
+      const currentDb = await loadDbFromStorage(storage);
+      const rawPerJuz = Number(templateConfig.internLembarPerJuz);
+      const existingPerJuz = Number(currentDb.templateConfig?.internLembarPerJuz);
+      const mergedTemplate: BrandingTemplateConfig = {
+        ...DEFAULT_TEMPLATE_CONFIG,
+        ...(currentDb.templateConfig || {}),
+        ...templateConfig,
+        internTrackerItems: Array.isArray(templateConfig.internTrackerItems)
+          ? templateConfig.internTrackerItems
+          : currentDb.templateConfig?.internTrackerItems ||
+            DEFAULT_TEMPLATE_CONFIG.internTrackerItems,
+        internLembarPerJuz:
+          Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
+            ? Math.round(rawPerJuz)
+            : Number.isFinite(existingPerJuz) && existingPerJuz >= 1 && existingPerJuz <= 100
+              ? Math.round(existingPerJuz)
+              : DEFAULT_TEMPLATE_CONFIG.internLembarPerJuz || 10,
+      };
       const nextDb =
         storage.mode === 'apps_script'
-          ? await saveTemplateConfigInAppsScript(storage.apiUrl, storage.secret, templateConfig)
-          : await saveTemplateConfigInSheet(storage.token, storage.spreadsheetId, templateConfig);
+          ? await saveTemplateConfigInAppsScript(storage.apiUrl, storage.secret, mergedTemplate)
+          : await saveTemplateConfigInSheet(storage.token, storage.spreadsheetId, mergedTemplate);
       res.json({ data: scopeDatabaseForSession(nextDb, req.session!) });
     } catch (err: any) {
       res.status(502).json({ error: err.message || 'Gagal menyimpan template.' });
@@ -2297,11 +2315,19 @@ export function createApiApp(): express.Express {
       }
 
       const incomeRaw = Number(profile.incomeMagangRp || 0);
+      const rawMulai = String(profile.mulaiTanggal || '').trim();
+      const rawSelesai = String(profile.selesaiTanggal || '').trim();
+      const mulaiTanggal = /^\d{4}-\d{2}-\d{2}$/.test(rawMulai) ? rawMulai : '';
+      const selesaiTanggal = /^\d{4}-\d{2}-\d{2}$/.test(rawSelesai) ? rawSelesai : '';
+      const jamKerjaHarian = String(profile.jamKerjaHarian || '').trim().slice(0, 120);
       const sanitizedProfile: InternProfile = {
         id: studentId,
         studentId,
         tempatMagang: String(profile.tempatMagang || '').trim().slice(0, 300),
         waktuMagang: String(profile.waktuMagang || '').trim().slice(0, 200),
+        mulaiTanggal,
+        selesaiTanggal,
+        jamKerjaHarian,
         kompetensiMagang: String(profile.kompetensiMagang || '').trim().slice(0, 500),
         incomeMagangRp: Number.isFinite(incomeRaw) && incomeRaw >= 0 ? Math.round(incomeRaw) : 0,
         pembimbingNama: String(profile.pembimbingNama || '').trim().slice(0, 150),
@@ -2382,11 +2408,18 @@ export function createApiApp(): express.Express {
         (l) => l.id === `${studentId}_${tanggal}` || (l.studentId === studentId && l.tanggal === tanggal)
       );
 
+      const rawLembar = Number(log.tilawahLembar);
+      const tilawahLembar =
+        Number.isFinite(rawLembar) && rawLembar >= 0
+          ? Math.min(1000, Math.round(rawLembar * 10) / 10)
+          : 0;
+
       const sanitizedLog: InternDailyLog = {
         id: `${studentId}_${tanggal}`,
         studentId,
         tanggal,
         trackerResults: cleanResults,
+        tilawahLembar,
         hourlyBlocks: {
           block_05_08: String(blocks.block_05_08 || '').trim().slice(0, 2000),
           block_08_12: String(blocks.block_08_12 || '').trim().slice(0, 2000),
@@ -2394,6 +2427,7 @@ export function createApiApp(): express.Express {
           block_18_21: String(blocks.block_18_21 || '').trim().slice(0, 2000),
           block_22_03: String(blocks.block_22_03 || '').trim().slice(0, 2000),
         },
+        kejadianPenting: String(log.kejadianPenting || '').trim().slice(0, 2000),
         // Santri tidak boleh menimpa catatan pembimbing
         catatanPembimbing:
           session.role === 'santri_ortu'
@@ -2432,7 +2466,10 @@ export function createApiApp(): express.Express {
         return;
       }
 
-      const { internTrackerItems } = req.body as { internTrackerItems?: InternTrackerItem[] };
+      const { internTrackerItems, internLembarPerJuz } = req.body as {
+        internTrackerItems?: InternTrackerItem[];
+        internLembarPerJuz?: number;
+      };
       if (!Array.isArray(internTrackerItems)) {
         res.status(400).json({ error: 'Daftar item tracker tidak valid.' });
         return;
@@ -2457,10 +2494,20 @@ export function createApiApp(): express.Express {
         .filter((item) => item.label.length > 0);
 
       const currentDb = await loadDbFromStorage(storage);
+      const rawPerJuz = Number(internLembarPerJuz);
+      const existingPerJuz = Number(currentDb.templateConfig?.internLembarPerJuz);
+      const cleanLembarPerJuz =
+        Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
+          ? Math.round(rawPerJuz)
+          : Number.isFinite(existingPerJuz) && existingPerJuz >= 1 && existingPerJuz <= 100
+            ? Math.round(existingPerJuz)
+            : 10;
+
       const nextTemplate: BrandingTemplateConfig = {
         ...DEFAULT_TEMPLATE_CONFIG,
         ...(currentDb.templateConfig || {}),
         internTrackerItems: cleanItems,
+        internLembarPerJuz: cleanLembarPerJuz,
       };
 
       const nextDb =
