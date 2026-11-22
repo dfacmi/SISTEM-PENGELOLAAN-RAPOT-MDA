@@ -190,8 +190,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
   // MODE 1: BULK "NILAI MATA PELAJARAN" PER KELAS
   // =========================================================
   const [bulkClassFilter, setBulkClassFilter] = useState<string>(() => {
-    const first = extractUniqueClasses(db.students, db.teachers)[0];
-    return first ? first.name : 'ALL';
+    const classes = extractUniqueClasses(db.students, db.teachers);
+    const firstNonEmpty = classes.find((c) => c.count > 0) || classes[0];
+    return firstNonEmpty ? firstNonEmpty.name : 'ALL';
   });
   const [bulkYear, setBulkYear] = useState<string>(selectedYear);
   const [bulkSemester, setBulkSemester] = useState<'Gasal' | 'Genap'>(selectedSemester);

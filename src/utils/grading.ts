@@ -218,13 +218,24 @@ export interface ClassFilterOption {
   count: number;
 }
 
-const CLASS_ORDER_PRIORITY = ['mda senior', 'mda intermediate', 'mda junior'];
+export const DEFAULT_CLASS_PRESETS = [
+  'MDA Junior',
+  'MDA Senior',
+  'MDA Putri',
+] as const;
+
+const CLASS_ORDER_PRIORITY = ['mda junior', 'mda senior', 'mda putri'];
 
 export function extractUniqueClasses(
   students: Student[],
   teachers: TeacherClass[] = []
 ): ClassFilterOption[] {
   const map = new Map<string, { name: string; count: number }>();
+
+  // Always seed the 3 built-in MDA class options so they appear even at (0 Santri)
+  DEFAULT_CLASS_PRESETS.forEach((preset) => {
+    map.set(preset.toLowerCase(), { name: preset, count: 0 });
+  });
 
   students.forEach((s) => {
     const normalized = normalizeClassName(s.kelas);
@@ -240,7 +251,13 @@ export function extractUniqueClasses(
 
   teachers.forEach((t) => {
     const normalized = normalizeClassName(t.kelasDiampu);
-    if (!normalized || /^semua\s*kelas$/i.test(normalized)) return;
+    if (
+      !normalized ||
+      /^semua\s*kelas$/i.test(normalized) ||
+      /^mda\s*junior\s*&\s*senior$/i.test(normalized)
+    ) {
+      return;
+    }
     const key = normalized.toLowerCase();
     if (!map.has(key)) {
       map.set(key, { name: normalized, count: 0 });

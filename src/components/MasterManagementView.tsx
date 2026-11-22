@@ -20,6 +20,7 @@ import {
   TeacherClass,
 } from '../types/mda';
 import {
+  DEFAULT_CLASS_PRESETS,
   extractUniqueClasses,
   generateSmartAccessPin,
   matchesClassFilter,
@@ -468,15 +469,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         program: `Muslim Digital Academy – ${val.replace(/^MDA\s+/i, '')}`,
                       });
                     }}
-                    placeholder="Contoh: MDA Senior / MDA Junior / Kelas Baru"
+                    placeholder="Contoh: MDA Junior / MDA Senior / MDA Putri"
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500"
                   />
                   <datalist id="mda-class-suggestions">
                     {Array.from(
                       new Set([
-                        'MDA Junior',
-                        'MDA Intermediate',
-                        'MDA Senior',
+                        ...DEFAULT_CLASS_PRESETS,
                         ...dynamicClasses.map((c) => c.name),
                       ])
                     ).map((cls) => (
@@ -487,9 +486,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {Array.from(
                         new Set([
-                          'MDA Junior',
-                          'MDA Intermediate',
-                          'MDA Senior',
+                          ...DEFAULT_CLASS_PRESETS,
                           ...dynamicClasses.map((c) => c.name),
                         ])
                       ).map((cls) => (
@@ -942,12 +939,25 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   </label>
                   <input
                     type="text"
+                    list="mda-teacher-class-suggestions"
                     value={editingTeacher.kelasDiampu}
                     onChange={(e) =>
                       setEditingTeacher({ ...editingTeacher, kelasDiampu: e.target.value })
                     }
+                    placeholder="Contoh: MDA Junior / MDA Senior / MDA Putri / Semua Kelas"
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
                   />
+                  <datalist id="mda-teacher-class-suggestions">
+                    {Array.from(
+                      new Set([
+                        ...DEFAULT_CLASS_PRESETS,
+                        ...dynamicClasses.map((c) => c.name),
+                        'Semua Kelas',
+                      ])
+                    ).map((cls) => (
+                      <option key={cls} value={cls} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
