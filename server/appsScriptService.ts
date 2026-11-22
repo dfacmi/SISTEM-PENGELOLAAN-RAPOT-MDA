@@ -297,6 +297,119 @@ export async function upsertStudentInAppsScript(
   });
 }
 
+export async function bulkImportStudentsInAppsScript(
+  apiUrl: string,
+  secret: string,
+  payload: {
+    students: Student[];
+    userAccess: UserAccess[];
+    duplicatePolicy?: 'skip' | 'update';
+  }
+): Promise<{
+  db: MdaDatabase;
+  addedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  addedAccessCount: number;
+}> {
+  return enqueueSheetOperation(`apps_script:${apiUrl}`, async () => {
+    const currentDb = await readDatabaseFromAppsScript(apiUrl);
+    const policy = payload.duplicatePolicy === 'update' ? 'update' : 'skip';
+
+    const nextStudents = [...currentDb.students];
+    const idRemap = new Map<string, string>();
+    let addedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const incoming of payload.students || []) {
+      const nisnKey = (incoming.nisnMda || '').trim().toLowerCase();
+      const idx = nextStudents.findIndex(
+        (s) =>
+          s.id === incoming.id ||
+          (Boolean(nisnKey) && s.nisnMda.trim().toLowerCase() === nisnKey)
+      );
+
+      if (idx !== -1) {
+        const existing = nextStudents[idx];
+        idRemap.set(incoming.id, existing.id);
+        if (policy === 'update') {
+          nextStudents[idx] = {
+            ...existing,
+            ...incoming,
+            id: existing.id,
+            fotoUrl: incoming.fotoUrl || existing.fotoUrl,
+            waliKelasId: incoming.waliKelasId || existing.waliKelasId,
+            waliKelasNama: incoming.waliKelasNama || existing.waliKelasNama,
+            emailSantriOrtu: incoming.emailSantriOrtu || existing.emailSantriOrtu,
+          };
+          updatedCount += 1;
+        } else {
+          skippedCount += 1;
+        }
+      } else {
+        nextStudents.push(incoming);
+        idRemap.set(incoming.id, incoming.id);
+        addedCount += 1;
+      }
+    }
+
+    const nextUserAccess = [...currentDb.userAccess];
+    let addedAccessCount = 0;
+
+    for (const rawAcc of payload.userAccess || []) {
+      const resolvedLinkedId = idRemap.get(rawAcc.linkedStudentId) || rawAcc.linkedStudentId;
+      const acc: UserAccess = {
+        ...rawAcc,
+        linkedStudentId: resolvedLinkedId,
+      };
+      const emailKey = (acc.email || '').trim().toLowerCase();
+      const accIdx = nextUserAccess.findIndex(
+        (u) =>
+          u.id === acc.id ||
+          (u.role === 'santri_ortu' &&
+            Boolean(acc.linkedStudentId) &&
+            u.linkedStudentId === acc.linkedStudentId) ||
+          (Boolean(emailKey) && u.email.trim().toLowerCase() === emailKey)
+      );
+
+      if (accIdx !== -1) {
+        if (policy === 'update') {
+          nextUserAccess[accIdx] = {
+            ...nextUserAccess[accIdx],
+            nama: acc.nama || nextUserAccess[accIdx].nama,
+            accessPin: acc.accessPin || nextUserAccess[accIdx].accessPin,
+            statusAktif: acc.statusAktif,
+          };
+        }
+      } else {
+        nextUserAccess.push(acc);
+        addedAccessCount += 1;
+      }
+    }
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      students: nextStudents,
+      userAccess: nextUserAccess,
+      lastSyncedAt: new Date().toISOString(),
+    };
+
+    if (addedCount > 0 || updatedCount > 0 || addedAccessCount > 0) {
+      const saved = await saveAllToAppsScript(apiUrl, secret, nextDb);
+      nextDb.lastSyncedAt = saved.updatedAt;
+    }
+
+    return {
+      db: nextDb,
+      addedCount,
+      updatedCount,
+      skippedCount,
+      addedAccessCount,
+    };
+  });
+}
+
 export async function deleteStudentInAppsScript(
   apiUrl: string,
   secret: string,

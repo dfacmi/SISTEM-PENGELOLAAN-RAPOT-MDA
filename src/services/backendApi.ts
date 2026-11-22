@@ -342,6 +342,32 @@ export async function upsertStudentOnServer(params: {
   });
 }
 
+export async function bulkImportStudentsOnServer(params: {
+  students: Student[];
+  userAccess: UserAccess[];
+  duplicatePolicy?: 'skip' | 'update';
+  googleAccessToken?: string | null;
+  spreadsheetId?: string | null;
+}): Promise<{
+  data: MdaDatabase;
+  addedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  addedAccessCount: number;
+}> {
+  return apiFetch('/api/students/bulk-import', {
+    method: 'POST',
+    body: {
+      students: params.students,
+      userAccess: params.userAccess,
+      duplicatePolicy: params.duplicatePolicy || 'skip',
+      spreadsheetId: params.spreadsheetId,
+    },
+    googleAccessToken: params.googleAccessToken,
+    spreadsheetId: params.spreadsheetId,
+  });
+}
+
 export async function deleteStudentOnServer(params: {
   studentId: string;
   googleAccessToken?: string | null;

@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Calendar,
   Check,
   Copy,
+  Download,
+  FileSpreadsheet,
   KeyRound,
   Plus,
   RefreshCw,
   Share2,
+  ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
   UserCheck,
@@ -18,6 +22,7 @@ import {
   MdaDatabase,
   Student,
   TeacherClass,
+  UserAccess,
 } from '../types/mda';
 import {
   DEFAULT_CLASS_PRESETS,
@@ -27,6 +32,14 @@ import {
   normalizeClassName,
   slugifyName,
 } from '../utils/grading';
+import {
+  BulkStudentDraftRow,
+  buildStudentsAndAccessFromDrafts,
+  downloadStudentImportTemplateXlsx,
+  formatPreset9MdaPutriAsText,
+  parseBulkStudentsSpreadsheet,
+  parseBulkStudentsText,
+} from '../utils/studentBulkImport';
 import { compressImageToDataUrl, processLogoImageToDataUrl } from '../utils/imageHelper';
 import { getParentPortalAccessUrl } from '../utils/theme';
 import { StudentAvatar } from './MdaLogo';
@@ -34,7 +47,13 @@ import { StudentAvatar } from './MdaLogo';
 interface MasterManagementViewProps {
   db: MdaDatabase;
   canManageAll: boolean;
+  isBusy?: boolean;
   onSaveStudents: (students: Student[]) => void;
+  onBulkImportStudents: (payload: {
+    students: Student[];
+    userAccess: UserAccess[];
+    duplicatePolicy: 'skip' | 'update';
+  }) => Promise<boolean>;
   onSaveTeachers: (teachers: TeacherClass[]) => void;
   onSavePeriods: (periods: AcademicPeriod[]) => void;
   onUploadPhotoToDrive: (file: File) => Promise<string | null>;
@@ -43,7 +62,9 @@ interface MasterManagementViewProps {
 export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
   db,
   canManageAll,
+  isBusy = false,
   onSaveStudents,
+  onBulkImportStudents,
   onSaveTeachers,
   onSavePeriods,
   onUploadPhotoToDrive,
@@ -59,7 +80,102 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
   const [santriClassFilter, setSantriClassFilter] = useState<string>('ALL');
   const [santriSearch, setSantriSearch] = useState<string>('');
 
+  // Bulk Import Modal State
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkRows, setBulkRows] = useState<BulkStudentDraftRow[]>([]);
+  const [bulkDuplicatePolicy, setBulkDuplicatePolicy] = useState<'skip' | 'update'>('skip');
+  const [bulkDefaultWaliId, setBulkDefaultWaliId] = useState<string>('');
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkParsing, setBulkParsing] = useState(false);
+
   const dynamicClasses = extractUniqueClasses(db.students, db.teachers);
+
+  const existingNisnSet = useMemo(() => {
+    return new Set(db.students.map((s) => s.nisnMda.trim().toLowerCase()));
+  }, [db.students]);
+
+  const bulkSummary = useMemo(() => {
+    let dup = 0;
+    let fresh = 0;
+    bulkRows.forEach((r) => {
+      if (existingNisnSet.has(r.nisnMda.trim().toLowerCase())) {
+        dup += 1;
+      } else {
+        fresh += 1;
+      }
+    });
+    return { total: bulkRows.length, fresh, dup };
+  }, [bulkRows, existingNisnSet]);
+
+  const handleBulkTextChange = (nextText: string) => {
+    setBulkText(nextText);
+    setBulkError(null);
+    setBulkRows(parseBulkStudentsText(nextText));
+  };
+
+  const handleApplyPreset9Putri = () => {
+    const presetText = formatPreset9MdaPutriAsText();
+    setBulkText(presetText);
+    setBulkRows(parseBulkStudentsText(presetText));
+    setBulkError(null);
+  };
+
+  const handleBulkFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkParsing(true);
+    setBulkError(null);
+    try {
+      const parsed = await parseBulkStudentsSpreadsheet(file);
+      if (parsed.length === 0) {
+        setBulkError(
+          'Tidak ditemukan baris data santri yang valid di file tersebut. Pastikan ada kolom ID Santri dan Nama Lengkap.'
+        );
+      } else {
+        setBulkRows(parsed);
+        setBulkText(
+          parsed
+            .map(
+              (r) =>
+                `${r.nisnMda} | ${r.nama} | ${r.kelas} | ${r.marhalah} | ${r.pin}`
+            )
+            .join('\n')
+        );
+      }
+    } catch (err: any) {
+      setBulkError(err?.message || 'Gagal membaca file Excel / CSV.');
+    } finally {
+      setBulkParsing(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSubmitBulkImport = async () => {
+    if (bulkRows.length === 0 || isBusy) return;
+    setBulkError(null);
+    const defaultWali = db.teachers.find((t) => t.id === bulkDefaultWaliId);
+    const built = buildStudentsAndAccessFromDrafts(bulkRows, db.students, defaultWali);
+    if (built.students.length === 0) {
+      setBulkError('Tidak ada data santri valid untuk disimpan.');
+      return;
+    }
+
+    const ok = await onBulkImportStudents({
+      students: built.students,
+      userAccess: built.userAccess,
+      duplicatePolicy: bulkDuplicatePolicy,
+    });
+    if (ok) {
+      const uniqueImportedClasses = Array.from(
+        new Set(built.students.map((s) => s.kelas))
+      );
+      if (uniqueImportedClasses.length === 1) {
+        setSantriClassFilter(uniqueImportedClasses[0]);
+      }
+      setBulkModalOpen(false);
+    }
+  };
   const filteredSantri = db.students.filter((s) => {
     if (!matchesClassFilter(s.kelas, santriClassFilter)) return false;
     const q = santriSearch.trim().toLowerCase();
@@ -285,14 +401,28 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
         </div>
 
         {activeTab === 'santri' && canManageAll && (
-          <button
-            type="button"
-            onClick={handleNewStudent}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tambah Santri</span>
-          </button>
+          <div className="flex flex-col min-[420px]:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setBulkDuplicatePolicy('skip');
+                setBulkError(null);
+                setBulkModalOpen(true);
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-[#E8FAF3] text-emerald-900 text-xs font-semibold hover:bg-emerald-100 transition-colors whitespace-nowrap"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0" />
+              <span>Import Santri Massal</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNewStudent}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>Tambah Santri</span>
+            </button>
+          </div>
         )}
         {activeTab === 'guru' && canManageAll && (
           <button
@@ -1642,6 +1772,373 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           </div>
         );
       })()}
+
+      {/* Bulk Student Import Modal (Excel/CSV + Paste Text + 9 Santri MDA Putri Preset) */}
+      {bulkModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+          onClick={() => !isBusy && setBulkModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[92dvh] overflow-y-auto my-auto bg-white border border-emerald-200 rounded-3xl p-4 sm:p-6 space-y-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                  Add-on Import Massal Santri &amp; Akses Login
+                </div>
+                <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 break-words">
+                  Import Santri Massal (Excel / CSV / Tempel Teks)
+                </h3>
+                <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed break-words">
+                  Menambahkan banyak santri sekaligus beserta PIN akses CBT &amp; Portal Rapor tanpa menghapus atau menimpa santri yang sudah ada.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => setBulkModalOpen(false)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Preset 9 Santri MDA Putri */}
+            <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="min-w-0 space-y-0.5">
+                <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <span>Preset Cepat: 9 Santri Baru MDA Putri</span>
+                </div>
+                <p className="text-[11px] text-emerald-900/90 leading-relaxed break-words">
+                  Isi otomatis daftar 9 santri kelas <strong>MDA Putri</strong> (ID <span className="font-mono">MDA03.2627.820</span> – <span className="font-mono">828</span>, Marhalah Tahsin &amp; Tahfizh) beserta PIN login CBT &amp; Rapor.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyPreset9Putri}
+                className="w-full sm:w-auto min-h-[40px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>Isi Template 9 Santri MDA Putri</span>
+              </button>
+            </div>
+
+            {/* Upload Excel/CSV + Download Template */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <label className="min-h-[42px] px-3.5 py-2 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-900 text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                <Upload className="w-4 h-4 text-emerald-700 shrink-0" />
+                <span>
+                  {bulkParsing ? 'Membaca File...' : 'Upload File Excel / CSV (.xlsx, .csv)'}
+                </span>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleBulkFileUpload}
+                  className="hidden"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={downloadStudentImportTemplateXlsx}
+                className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+              >
+                <Download className="w-4 h-4 text-slate-600 shrink-0" />
+                <span>Unduh Template Excel (.xlsx)</span>
+              </button>
+            </div>
+
+            {/* Paste Text Input */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Tempel Daftar Teks (1 baris per santri)
+                </label>
+                {bulkText && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkText('');
+                      setBulkRows([]);
+                      setBulkError(null);
+                    }}
+                    className="text-[11px] font-semibold text-rose-600 hover:underline"
+                  >
+                    Bersihkan Teks
+                  </button>
+                )}
+              </div>
+              <textarea
+                rows={4}
+                value={bulkText}
+                onChange={(e) => handleBulkTextChange(e.target.value)}
+                placeholder={
+                  'Format: ID | Nama Lengkap | Kelas | Marhalah/Keterangan | PIN (opsional)\nContoh: MDA03.2627.820 | Anisa Nurul Azizah | MDA Putri | Marhalah Tahsin | ANISA820'
+                }
+                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              />
+            </div>
+
+            {/* Settings Row: Default Wali + Anti-Duplicate Policy */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Wali Kelas Default (Opsional)
+                </label>
+                <select
+                  value={bulkDefaultWaliId}
+                  onChange={(e) => setBulkDefaultWaliId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"
+                >
+                  <option value="">-- Belum ditentukan / Atur nanti --</option>
+                  {db.teachers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nama} ({t.kelasDiampu || 'Umum'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Jika ID Santri Sudah Ada di Sheets
+                </label>
+                <select
+                  value={bulkDuplicatePolicy}
+                  onChange={(e) =>
+                    setBulkDuplicatePolicy(e.target.value as 'skip' | 'update')
+                  }
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white font-semibold"
+                >
+                  <option value="skip">Lewati Duplikat — Anti-Timpa (Disarankan)</option>
+                  <option value="update">Perbarui Data yang ID-nya Sama</option>
+                </select>
+              </div>
+            </div>
+
+            {bulkError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold break-words">
+                {bulkError}
+              </div>
+            )}
+
+            {/* Live Preview */}
+            {bulkRows.length > 0 && (
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="font-bold text-slate-900">
+                    Pratinjau Data Santri ({bulkSummary.total} Baris)
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold">
+                      {bulkSummary.fresh} Baru
+                    </span>
+                    {bulkSummary.dup > 0 && (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold">
+                        {bulkSummary.dup} Sudah Ada ({bulkDuplicatePolicy === 'skip' ? 'Dilewati' : 'Diperbarui'})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mobile Preview Cards (< md) */}
+                <div className="md:hidden max-h-64 overflow-y-auto space-y-2 pr-0.5">
+                  {bulkRows.map((row, idx) => {
+                    const isExisting = existingNisnSet.has(
+                      row.nisnMda.trim().toLowerCase()
+                    );
+                    return (
+                      <div
+                        key={row.rowId}
+                        className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5 text-xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-slate-900 break-words">
+                              {idx + 1}. {row.nama}
+                            </div>
+                            <div className="font-mono text-[11px] text-emerald-700 font-semibold">
+                              {row.nisnMda} · {row.kelas}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBulkRows((prev) =>
+                                prev.filter((r) => r.rowId !== row.rowId)
+                              )
+                            }
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 shrink-0"
+                            title="Hapus baris"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                          <span className="text-slate-600">
+                            {row.marhalah || 'Program MDA'} ·{' '}
+                            <span className="font-semibold text-emerald-700">
+                              {row.statusAktif}
+                            </span>
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded font-bold text-[10px] ${
+                              isExisting
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {isExisting ? 'Sudah Ada' : 'Baru'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[11px] text-slate-500">PIN Login:</span>
+                          <input
+                            type="text"
+                            value={row.pin}
+                            onChange={(e) => {
+                              const nextPin = e.target.value.toUpperCase();
+                              setBulkRows((prev) =>
+                                prev.map((r) =>
+                                  r.rowId === row.rowId ? { ...r, pin: nextPin } : r
+                                )
+                              );
+                            }}
+                            className="flex-1 min-w-0 px-2 py-1 text-[11px] font-mono font-bold border border-slate-200 rounded-lg bg-white uppercase"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Preview Table (md+) */}
+                <div className="hidden md:block max-h-64 overflow-y-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead className="sticky top-0 bg-slate-100 text-slate-700 z-10">
+                      <tr>
+                        <th className="py-2 px-2.5">#</th>
+                        <th className="py-2 px-2.5">ID Santri</th>
+                        <th className="py-2 px-2.5">Nama Lengkap</th>
+                        <th className="py-2 px-2.5">Kelas</th>
+                        <th className="py-2 px-2.5">Marhalah / Program</th>
+                        <th className="py-2 px-2.5">PIN Login</th>
+                        <th className="py-2 px-2.5">Status</th>
+                        <th className="py-2 px-2.5 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {bulkRows.map((row, idx) => {
+                        const isExisting = existingNisnSet.has(
+                          row.nisnMda.trim().toLowerCase()
+                        );
+                        return (
+                          <tr key={row.rowId} className="hover:bg-slate-50">
+                            <td className="py-2 px-2.5 text-slate-500">{idx + 1}</td>
+                            <td className="py-2 px-2.5 font-mono font-semibold text-emerald-800 whitespace-nowrap">
+                              {row.nisnMda}
+                            </td>
+                            <td className="py-2 px-2.5 font-semibold text-slate-900">
+                              {row.nama}
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap">{row.kelas}</td>
+                            <td className="py-2 px-2.5 text-slate-700">
+                              {row.marhalah || '—'}
+                            </td>
+                            <td className="py-2 px-2.5">
+                              <input
+                                type="text"
+                                value={row.pin}
+                                onChange={(e) => {
+                                  const nextPin = e.target.value.toUpperCase();
+                                  setBulkRows((prev) =>
+                                    prev.map((r) =>
+                                      r.rowId === row.rowId ? { ...r, pin: nextPin } : r
+                                    )
+                                  );
+                                }}
+                                className="w-24 px-2 py-1 text-[11px] font-mono font-bold border border-slate-200 rounded-md bg-white uppercase"
+                              />
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap">
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                  isExisting
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-emerald-100 text-emerald-800'
+                                }`}
+                              >
+                                {isExisting ? 'Sudah Ada' : `${row.statusAktif} · Baru`}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2.5 text-right">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setBulkRows((prev) =>
+                                    prev.filter((r) => r.rowId !== row.rowId)
+                                  )
+                                }
+                                className="p-1 rounded text-rose-600 hover:bg-rose-50"
+                                title="Hapus baris"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Anti-Overwrite Guarantee */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2 text-[11px] text-slate-600">
+              <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <span className="leading-relaxed break-words">
+                <strong>Mode Anti-Timpa Aktif:</strong> Data santri lama (seperti MDA Senior &amp; MDA Junior) tetap aman tersimpan. Akun akses login CBT &amp; Portal Rapor otomatis dibuatkan untuk setiap santri baru.
+              </span>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => setBulkModalOpen(false)}
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={bulkRows.length === 0 || isBusy}
+                onClick={() => void handleSubmitBulkImport()}
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
+              >
+                {isBusy ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan ke Sheets...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>
+                      Simpan ke Data Santri &amp; Sheets ({bulkRows.length} Baris)
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -47,6 +47,7 @@ import { DEFAULT_TEMPLATE_CONFIG, INITIAL_MDA_DATABASE } from './data/seedData';
 import {
   ApiConflictError,
   BackendSessionUser,
+  bulkImportStudentsOnServer,
   connectAppsScriptOnServer,
   connectSpreadsheetOnServer,
   deleteCbtExamOnServer,
@@ -928,6 +929,93 @@ export default function App() {
         }
       },
     });
+  };
+
+  const handleBulkImportStudents = async (payload: {
+    students: Student[];
+    userAccess: UserAccess[];
+    duplicatePolicy: 'skip' | 'update';
+  }): Promise<boolean> => {
+    if (payload.students.length === 0) return false;
+
+    if (previewSampleMode) {
+      setDb((prev) => {
+        const nextStudents = [...prev.students];
+        const idRemap = new Map<string, string>();
+        let added = 0;
+        let updated = 0;
+        let skipped = 0;
+
+        for (const incoming of payload.students) {
+          const nisnKey = incoming.nisnMda.trim().toLowerCase();
+          const idx = nextStudents.findIndex(
+            (s) =>
+              s.id === incoming.id ||
+              (Boolean(nisnKey) && s.nisnMda.trim().toLowerCase() === nisnKey)
+          );
+          if (idx !== -1) {
+            idRemap.set(incoming.id, nextStudents[idx].id);
+            if (payload.duplicatePolicy === 'update') {
+              nextStudents[idx] = { ...nextStudents[idx], ...incoming, id: nextStudents[idx].id };
+              updated += 1;
+            } else {
+              skipped += 1;
+            }
+          } else {
+            nextStudents.push(incoming);
+            idRemap.set(incoming.id, incoming.id);
+            added += 1;
+          }
+        }
+
+        const nextAccess = [...prev.userAccess];
+        let addedAcc = 0;
+        for (const rawAcc of payload.userAccess) {
+          const resolvedId = idRemap.get(rawAcc.linkedStudentId) || rawAcc.linkedStudentId;
+          const existsAcc = nextAccess.some(
+            (u) => u.id === rawAcc.id || (u.role === 'santri_ortu' && u.linkedStudentId === resolvedId)
+          );
+          if (!existsAcc) {
+            nextAccess.push({ ...rawAcc, linkedStudentId: resolvedId });
+            addedAcc += 1;
+          }
+        }
+
+        showToast(
+          'ok',
+          `Pratinjau import: ${added} santri baru${updated > 0 ? `, ${updated} diperbarui` : ''}${skipped > 0 ? `, ${skipped} duplikat dilewati` : ''} (+${addedAcc} akses login).`
+        );
+        return { ...prev, students: nextStudents, userAccess: nextAccess };
+      });
+      return true;
+    }
+
+    if (!ensureOnlineForWrite()) return false;
+    setIsSyncing(true);
+    setSyncState('saving');
+    try {
+      const res = await bulkImportStudentsOnServer({
+        students: payload.students,
+        userAccess: payload.userAccess,
+        duplicatePolicy: payload.duplicatePolicy,
+        spreadsheetId: db.spreadsheetId || preferredSheetId,
+      });
+      applyServerDatabase(res.data);
+      setSyncState('saved');
+      showToast(
+        'ok',
+        `Import sukses! ${res.addedCount} santri baru ditambahkan${
+          res.updatedCount > 0 ? `, ${res.updatedCount} diperbarui` : ''
+        }${res.skippedCount > 0 ? `, ${res.skippedCount} duplikat dilewati` : ''} (+${res.addedAccessCount} akses login ke Google Sheets).`
+      );
+      return true;
+    } catch (err: any) {
+      setSyncState('error');
+      showToast('err', err.message || 'Gagal mengimpor data santri secara massal.');
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleUpdateStudentPhoto = (studentId: string, fotoUrl: string) => {
@@ -2715,7 +2803,9 @@ export default function App() {
             <MasterManagementView
               db={db}
               canManageAll={effectiveRole === 'admin'}
+              isBusy={isSyncing}
               onSaveStudents={handleSaveStudents}
+              onBulkImportStudents={handleBulkImportStudents}
               onSaveTeachers={handleSaveTeachers}
               onSavePeriods={handleSavePeriods}
               onUploadPhotoToDrive={async (file) => {

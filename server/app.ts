@@ -7,6 +7,7 @@ import type { NextFunction, Request, Response } from 'express';
 import {
   ConflictError,
   DEFAULT_TEMPLATE_CONFIG,
+  bulkImportStudentsInSheet,
   deletePortfolioInSheet,
   deleteStudentInSheet,
   deleteTeacherInSheet,
@@ -29,6 +30,7 @@ import {
 import {
   DEFAULT_APPS_SCRIPT_SECRET,
   DEFAULT_APPS_SCRIPT_URL,
+  bulkImportStudentsInAppsScript,
   deleteCbtExamInAppsScript,
   deletePortfolioInAppsScript,
   deleteStudentInAppsScript,
@@ -1163,6 +1165,114 @@ export function createApiApp(): express.Express {
       res.json({ data: scopeDatabaseForSession(result.db, session) });
     } catch (err: any) {
       res.status(502).json({ error: err.message || 'Gagal menyimpan data santri ke Google Sheets.' });
+    }
+  });
+
+  app.post('/api/students/bulk-import', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.role !== 'admin') {
+        res.status(403).json({ error: 'Hanya Admin yang dapat mengimpor data santri secara massal.' });
+        return;
+      }
+      const storage = await resolveBackendStorage(req);
+      if (storage.mode === 'none') {
+        res.status(503).json({ error: 'Google Sheets belum terhubung.' });
+        return;
+      }
+
+      const {
+        students,
+        userAccess = [],
+        duplicatePolicy = 'skip',
+      } = req.body as {
+        students?: Student[];
+        userAccess?: UserAccess[];
+        duplicatePolicy?: 'skip' | 'update';
+      };
+
+      if (!Array.isArray(students) || students.length === 0) {
+        res.status(400).json({ error: 'Daftar santri yang akan diimpor masih kosong.' });
+        return;
+      }
+
+      const sanitizedStudents: Student[] = students
+        .filter((s) => s && (s.nisnMda || s.id) && s.nama)
+        .map((s) => {
+          const nisnMda = String(s.nisnMda || s.id).trim();
+          const nama = String(s.nama).trim();
+          const kelas = String(s.kelas || 'MDA Putri').trim();
+          const id =
+            String(s.id || '').trim() ||
+            `std-${nisnMda.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+          const accessPin =
+            String(s.accessPin || '').trim().toUpperCase() ||
+            generateSmartAccessPin(nama, nisnMda);
+          return {
+            id,
+            nisnMda,
+            nama,
+            kelas,
+            program:
+              String(s.program || '').trim() ||
+              `Muslim Digital Academy – ${kelas.replace(/^MDA\s+/i, '')}`,
+            waliKelasId: String(s.waliKelasId || ''),
+            waliKelasNama: String(s.waliKelasNama || ''),
+            fotoUrl: String(s.fotoUrl || ''),
+            emailSantriOrtu: String(s.emailSantriOrtu || ''),
+            portfolioSlug:
+              String(s.portfolioSlug || '').trim() ||
+              nama
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-'),
+            accessPin,
+            statusAktif:
+              s.statusAktif === 'Alumni' || s.statusAktif === 'Cuti'
+                ? s.statusAktif
+                : 'Aktif',
+          };
+        });
+
+      if (sanitizedStudents.length === 0) {
+        res.status(400).json({ error: 'Tidak ada baris santri valid (wajib memiliki ID dan Nama).' });
+        return;
+      }
+
+      const sanitizedAccess: UserAccess[] = (Array.isArray(userAccess) ? userAccess : []).map(
+        (u) => ({
+          id: String(u.id || `usr-${u.linkedStudentId}`),
+          email: String(u.email || `${u.linkedStudentId}@santri.mda.sch.id`),
+          nama: String(u.nama || ''),
+          role: 'santri_ortu',
+          linkedStudentId: String(u.linkedStudentId || ''),
+          accessPin: u.accessPin ? String(u.accessPin).trim().toUpperCase() : undefined,
+          statusAktif: u.statusAktif !== false,
+        })
+      );
+
+      const result =
+        storage.mode === 'apps_script'
+          ? await bulkImportStudentsInAppsScript(storage.apiUrl, storage.secret, {
+              students: sanitizedStudents,
+              userAccess: sanitizedAccess,
+              duplicatePolicy,
+            })
+          : await bulkImportStudentsInSheet(storage.token, storage.spreadsheetId, {
+              students: sanitizedStudents,
+              userAccess: sanitizedAccess,
+              duplicatePolicy,
+            });
+
+      res.json({
+        data: scopeDatabaseForSession(result.db, session),
+        addedCount: result.addedCount,
+        updatedCount: result.updatedCount,
+        skippedCount: result.skippedCount,
+        addedAccessCount: result.addedAccessCount,
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal mengimpor data santri ke Google Sheets.' });
     }
   });
 
