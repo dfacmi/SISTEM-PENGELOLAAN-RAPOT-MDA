@@ -64,6 +64,28 @@ export function mergeTemplateConfig(
   fallback: BrandingTemplateConfig
 ): BrandingTemplateConfig {
   const merged = { ...fallback, ...(cfg || {}) };
+
+  // Upgrade legacy default copy saved previously in Google Sheets without overwriting custom edits
+  if (
+    !merged.loginHeadline ||
+    merged.loginHeadline.trim() === 'Dashboard Rapor Digital & Student Portfolio'
+  ) {
+    merged.loginHeadline = fallback.loginHeadline;
+  }
+  if (
+    !merged.loginDescription ||
+    merged.loginDescription.trim() ===
+      'Sistem pengelolaan hasil belajar terpadu Muslim Digital Academy (MDA) Pondok Pesantren Darul Fithrah dengan penyimpanan permanen di Google Sheets dan akses privat bagi setiap wali santri.'
+  ) {
+    merged.loginDescription = fallback.loginDescription;
+  }
+  if (merged.loginAdminInfo) {
+    merged.loginAdminInfo = merged.loginAdminInfo.replace(/eskpor/gi, 'ekspor');
+  }
+  if (merged.loginParentInfo) {
+    merged.loginParentInfo = merged.loginParentInfo.replace(/eskpor/gi, 'ekspor');
+  }
+
   merged.internTrackerItems = Array.isArray(cfg?.internTrackerItems)
     ? cfg.internTrackerItems
     : fallback.internTrackerItems;

@@ -1,12 +1,14 @@
-const CACHE_NAME = 'siakad-mda-shell-v2';
+const CACHE_NAME = 'siakad-mda-shell-v3';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/favicon.ico',
+  '/favicon.svg',
   '/favicon-32x32.png',
   '/favicon-64x64.png',
-  '/pwa-192x192.png',
-  '/pwa-512x512.png',
+  '/icon-192.png',
+  '/icon-512.png',
   '/pwa-maskable-512x512.png',
   '/apple-touch-icon.png',
   '/mda-logo-official.png',

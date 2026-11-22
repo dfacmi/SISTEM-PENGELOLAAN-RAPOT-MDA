@@ -1898,7 +1898,7 @@ export default function App() {
 
             <div className="relative z-10 mt-6 sm:mt-8 pt-5 border-t border-white/25 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <div className="font-[Arial] font-bold text-[#1DF27A]">Ruang Ujian CBT &amp; Admin</div>
+                <div className="font-[Arial] font-bold text-[#1DF27A]">Admin, Guru &amp; Ujian CBT</div>
                 <div className="font-[Arial] text-white/90 mt-1">{tpl.loginAdminInfo}</div>
               </div>
               <div>
@@ -2740,7 +2740,7 @@ export default function App() {
                 {tpl.namaLembaga} · {tpl.namaPesantren}
               </div>
               <div className="font-display font-bold text-slate-900 text-xs sm:text-base truncate">
-                {visibleNavItems.find((i) => i.id === activeNav)?.label || 'Dashboard Rapor'}
+                {visibleNavItems.find((i) => i.id === activeNav)?.label || 'SIAKAD MDA'}
               </div>
             </div>
           </div>

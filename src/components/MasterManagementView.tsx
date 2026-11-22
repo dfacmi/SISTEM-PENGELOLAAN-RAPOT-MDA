@@ -1672,7 +1672,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
         );
         const waText = [
           `Assalamu'alaikum Wr. Wb. Bapak/Ibu Wali Santri *${shareModalStudent.nama}*.`,
-          `Berikut akses privat Portal Rapor Digital & Portofolio Muslim Digital Academy (MDA):`,
+          `Berikut akses privat Portal SIAKAD MDA (Rapor Digital & Portofolio) Muslim Digital Academy:`,
           ``,
           `• ID Santri / Nama Lengkap: ${shareModalStudent.nisnMda} / ${shareModalStudent.nama}`,
           `• PIN Akses: ${studentPin}`,

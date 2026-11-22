@@ -31,9 +31,9 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   coverPhotoUrl: '',
   customLogoUrl: '',
   accentTheme: 'mda-emerald',
-  loginHeadline: 'Dashboard Rapor Digital & Student Portfolio',
+  loginHeadline: 'Portal SIAKAD MDA',
   loginDescription:
-    'Sistem pengelolaan hasil belajar terpadu Muslim Digital Academy (MDA) Pondok Pesantren Darul Fithrah dengan penyimpanan permanen di Google Sheets dan akses privat bagi setiap wali santri.',
+    'Sistem informasi akademik terpadu untuk ujian CBT, rapor digital, dan portofolio santri Muslim Digital Academy (MDA) Pondok Pesantren Darul Fithrah Sukoharjo.',
   loginAdminInfo:
     'Kelola santri, input nilai otomatis, template rapor, portofolio, & ekspor PDF resmi.',
   loginParentInfo:
