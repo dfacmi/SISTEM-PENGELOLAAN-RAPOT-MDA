@@ -25,9 +25,12 @@ import {
   PortfolioProject,
 } from '../types/mda';
 import {
+  GroupedPortfolioProject,
   generateParentPortfolioNarrative,
   getStudentPortfolioLinks,
+  groupPortfolioProjects,
   normalizeExternalUrl,
+  splitPortfolioProjectForStorage,
 } from '../utils/grading';
 import {
   compressSidangImageWebp,
@@ -105,6 +108,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
   const [pdfSubjectDraft, setPdfSubjectDraft] = useState('UI/UX Design & Graphic Design');
 
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
+  const [editingSourceIds, setEditingSourceIds] = useState<string[]>([]);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [slotUploadMeta, setSlotUploadMeta] = useState<
     Record<number, { byteLength: number; charLength: number; width: number; height: number; mimeType: string }>
@@ -133,6 +137,11 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
     [db.portfolios, student]
   );
 
+  const groupedProjects = useMemo(
+    () => groupPortfolioProjects(projects),
+    [projects]
+  );
+
   const activePeriod = useMemo(
     () => db.periods.find((p) => p.isActive) || db.periods[0],
     [db.periods]
@@ -157,9 +166,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
     () =>
       generateParentPortfolioNarrative({
         report: latestReport,
-        projects,
+        projects: groupedProjects,
       }),
-    [latestReport, projects]
+    [latestReport, groupedProjects]
   );
 
   const savedNarrative = (latestReport?.ringkasanPortofolio || '').trim();
@@ -171,15 +180,15 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
 
   const jenisOptions = useMemo(() => {
     const set = new Set<string>(['Semua']);
-    projects.forEach((p) => {
+    groupedProjects.forEach((p) => {
       if (p.jenis.trim()) set.add(p.jenis.trim());
     });
     return Array.from(set);
-  }, [projects]);
+  }, [groupedProjects]);
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return projects.filter((p) => {
+    return groupedProjects.filter((p) => {
       const matchType = typeFilter === 'Semua' || p.jenis.trim() === typeFilter;
       const matchSearch =
         q === '' ||
@@ -188,7 +197,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         p.keteranganSingkat.toLowerCase().includes(q);
       return matchType && matchSearch;
     });
-  }, [projects, typeFilter, searchQuery]);
+  }, [groupedProjects, typeFilter, searchQuery]);
 
   if (!student) {
     return (
@@ -221,6 +230,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
   const handleNewProject = (preset: 'default' | 'sidang' = 'sidang') => {
     setSlotUploadMeta({});
     setUploadError(null);
+    setEditingSourceIds([]);
     setEditingProject({
       id: `port-${Date.now()}`,
       studentId: student.id,
@@ -237,35 +247,44 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         {
           url: '',
           type: 'image',
-          caption: 'Hasil Sidang Karya 1',
+          caption: 'Foto Karya 1',
           presetArt: 'poster',
         },
         {
           url: '',
           type: 'image',
-          caption: 'Hasil Sidang Karya 2 (Opsional)',
+          caption: 'Foto Karya 2',
           presetArt: 'uiux',
+        },
+        {
+          url: '',
+          type: 'image',
+          caption: 'Foto Karya 3',
+          presetArt: 'video',
         },
       ],
       featured: true,
     });
   };
 
-  const openEditProject = (proj: PortfolioProject) => {
+  const openEditProject = (proj: GroupedPortfolioProject) => {
     setSlotUploadMeta({});
     setUploadError(null);
-    const items = [...proj.mediaItems];
-    while (items.length < 2) {
+    setEditingSourceIds(proj.sourceIds || [proj.id]);
+    const items = (proj.mediaItems || []).map((m) => ({ ...m }));
+    while (items.length < 3) {
+      const idx = items.length;
       items.push({
         url: '',
         type: 'image',
-        caption: items.length === 0 ? 'Hasil Sidang Karya 1' : 'Hasil Sidang Karya 2 (Opsional)',
-        presetArt: items.length === 0 ? 'poster' : 'uiux',
+        caption: `Foto Karya ${idx + 1}`,
+        presetArt: idx === 0 ? 'poster' : idx === 1 ? 'uiux' : 'video',
       });
     }
     setEditingProject({
       ...proj,
-      mediaItems: items.slice(0, 2),
+      id: proj.id.replace(/__slot[23]$/, ''),
+      mediaItems: items.slice(0, 3),
     });
   };
 
@@ -287,25 +306,30 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         return;
       }
 
-      const otherIdx = slotIdx === 0 ? 1 : 0;
-      const otherHasImage = Boolean(
-        editingProject.mediaItems[otherIdx]?.url &&
-          editingProject.mediaItems[otherIdx].url.trim() !== ''
-      );
-      // 1 gambar -> maks 36.000 karakter (~26 KB WebP); 2 gambar -> masing-masing maks 18.000 karakter
-      const targetChars = otherHasImage ? 18000 : 36000;
-
-      const compressed = await compressSidangImageWebp(file, { maxChars: targetChars });
+      // Resolusi tajam maxWidth 720px, <= 30.000 karakter WebP per slot (otomatis di-split baris saat simpan agar aman dari limit 50k Sheets)
+      const compressed = await compressSidangImageWebp(file, {
+        maxChars: 30000,
+        maxWidth: 720,
+      });
 
       const nextMedia = [...editingProject.mediaItems];
+      while (nextMedia.length < 3) {
+        const idx = nextMedia.length;
+        nextMedia.push({
+          url: '',
+          type: 'image',
+          caption: `Foto Karya ${idx + 1}`,
+          presetArt: idx === 0 ? 'poster' : idx === 1 ? 'uiux' : 'video',
+        });
+      }
       nextMedia[slotIdx] = {
         ...nextMedia[slotIdx],
         url: compressed.dataUrl,
         type: 'image',
       };
 
-      const nextMeta = {
-        ...slotUploadMeta,
+      setSlotUploadMeta((prev) => ({
+        ...prev,
         [slotIdx]: {
           byteLength: compressed.byteLength,
           charLength: compressed.dataUrl.length,
@@ -313,27 +337,8 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
           height: compressed.height,
           mimeType: compressed.mimeType,
         },
-      };
-
-      // Jika slot lain juga berisi data:image > 18.000 karakter, perkecil ke <= 18.000 agar total baris Sheets aman
-      const otherUrl = nextMedia[otherIdx]?.url || '';
-      if (otherUrl.startsWith('data:image/') && otherUrl.length > 18000) {
-        const shrunkOther = await shrinkImageDataUrlWebp(otherUrl, 18000);
-        nextMedia[otherIdx] = {
-          ...nextMedia[otherIdx],
-          url: shrunkOther,
-        };
-        if (nextMeta[otherIdx]) {
-          nextMeta[otherIdx] = {
-            ...nextMeta[otherIdx],
-            charLength: shrunkOther.length,
-            byteLength: Math.round((shrunkOther.length * 3) / 4),
-          };
-        }
-      }
-
-      setSlotUploadMeta(nextMeta);
-      setEditingProject({ ...editingProject, mediaItems: nextMedia });
+      }));
+      setEditingProject({ ...editingProject, mediaItems: nextMedia.slice(0, 3) });
     } catch (err: any) {
       setUploadError(
         err?.message ||
@@ -364,35 +369,47 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
     e.preventDefault();
     if (!editingProject || !editingProject.judul.trim()) return;
 
-    // Normalize Google Drive image links & enforce 18k per slot if 2 DataURL images are saved together
-    const normalizedMedia = editingProject.mediaItems.map((m) => ({
+    // Normalize Google Drive URL & pastikan setiap slot DataURL <= 30.000 karakter (maxWidth 720px)
+    const normalizedMedia = editingProject.mediaItems.slice(0, 3).map((m) => ({
       ...m,
       url: normalizeDisplayImageUrl(m.url),
     }));
 
-    const activeDataUrls = normalizedMedia.filter((m) => m.url.startsWith('data:image/'));
-    if (activeDataUrls.length >= 2) {
-      for (let i = 0; i < normalizedMedia.length; i++) {
-        if (normalizedMedia[i].url.startsWith('data:image/') && normalizedMedia[i].url.length > 18000) {
-          normalizedMedia[i] = {
-            ...normalizedMedia[i],
-            url: await shrinkImageDataUrlWebp(normalizedMedia[i].url, 18000),
-          };
-        }
+    for (let i = 0; i < normalizedMedia.length; i++) {
+      if (normalizedMedia[i].url.startsWith('data:image/') && normalizedMedia[i].url.length > 30000) {
+        normalizedMedia[i] = {
+          ...normalizedMedia[i],
+          url: await shrinkImageDataUrlWebp(normalizedMedia[i].url, 30000, 720),
+        };
       }
     }
 
     const cleanProject: PortfolioProject = {
       ...editingProject,
+      id: editingProject.id.replace(/__slot[23]$/, ''),
       mediaItems: normalizedMedia,
     };
 
-    const exists = db.portfolios.some((p) => p.id === cleanProject.id);
-    const next = exists
-      ? db.portfolios.map((p) => (p.id === cleanProject.id ? cleanProject : p))
-      : [...db.portfolios, cleanProject];
+    // Pecah aman per foto jika ada >= 2 foto WebP agar tiap baris Google Sheets selalu < 42.000 karakter
+    const recordsToSave = splitPortfolioProjectForStorage(cleanProject);
+    const idsToReplace = new Set(
+      editingSourceIds.length > 0 ? editingSourceIds : [cleanProject.id]
+    );
+
+    const firstReplaceIdx = db.portfolios.findIndex((p) => idsToReplace.has(p.id));
+    const filteredExisting = db.portfolios.filter((p) => !idsToReplace.has(p.id));
+    const next =
+      firstReplaceIdx >= 0
+        ? [
+            ...filteredExisting.slice(0, firstReplaceIdx),
+            ...recordsToSave,
+            ...filteredExisting.slice(firstReplaceIdx),
+          ]
+        : [...filteredExisting, ...recordsToSave];
+
     onSavePortfolios(next);
     setEditingProject(null);
+    setEditingSourceIds([]);
   };
 
   const renderSharpMediaFrame = (
@@ -521,7 +538,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     <span>Multimedia: {latestReport.pilar.penguasaanMultimedia}%</span>
                     <span aria-hidden="true">·</span>
                     <span className="font-semibold text-emerald-700">
-                      {projects.length} Dokumentasi Karya
+                      {groupedProjects.length} Dokumentasi Karya
                     </span>
                   </div>
                 )}
@@ -833,7 +850,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         </div>
 
         {/* Filter by Materi / Jenis Karya + Search Bar */}
-        {projects.length > 0 && (
+        {groupedProjects.length > 0 && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-1.5">
               {jenisOptions.map((jenis) => {
@@ -876,17 +893,20 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h2 className="font-display font-bold text-slate-900 text-base break-words">
-                  {db.portfolios.some((p) => p.id === editingProject.id)
+                  {editingSourceIds.length > 0
                     ? 'Edit Hasil Sidang Karya'
                     : 'Upload Hasil Sidang Karya'}
                 </h2>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Mendukung upload foto/PNG ukuran besar (3–25 MB) dari HP, Figma, atau Canva — otomatis dioptimalkan ke WebP tajam.
+                  Mendukung upload foto/PNG ukuran besar (3–25 MB) untuk 3 slot berjajar — otomatis dikompresi WebP tajam &amp; aman di Google Sheets.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setEditingProject(null)}
+                onClick={() => {
+                  setEditingProject(null);
+                  setEditingSourceIds([]);
+                }}
                 className="text-xs text-slate-500 hover:text-slate-800 shrink-0 px-2 py-1"
               >
                 Tutup
@@ -983,98 +1003,126 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               </div>
             )}
 
-            {/* 1-2 High-Clarity WebP Image Upload Slots + Google Drive Link Auto-Convert */}
+            {/* 3 High-Clarity WebP Image Upload Slots (720px, <=30k chars/slot, safe Sheets row split) */}
             <div className="pt-2 border-t border-slate-100">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="text-xs font-semibold text-slate-800">
-                  Upload Gambar Hasil Sidang Karya (1 atau 2 Gambar Tajam)
+                  Upload 3 Slot Foto Hasil Sidang Karya (Tampil 3 Kolom Berjajar di Hal. 5 Rapor &amp; PDF)
                 </div>
                 <span className="text-[11px] text-slate-500">
-                  Kompresi otomatis WebP (1 gambar &lt; 36 rb kar, 2 gambar &lt; 18 rb kar/slot)
+                  Kompresi tajam WebP (maks 720px, ≤ 30 rb kar/slot · Anti-Limit 50 rb Sheets)
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {editingProject.mediaItems.slice(0, 2).map((m, idx) => {
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[0, 1, 2].map((idx) => {
+                  const m = editingProject.mediaItems[idx] || {
+                    url: '',
+                    type: 'image' as const,
+                    caption: `Foto Karya ${idx + 1}`,
+                    presetArt: idx === 0 ? ('poster' as const) : idx === 1 ? ('uiux' as const) : ('video' as const),
+                  };
                   const meta = slotUploadMeta[idx];
                   const previewUrl = normalizeDisplayImageUrl(m.url);
                   const hasImage = Boolean(previewUrl);
                   return (
                     <div
                       key={idx}
-                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5 min-w-0"
+                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5 min-w-0 flex flex-col justify-between"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-slate-800">
-                          {idx === 0
-                            ? 'Gambar Utama Sidang Karya'
-                            : 'Gambar Pendukung (Opsional)'}
-                        </span>
-                        {meta ? (
-                          <span className="text-[10.5px] font-mono text-emerald-700 font-semibold">
-                            {meta.width}px · {(meta.byteLength / 1024).toFixed(1)} KB
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-slate-800">
+                            {idx === 0
+                              ? 'Foto Karya 1 / Utama'
+                              : idx === 1
+                                ? 'Foto Karya 2'
+                                : 'Foto Karya 3'}
                           </span>
-                        ) : m.url.startsWith('data:') ? (
-                          <span className="text-[10.5px] font-mono text-slate-500">
-                            {(m.url.length / 1000).toFixed(1)}k kar
-                          </span>
-                        ) : null}
-                      </div>
+                          {meta ? (
+                            <span className="text-[10.5px] font-mono text-emerald-700 font-semibold">
+                              {meta.width}px · {(meta.byteLength / 1024).toFixed(1)} KB
+                            </span>
+                          ) : m.url.startsWith('data:') ? (
+                            <span className="text-[10.5px] font-mono text-slate-500">
+                              {(m.url.length / 1000).toFixed(1)}k kar
+                            </span>
+                          ) : null}
+                        </div>
 
-                      <div className="relative h-44 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden p-2">
-                        {uploadingSlot === idx ? (
-                          <div className="text-center text-emerald-700 space-y-2">
-                            <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                            <div className="text-xs font-semibold">Mengoptimalkan gambar...</div>
-                          </div>
-                        ) : hasImage ? (
-                          <img
-                            src={previewUrl}
-                            alt={m.caption || editingProject.judul || `Gambar ${idx + 1}`}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <div className="text-center text-slate-400 space-y-1">
-                            <ImageIcon className="w-7 h-7 mx-auto opacity-60" />
-                            <div className="text-[11px]">Belum ada gambar</div>
-                          </div>
-                        )}
-                      </div>
+                        <div className="relative h-44 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden p-2">
+                          {uploadingSlot === idx ? (
+                            <div className="text-center text-emerald-700 space-y-2">
+                              <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                              <div className="text-xs font-semibold">Mengoptimalkan gambar...</div>
+                            </div>
+                          ) : hasImage ? (
+                            <img
+                              src={previewUrl}
+                              alt={m.caption || editingProject.judul || `Foto Karya ${idx + 1}`}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="text-center text-slate-400 space-y-1">
+                              <ImageIcon className="w-7 h-7 mx-auto opacity-60" />
+                              <div className="text-[11px]">Belum ada foto</div>
+                            </div>
+                          )}
+                        </div>
 
-                      <input
-                        type="text"
-                        value={m.caption}
-                        onChange={(e) => {
-                          const next = [...editingProject.mediaItems];
-                          next[idx] = { ...next[idx], caption: e.target.value };
-                          setEditingProject({ ...editingProject, mediaItems: next });
-                        }}
-                        placeholder="Keterangan gambar (opsional)"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
-                      />
-
-                      <div>
                         <input
                           type="text"
-                          value={m.url}
+                          value={m.caption}
                           onChange={(e) => {
-                            const raw = e.target.value;
-                            const converted = /drive\.google\.com/i.test(raw)
-                              ? normalizeDisplayImageUrl(raw)
-                              : raw;
                             const next = [...editingProject.mediaItems];
-                            next[idx] = { ...next[idx], url: converted };
+                            while (next.length < 3) {
+                              const k = next.length;
+                              next.push({
+                                url: '',
+                                type: 'image',
+                                caption: `Foto Karya ${k + 1}`,
+                                presetArt: k === 0 ? 'poster' : k === 1 ? 'uiux' : 'video',
+                              });
+                            }
+                            next[idx] = { ...next[idx], caption: e.target.value };
                             setEditingProject({ ...editingProject, mediaItems: next });
                           }}
-                          placeholder="Atau tempel URL gambar / link share Google Drive (opsional)"
+                          placeholder={`Caption singkat Foto Karya ${idx + 1}`}
                           className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
                         />
-                        {m.url && /googleusercontent\.com/i.test(m.url) && (
-                          <p className="text-[10px] text-emerald-700 mt-1">
-                            Link Google Drive otomatis dikonversi agar tampil langsung &amp; masuk PDF.
-                          </p>
-                        )}
+
+                        <div>
+                          <input
+                            type="text"
+                            value={m.url}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const converted = /drive\.google\.com/i.test(raw)
+                                ? normalizeDisplayImageUrl(raw)
+                                : raw;
+                              const next = [...editingProject.mediaItems];
+                              while (next.length < 3) {
+                                const k = next.length;
+                                next.push({
+                                  url: '',
+                                  type: 'image',
+                                  caption: `Foto Karya ${k + 1}`,
+                                  presetArt: k === 0 ? 'poster' : k === 1 ? 'uiux' : 'video',
+                                });
+                              }
+                              next[idx] = { ...next[idx], url: converted };
+                              setEditingProject({ ...editingProject, mediaItems: next });
+                            }}
+                            placeholder="Atau tempel URL / Google Drive"
+                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                          />
+                          {m.url && /googleusercontent\.com/i.test(m.url) && (
+                            <p className="text-[10px] text-emerald-700 mt-1">
+                              Link Google Drive otomatis dikonversi untuk PDF.
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
@@ -1082,12 +1130,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           {uploadingSlot === idx ? (
                             <>
                               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1DF27A]" />
-                              <span>Mengoptimalkan gambar...</span>
+                              <span>Mengoptimalkan...</span>
                             </>
                           ) : (
                             <>
                               <Upload className="w-3.5 h-3.5 text-[#1DF27A]" />
-                              <span>Upload Gambar</span>
+                              <span>Upload Foto</span>
                             </>
                           )}
                           <input
@@ -1106,7 +1154,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 text-xs font-semibold"
                           >
                             <Trash2 className="w-3 h-3" />
-                            <span>Hapus Gambar</span>
+                            <span>Hapus</span>
                           </button>
                         )}
                       </div>
@@ -1119,7 +1167,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setEditingProject(null)}
+                onClick={() => {
+                  setEditingProject(null);
+                  setEditingSourceIds([]);
+                }}
                 className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
               >
                 Batal
@@ -1139,12 +1190,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         {filteredProjects.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center space-y-3">
             <div className="text-sm font-semibold text-slate-800">
-              {projects.length === 0
+              {groupedProjects.length === 0
                 ? `Belum ada dokumentasi Sidang Karya untuk ${student.nama}`
                 : 'Tidak ada karya yang cocok dengan filter jenis/pencarian.'}
             </div>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Upload 1 atau 2 gambar hasil Sidang Karya santri (bebas ukuran, otomatis dioptimalkan ke WebP) agar tampil bersih dan tajam di Halaman 5 Rapor &amp; PDF.
+              Upload hingga 3 foto hasil Sidang Karya santri (bebas ukuran, otomatis dioptimalkan ke WebP tajam) agar tampil 3 kolom berjajar di Halaman 5 Rapor &amp; PDF.
             </p>
             {canEdit && (
               <div className="pt-1">
@@ -1164,7 +1215,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             {filteredProjects.map((proj, index) => {
               const activeMedia = proj.mediaItems
                 .filter((m) => m.url && m.url.trim() !== '')
-                .slice(0, 2);
+                .slice(0, 3);
               const displayMedia =
                 activeMedia.length > 0 ? activeMedia : proj.mediaItems.slice(0, 1);
 
@@ -1238,11 +1289,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              const idsToDelete = new Set(proj.sourceIds || [proj.id]);
                               onSavePortfolios(
-                                db.portfolios.filter((x) => x.id !== proj.id)
-                              )
-                            }
+                                db.portfolios.filter((x) => !idsToDelete.has(x.id))
+                              );
+                            }}
                             className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
                             title="Hapus karya"
                           >
@@ -1253,12 +1305,14 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Clean 1-Image or 2-Image Side-by-Side Sharp Showcase */}
+                  {/* Clean 1-3 Image Side-by-Side Sharp Showcase */}
                   <div
                     className={
-                      displayMedia.length >= 2
-                        ? 'grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0'
-                        : 'min-w-0'
+                      displayMedia.length >= 3
+                        ? 'grid grid-cols-1 sm:grid-cols-3 gap-3.5 min-w-0'
+                        : displayMedia.length === 2
+                          ? 'grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0'
+                          : 'min-w-0'
                     }
                   >
                     {displayMedia.map((mediaItem, mIdx) => (
@@ -1267,7 +1321,11 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           mediaItem,
                           proj.judul,
                           proj.jenis,
-                          displayMedia.length >= 2 ? 'h-56 sm:h-64' : 'h-64 sm:h-80'
+                          displayMedia.length >= 3
+                            ? 'h-56 sm:h-64'
+                            : displayMedia.length === 2
+                              ? 'h-56 sm:h-64'
+                              : 'h-64 sm:h-80'
                         )}
                       </div>
                     ))}

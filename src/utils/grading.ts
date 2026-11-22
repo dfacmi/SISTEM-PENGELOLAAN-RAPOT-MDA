@@ -3,6 +3,8 @@ import {
   DigitalSkillSubject,
   GradeWeights,
   PillarSummary,
+  PortfolioMediaItem,
+  PortfolioProject,
   Predikat,
   SemesterReport,
   Student,
@@ -680,4 +682,168 @@ export function generateParentPortfolioNarrative(params: {
 
   return `${paragraph1}\n\n${paragraph2}`;
 }
+
+export interface GroupedPortfolioProject extends PortfolioProject {
+  sourceIds: string[];
+}
+
+function parseSlotChildInfo(project: PortfolioProject): { parentId: string; slotIndex: number } | null {
+  const idMatch = project.id.match(/^(.+)__slot([23])$/);
+  if (idMatch) {
+    return { parentId: idMatch[1], slotIndex: Number(idMatch[2]) - 1 };
+  }
+  const descMatch = (project.description || '').match(/^__parent:(.+)$/);
+  const techMatch = (project.technology || '').match(/^__slot:([23])$/);
+  if (descMatch) {
+    return {
+      parentId: descMatch[1],
+      slotIndex: techMatch ? Number(techMatch[1]) - 1 : 1,
+    };
+  }
+  return null;
+}
+
+/**
+ * Reconstructs grouped PortfolioProject entries when a 3-slot project was split
+ * across separate Google Sheets / Apps Script rows to stay below the 50,000-char cell limit.
+ */
+export function groupPortfolioProjects(
+  projects: PortfolioProject[]
+): GroupedPortfolioProject[] {
+  const orderedParents: GroupedPortfolioProject[] = [];
+  const parentMap = new Map<string, GroupedPortfolioProject>();
+  const childRecords: Array<{ project: PortfolioProject; parentId: string; slotIndex: number }> = [];
+
+  for (const p of projects) {
+    const childInfo = parseSlotChildInfo(p);
+    if (childInfo) {
+      childRecords.push({ project: p, ...childInfo });
+      continue;
+    }
+    const baseItems: PortfolioMediaItem[] = (p.mediaItems || []).map((m) => ({ ...m }));
+    const grouped: GroupedPortfolioProject = {
+      ...p,
+      mediaItems: baseItems,
+      sourceIds: [p.id],
+    };
+    orderedParents.push(grouped);
+    parentMap.set(p.id, grouped);
+  }
+
+  for (const { project: child, parentId, slotIndex } of childRecords) {
+    const parent = parentMap.get(parentId);
+    const childActiveMedia = (child.mediaItems || []).filter(
+      (m) => Boolean(m.url && m.url.trim() !== '')
+    );
+    const primaryChildItem = childActiveMedia[0] || child.mediaItems?.[0];
+
+    if (!parent) {
+      orderedParents.push({
+        ...child,
+        description: (child.description || '').startsWith('__parent:') ? '' : child.description,
+        technology: (child.technology || '').startsWith('__slot:') ? '' : child.technology,
+        mediaItems: primaryChildItem ? [{ ...primaryChildItem }] : [],
+        sourceIds: [child.id],
+      });
+      continue;
+    }
+
+    if (!parent.sourceIds.includes(child.id)) {
+      parent.sourceIds.push(child.id);
+    }
+
+    if (primaryChildItem && primaryChildItem.url.trim() !== '') {
+      const targetIdx = Math.max(1, Math.min(2, slotIndex));
+      while (parent.mediaItems.length <= targetIdx) {
+        parent.mediaItems.push({
+          url: '',
+          type: 'image',
+          caption: '',
+          presetArt: parent.mediaItems.length === 1 ? 'uiux' : 'video',
+        });
+      }
+      if (!parent.mediaItems[targetIdx].url || parent.mediaItems[targetIdx].url.trim() === '') {
+        parent.mediaItems[targetIdx] = { ...primaryChildItem };
+      } else {
+        parent.mediaItems.push({ ...primaryChildItem });
+      }
+    }
+  }
+
+  return orderedParents;
+}
+
+/**
+ * Splits a PortfolioProject containing multiple compressed DataURL photos into separate
+ * records (max 1 uploaded image per record) so every JSON row stays comfortably < 42,000 chars
+ * in Google Sheets & Google Apps Script.
+ */
+export function splitPortfolioProjectForStorage(
+  project: PortfolioProject
+): PortfolioProject[] {
+  const baseId = project.id.replace(/__slot[23]$/, '');
+  const cleanDescription = (project.description || '').startsWith('__parent:')
+    ? ''
+    : project.description || '';
+  const cleanTechnology = (project.technology || '').startsWith('__slot:')
+    ? ''
+    : project.technology || '';
+
+  const normalizedSlots: PortfolioMediaItem[] = (project.mediaItems || [])
+    .slice(0, 3)
+    .map((m, idx) => ({
+      url: (m.url || '').trim(),
+      type: m.type || 'image',
+      caption: (m.caption || '').trim(),
+      presetArt: m.presetArt || (idx === 0 ? 'poster' : idx === 1 ? 'uiux' : 'video'),
+    }));
+
+  const cleanBase: PortfolioProject = {
+    ...project,
+    id: baseId,
+    description: cleanDescription,
+    technology: cleanTechnology,
+    mediaItems: normalizedSlots,
+  };
+
+  const dataUrlSlotsCount = normalizedSlots.filter((m) => m.url.startsWith('data:')).length;
+  const serializedLen = JSON.stringify(cleanBase).length;
+
+  if (dataUrlSlotsCount <= 1 && serializedLen <= 40000) {
+    return [cleanBase];
+  }
+
+  const slotEntries = normalizedSlots
+    .map((item, idx) => ({ item, slotNumber: idx + 1 }))
+    .filter(({ item }) => item.url !== '');
+
+  if (slotEntries.length === 0) {
+    return [
+      {
+        ...cleanBase,
+        mediaItems: normalizedSlots.slice(0, 1),
+      },
+    ];
+  }
+
+  return slotEntries.map(({ item, slotNumber }, arrayIdx) => {
+    if (arrayIdx === 0) {
+      return {
+        ...cleanBase,
+        id: baseId,
+        mediaItems: [item],
+      };
+    }
+    const targetSlot = Math.max(2, Math.min(3, slotNumber === 1 ? arrayIdx + 1 : slotNumber));
+    return {
+      ...cleanBase,
+      id: `${baseId}__slot${targetSlot}`,
+      description: `__parent:${baseId}`,
+      technology: `__slot:${targetSlot}`,
+      featured: false,
+      mediaItems: [item],
+    };
+  });
+}
+
 

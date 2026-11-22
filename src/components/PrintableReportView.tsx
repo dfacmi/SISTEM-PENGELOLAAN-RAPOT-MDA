@@ -17,6 +17,7 @@ import {
   generateParentPortfolioNarrative,
   getKkmPredicateBounds,
   getStudentPortfolioLinks,
+  groupPortfolioProjects,
   hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
@@ -267,16 +268,21 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     };
   }, [qrTargetUrl]);
 
+  const groupedProjects = useMemo(
+    () => groupPortfolioProjects(projects),
+    [projects]
+  );
+
   const sidangProject = useMemo(
     () =>
-      projects.find(
+      groupedProjects.find(
         (p) =>
           p.jenis.toLowerCase().includes('sidang') || p.judul.toLowerCase().includes('sidang')
       ) ||
-      projects.find((p) => (p.mediaItems || []).some((m) => m.url && m.url.trim() !== '')) ||
-      projects.find((p) => p.featured) ||
-      projects[0],
-    [projects]
+      groupedProjects.find((p) => (p.mediaItems || []).some((m) => m.url && m.url.trim() !== '')) ||
+      groupedProjects.find((p) => p.featured) ||
+      groupedProjects[0],
+    [groupedProjects]
   );
 
   const sidangVisualItems = useMemo(() => {
@@ -284,20 +290,20 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
       .map((m) => ({ ...m, url: normalizeDisplayImageUrl(m.url) }))
       .filter((m) => m.url !== '');
     if (primaryMedia.length > 0) {
-      return primaryMedia.slice(0, 2);
+      return primaryMedia.slice(0, 3);
     }
-    const fallbackMedia = projects
+    const fallbackMedia = groupedProjects
       .flatMap((p) => p.mediaItems || [])
       .map((m) => ({ ...m, url: normalizeDisplayImageUrl(m.url) }))
       .filter((m) => m.url !== '');
-    return fallbackMedia.slice(0, 2);
-  }, [sidangProject, projects]);
+    return fallbackMedia.slice(0, 3);
+  }, [sidangProject, groupedProjects]);
 
   const effectivePortfolioSummary = useMemo(() => {
     const manual = (report?.ringkasanPortofolio || '').trim();
     if (manual) return manual;
-    return generateParentPortfolioNarrative({ report, projects });
-  }, [report, projects]);
+    return generateParentPortfolioNarrative({ report, projects: groupedProjects });
+  }, [report, groupedProjects]);
 
   if (!student || !report) {
     return (
@@ -1647,20 +1653,20 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               fontFamily: 'Arial, Helvetica, sans-serif',
             }}
           >
-            <div className="px-8 pt-5 pb-3.5 flex-1 min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
-              {/* Top Group: Header + Judul + Gambar Proporsional */}
-              <div className="flex-1 min-h-0 flex flex-col gap-3">
+            <div className="px-8 pt-5 pb-3 flex-1 min-h-0 flex flex-col justify-between gap-2.5 overflow-hidden">
+              {/* Top Group: Header + Judul Besar + 3 Slot Foto Berjajar */}
+              <div className="flex-1 min-h-0 flex flex-col gap-2.5">
                 {/* Header Page 5 */}
                 <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-2.5">
                   <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
                   <div className="text-right min-w-0 leading-snug">
-                    <div className="font-bold text-base text-slate-900 uppercase tracking-tight">
+                    <div className="font-bold text-[17px] text-slate-900 uppercase tracking-tight">
                       {tpl.labelCoverPortfolio}
                     </div>
-                    <div className="text-[11px] font-bold text-sky-600 tabular-nums">
+                    <div className="text-[12px] font-bold text-sky-600 tabular-nums">
                       Semester {report.semester} · Tahun Akademik {report.tahunAkademik}
                     </div>
-                    <div className="text-[11px] text-slate-700 truncate">
+                    <div className="text-[12px] text-slate-700 truncate">
                       Nama Santri: <span className="font-bold">{student.nama}</span> ({student.kelas})
                     </div>
                   </div>
@@ -1668,97 +1674,93 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
 
                 {/* Judul Karya & Nama Pelajaran */}
                 <div className="shrink-0 flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <span
-                      className="inline-block text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-full tracking-wide uppercase"
+                      className="inline-block text-slate-950 font-bold text-[10.5px] px-3 py-1 rounded-full tracking-wide uppercase"
                       style={{ backgroundColor: theme.sectionSky }}
                     >
                       Dokumentasi Sidang Karya
                     </span>
-                    <div className="font-bold text-[18px] text-slate-950 leading-snug truncate">
+                    <div className="font-bold text-[23px] text-slate-950 leading-[1.2] line-clamp-2">
                       {sidangProject?.judul || 'Sidang Karya Akhir Semester'}
                     </div>
                     {sidangProject?.keteranganSingkat && (
-                      <div className="text-[11px] text-slate-600 leading-snug truncate">
+                      <div className="text-[13.5px] font-medium text-[#334155] leading-snug line-clamp-2">
                         {sidangProject.keteranganSingkat}
                       </div>
                     )}
                   </div>
                   <div className="shrink-0 pt-1">
-                    <span className="inline-block px-3 py-1 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10.5px] font-bold">
+                    <span className="inline-block px-3.5 py-1.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[11px] font-bold">
                       {sidangProject?.jenis || pdfKaryaSubject || 'Sidang Karya'}
                     </span>
                   </div>
                 </div>
 
-                {/* 1. Visual Hasil Sidang Karya (Pas membungkus proporsi gambar, tidak melebar kosong) */}
+                {/* 1. 3 Kolom Foto Hasil Sidang Karya Berjajar */}
                 <div className="flex-1 min-h-0 flex items-center justify-center py-0.5">
-                  {sidangVisualItems.length === 2 ? (
-                    <div className="grid grid-cols-2 gap-3.5 w-full items-center">
-                      {sidangVisualItems.map((media, idx) => (
-                        <div
-                          key={idx}
-                          className="w-fit max-w-full mx-auto flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs"
-                        >
-                          <div className="p-2 bg-white flex items-center justify-center overflow-hidden">
-                            {media.type === 'video' ? (
-                              <div className="w-[290px] h-[240px] flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-4 text-center">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1DF27A]">
-                                  Dokumentasi Video Sidang Karya
+                  {sidangVisualItems.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3 w-full items-stretch">
+                      {[0, 1, 2].map((slotIdx) => {
+                        const media = sidangVisualItems[slotIdx];
+                        if (!media) {
+                          return (
+                            <div
+                              key={slotIdx}
+                              className="flex flex-col border border-emerald-300/80 border-dashed rounded-2xl overflow-hidden bg-white/85 min-w-0"
+                            >
+                              <div className="h-[252px] w-full p-4 flex flex-col items-center justify-center text-center gap-2">
+                                <span
+                                  className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide text-slate-900"
+                                  style={{ backgroundColor: theme.sectionSky }}
+                                >
+                                  Portofolio Lengkap
                                 </span>
-                                <p className="text-xs font-bold mt-1.5 line-clamp-2">
-                                  {media.caption || sidangProject?.judul}
+                                <p className="text-[11.5px] font-medium text-[#334155] leading-relaxed">
+                                  Karya selengkapnya tersedia di Portofolio Behance &amp; PDF Kumpulan Karya
                                 </p>
                               </div>
-                            ) : (
-                              <img
-                                src={media.url}
-                                alt={
-                                  media.caption || sidangProject?.judul || `Sidang Karya ${idx + 1}`
-                                }
-                                referrerPolicy="no-referrer"
-                                className="block max-w-full max-h-[255px] w-auto h-auto object-contain rounded-lg"
-                              />
-                            )}
-                          </div>
-                          {media.caption && (
-                            <div className="w-0 min-w-full shrink-0 bg-slate-900 text-white text-[10px] font-semibold px-3 py-1.5 text-center truncate">
-                              {media.caption}
+                              <div className="shrink-0 bg-slate-800 text-emerald-200 text-[12px] font-bold px-2.5 py-2 text-center truncate">
+                                Lihat Link di Bawah
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : sidangVisualItems.length === 1 ? (
-                    <div className="w-fit max-w-full mx-auto flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs">
-                      <div className="p-2 bg-white flex items-center justify-center overflow-hidden">
-                        {sidangVisualItems[0].type === 'video' ? (
-                          <div className="w-[440px] max-w-full h-[265px] flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-6 text-center">
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-[#1DF27A]">
-                              Dokumentasi Video Sidang Karya
-                            </span>
-                            <p className="text-sm font-bold mt-2 line-clamp-2">
-                              {sidangVisualItems[0].caption || sidangProject?.judul}
-                            </p>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={slotIdx}
+                            className="flex flex-col border border-emerald-400/80 rounded-2xl overflow-hidden bg-white shadow-xs min-w-0"
+                          >
+                            <div className="h-[252px] w-full p-2 bg-white flex items-center justify-center overflow-hidden">
+                              {media.type === 'video' ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-3 text-center">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#1DF27A]">
+                                    Video Karya {slotIdx + 1}
+                                  </span>
+                                  <p className="text-xs font-bold mt-1.5 line-clamp-2">
+                                    {media.caption || sidangProject?.judul}
+                                  </p>
+                                </div>
+                              ) : (
+                                <img
+                                  src={media.url}
+                                  alt={
+                                    media.caption ||
+                                    sidangProject?.judul ||
+                                    `Hasil Karya ${slotIdx + 1}`
+                                  }
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-contain rounded-lg"
+                                />
+                              )}
+                            </div>
+                            <div className="shrink-0 bg-[#0E2228] text-white text-[12px] font-bold px-2.5 py-2 text-center truncate">
+                              {media.caption || `Hasil Karya ${slotIdx + 1}`}
+                            </div>
                           </div>
-                        ) : (
-                          <img
-                            src={sidangVisualItems[0].url}
-                            alt={
-                              sidangVisualItems[0].caption ||
-                              sidangProject?.judul ||
-                              'Dokumentasi Sidang Karya'
-                            }
-                            referrerPolicy="no-referrer"
-                            className="block max-w-full max-h-[290px] w-auto h-auto object-contain rounded-lg"
-                          />
-                        )}
-                      </div>
-                      {sidangVisualItems[0].caption && (
-                        <div className="w-0 min-w-full shrink-0 bg-slate-900 text-white text-[10.5px] font-semibold px-3 py-1.5 text-center truncate">
-                          {sidangVisualItems[0].caption}
-                        </div>
-                      )}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="w-full max-w-[560px] h-[270px] mx-auto flex flex-col border border-emerald-300 rounded-2xl overflow-hidden bg-white shadow-xs">
@@ -1768,8 +1770,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                           title={sidangProject?.judul || 'Dokumentasi Sidang Karya Santri'}
                         />
                       </div>
-                      <div className="shrink-0 bg-slate-900 text-slate-200 text-[10px] px-4 py-1.5 text-center">
-                        Silakan unggah 1–2 gambar hasil Sidang Karya di menu Student Portfolio
+                      <div className="shrink-0 bg-slate-900 text-slate-200 text-[11px] font-semibold px-4 py-2 text-center">
+                        Silakan unggah 1–3 foto hasil Sidang Karya di menu Student Portfolio
                       </div>
                     </div>
                   )}

@@ -25,6 +25,7 @@ import {
   generateParentPortfolioNarrative,
   getKategoriPredikat,
   getStudentPortfolioLinks,
+  groupPortfolioProjects,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
   resolveTanggalRapor,
@@ -133,7 +134,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
   }, [studentReports]);
 
   const studentProjects = useMemo(
-    () => db.portfolios.filter((p) => p.studentId === student?.id),
+    () => groupPortfolioProjects(db.portfolios.filter((p) => p.studentId === student?.id)),
     [db.portfolios, student]
   );
 
@@ -1034,39 +1035,81 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             Belum ada karya portofolio yang diunggah untuk santri ini.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {studentProjects.map((proj) => {
-              const firstMedia = proj.mediaItems[0];
-              const resolvedFirstUrl = normalizeDisplayImageUrl(firstMedia?.url);
+              const activeMedia = (proj.mediaItems || [])
+                .map((m) => ({ ...m, url: normalizeDisplayImageUrl(m.url) }))
+                .filter((m) => m.url !== '')
+                .slice(0, 3);
+              const firstMedia = activeMedia[0] || proj.mediaItems[0];
+              const resolvedFirstUrl = firstMedia ? normalizeDisplayImageUrl(firstMedia.url) : '';
               return (
                 <div
                   key={proj.id}
                   className="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col justify-between hover:border-emerald-300 transition-colors"
                 >
                   <div>
-                    <div className="h-44 sm:h-40 bg-white relative overflow-hidden p-1.5 flex items-center justify-center border-b border-slate-100">
-                      {resolvedFirstUrl ? (
-                        firstMedia?.type === 'video' ? (
-                          <iframe
-                            src={resolvedFirstUrl}
-                            title={proj.judul}
-                            className="w-full h-full pointer-events-none rounded-lg"
-                          />
+                    {activeMedia.length >= 2 ? (
+                      <div
+                        className={`grid gap-1.5 p-2 bg-slate-50 border-b border-slate-100 ${
+                          activeMedia.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'
+                        }`}
+                      >
+                        {activeMedia.map((media, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() =>
+                              setPreviewMedia({
+                                item: media,
+                                title: proj.judul,
+                                jenis: proj.jenis,
+                              })
+                            }
+                            className="h-36 sm:h-40 rounded-lg bg-white border border-slate-200 overflow-hidden p-1 flex items-center justify-center hover:border-emerald-400 transition-colors"
+                          >
+                            {media.type === 'video' ? (
+                              <iframe
+                                src={media.url}
+                                title={media.caption || proj.judul}
+                                className="w-full h-full pointer-events-none rounded"
+                              />
+                            ) : (
+                              <img
+                                src={media.url}
+                                alt={media.caption || proj.judul}
+                                referrerPolicy="no-referrer"
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="h-44 sm:h-48 bg-white relative overflow-hidden p-2 flex items-center justify-center border-b border-slate-100">
+                        {resolvedFirstUrl ? (
+                          firstMedia?.type === 'video' ? (
+                            <iframe
+                              src={resolvedFirstUrl}
+                              title={proj.judul}
+                              className="w-full h-full pointer-events-none rounded-lg"
+                            />
+                          ) : (
+                            <img
+                              src={resolvedFirstUrl}
+                              alt={proj.judul}
+                              referrerPolicy="no-referrer"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          )
                         ) : (
-                          <img
-                            src={resolvedFirstUrl}
-                            alt={proj.judul}
-                            referrerPolicy="no-referrer"
-                            className="max-w-full max-h-full object-contain"
+                          <PortfolioArtwork
+                            preset={firstMedia?.presetArt || 'poster'}
+                            title={proj.judul}
                           />
-                        )
-                      ) : (
-                        <PortfolioArtwork
-                          preset={firstMedia?.presetArt || 'poster'}
-                          title={proj.judul}
-                        />
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="p-3.5 space-y-1.5">
                       <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">

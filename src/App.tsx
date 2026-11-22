@@ -1298,22 +1298,19 @@ export default function App() {
     });
     if (deleted.length === 0 && upserted.length === 0) return;
 
+    const isPureDelete = deleted.length > 0 && upserted.length === 0;
     setConfirmDialog({
       open: true,
-      title:
-        deleted.length > 0
-          ? 'Hapus Karya Portofolio?'
-          : upserted.length > 1
-            ? `Simpan ${upserted.length} Karya Portofolio?`
-            : 'Simpan Karya Portofolio?',
-      message:
-        deleted.length > 0
-          ? `Karya "${deleted[0].judul}" akan dihapus dari tab Portofolio Google Sheets.`
-          : upserted.length > 1
-            ? `Sebanyak ${upserted.length} karya pilihan hasil ekstraksi PDF akan disimpan ke Google Sheets.`
-            : `Perubahan karya Student Portfolio akan disimpan ke Google Sheets.`,
-      confirmLabel: deleted.length > 0 ? 'Hapus' : 'Simpan ke Google Sheets',
-      variant: deleted.length > 0 ? 'danger' : 'primary',
+      title: isPureDelete
+        ? 'Hapus Karya Portofolio?'
+        : upserted.length > 1
+          ? `Simpan Perubahan Karya Portofolio?`
+          : 'Simpan Karya Portofolio?',
+      message: isPureDelete
+        ? `Karya "${deleted[0].judul}" akan dihapus dari tab Portofolio Google Sheets.`
+        : `Perubahan karya & dokumentasi foto Student Portfolio (${upserted.length} item data) akan disimpan ke Google Sheets.`,
+      confirmLabel: isPureDelete ? 'Hapus' : 'Simpan ke Google Sheets',
+      variant: isPureDelete ? 'danger' : 'primary',
       onConfirm: async () => {
         if (!ensureOnlineForWrite()) return;
         setIsSyncing(true);

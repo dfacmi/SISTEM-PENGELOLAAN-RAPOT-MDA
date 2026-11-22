@@ -465,22 +465,23 @@ function detectWebpEncoderSupport(): boolean {
 
 function encodeImageWithSteps(
   img: HTMLImageElement,
-  maxChars: number
+  maxChars: number,
+  maxWidth = 720
 ): { dataUrl: string; byteLength: number; width: number; height: number; mimeType: string } {
   const srcW = Math.max(1, img.width);
   const srcH = Math.max(1, img.height);
   const supportsWebp = detectWebpEncoderSupport();
   const mimeCandidates = supportsWebp ? ['image/webp', 'image/jpeg'] : ['image/jpeg'];
+  const clampedMaxW = Math.max(40, Math.min(srcW, maxWidth));
   const widthSteps = Array.from(
     new Set([
-      Math.min(srcW, 960),
-      Math.min(srcW, 800),
-      Math.min(srcW, 680),
-      Math.min(srcW, 560),
-      Math.min(srcW, 480),
+      clampedMaxW,
+      Math.min(clampedMaxW, 620),
+      Math.min(clampedMaxW, 520),
+      Math.min(clampedMaxW, 440),
     ])
   ).filter((w) => w >= 40);
-  const qualitySteps = [0.85, 0.75, 0.65, 0.55];
+  const qualitySteps = [0.85, 0.76, 0.66, 0.56];
 
   let smallestFallback = {
     dataUrl: '',
@@ -490,7 +491,7 @@ function encodeImageWithSteps(
     mimeType: mimeCandidates[0],
   };
 
-  // Prefer WebP first; step down width (960 -> 800 -> 680 -> 560 -> 480) & quality (0.85 -> 0.55)
+  // Prefer WebP first; step down width (720 -> 620 -> 520 -> 440) & quality (0.85 -> 0.56)
   for (const mime of mimeCandidates) {
     for (const targetW of widthSteps) {
       const scale = targetW / srcW;
@@ -525,8 +526,8 @@ function encodeImageWithSteps(
     }
   }
 
-  // Emergency micro-step only if 480px @ 0.55 still exceeded maxChars on an ultra-complex image
-  for (const emergencyW of [380, 300]) {
+  // Emergency micro-step only if 440px @ 0.56 still exceeded maxChars on an ultra-complex image
+  for (const emergencyW of [360, 280]) {
     const scale = Math.min(1, emergencyW / srcW);
     const outW = Math.max(1, Math.round(srcW * scale));
     const outH = Math.max(1, Math.round(srcH * scale));
@@ -567,13 +568,14 @@ function encodeImageWithSteps(
 
 /**
  * Compresses any uploaded photo/PNG (regardless of raw file size) 100% in browser to WebP
- * (fallback JPEG) under the requested Data URL char budget (36,000 for 1 image, 18,000 for 2).
+ * (fallback JPEG) under the requested Data URL char budget (default 30,000 chars @ maxWidth 720px).
  */
 export async function compressSidangImageWebp(
   file: File,
-  options: { maxChars?: number } = {}
+  options: { maxChars?: number; maxWidth?: number } = {}
 ): Promise<{ dataUrl: string; byteLength: number; width: number; height: number; mimeType: string }> {
-  const maxChars = options.maxChars ?? 36000;
+  const maxChars = options.maxChars ?? 30000;
+  const maxWidth = options.maxWidth ?? 720;
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -585,14 +587,14 @@ export async function compressSidangImageWebp(
       reader.onload = () => {
         const img2 = new Image();
         img2.onerror = () => reject(new Error('Format gambar tidak didukung.'));
-        img2.onload = () => resolve(encodeImageWithSteps(img2, maxChars));
+        img2.onload = () => resolve(encodeImageWithSteps(img2, maxChars, maxWidth));
         img2.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     };
     img.onload = () => {
       try {
-        resolve(encodeImageWithSteps(img, maxChars));
+        resolve(encodeImageWithSteps(img, maxChars, maxWidth));
       } finally {
         URL.revokeObjectURL(objectUrl);
       }
@@ -602,12 +604,12 @@ export async function compressSidangImageWebp(
 }
 
 /**
- * Re-compresses an existing data:image/... URL to fit a smaller character budget
- * (used when adding a 2nd Sidang Karya image so both fit comfortably below Google Sheets limits).
+ * Re-compresses an existing data:image/... URL to fit a character budget safely under Google Sheets' limits.
  */
 export async function shrinkImageDataUrlWebp(
   dataUrl: string,
-  maxChars = 18000
+  maxChars = 30000,
+  maxWidth = 720
 ): Promise<string> {
   if (!dataUrl || !dataUrl.startsWith('data:image/') || dataUrl.length <= maxChars) {
     return dataUrl;
@@ -616,10 +618,11 @@ export async function shrinkImageDataUrlWebp(
     const img = new Image();
     img.onerror = () => resolve(dataUrl);
     img.onload = () => {
-      const encoded = encodeImageWithSteps(img, maxChars);
+      const encoded = encodeImageWithSteps(img, maxChars, maxWidth);
       resolve(encoded.dataUrl || dataUrl);
     };
     img.src = dataUrl;
   });
 }
+
 
