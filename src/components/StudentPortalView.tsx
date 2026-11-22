@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import QRCode from 'qrcode';
 import {
   BookOpen,
   Camera,
@@ -10,6 +11,7 @@ import {
   Link2,
   Lock,
   Printer,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
@@ -20,13 +22,17 @@ import {
 } from '../types/mda';
 import {
   formatRupiah,
+  generateParentPortfolioNarrative,
   getKategoriPredikat,
   getStudentPortfolioLinks,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
   resolveTanggalRapor,
 } from '../utils/grading';
-import { compressImageToDataUrl } from '../utils/imageHelper';
+import {
+  compressImageToDataUrl,
+  normalizeDisplayImageUrl,
+} from '../utils/imageHelper';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import {
   RadarFivePillarsChart,
@@ -64,6 +70,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState<'link1' | 'link2' | 'link3' | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [previewMedia, setPreviewMedia] = useState<{
     item: PortfolioMediaItem;
     title: string;
@@ -130,6 +137,48 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
     [db.portfolios, student]
   );
 
+  const portfolioLinks = useMemo(
+    () =>
+      student
+        ? getStudentPortfolioLinks(student, db.spreadsheetId)
+        : { sidangUrl: '', behanceUrl: '', pdfUrl: '', pdfSubject: '' },
+    [student, db.spreadsheetId]
+  );
+
+  const qrTargetUrl = portfolioLinks.pdfUrl || portfolioLinks.behanceUrl || '';
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!qrTargetUrl) {
+      setQrDataUrl('');
+      return;
+    }
+    QRCode.toDataURL(qrTargetUrl, {
+      width: 240,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#0E2228', light: '#FFFFFF' },
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrTargetUrl]);
+
+  const effectivePortfolioSummary = useMemo(() => {
+    const manual = (currentReport?.ringkasanPortofolio || '').trim();
+    if (manual) return manual;
+    return generateParentPortfolioNarrative({
+      report: currentReport,
+      projects: studentProjects,
+    });
+  }, [currentReport, studentProjects]);
+
   if (!student || !currentReport) {
     return (
       <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-500">
@@ -138,7 +187,6 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
     );
   }
 
-  const portfolioLinks = getStudentPortfolioLinks(student, db.spreadsheetId);
   const diniyahAvg = hitungRataRataDiniyah(currentReport.diniyah);
   const digitalAvg = hitungRataRataDigital(currentReport.skillDigital);
 
@@ -737,9 +785,9 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
         </div>
       </div>
 
-      {/* Catatan Wali Kelas + Integrated QR Code Portfolio */}
-      <div id="sec-catatan" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
-        <div className="lg:col-span-8 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm">
+      {/* Catatan Wali Kelas */}
+      <div id="sec-catatan" className="space-y-5 sm:space-y-6 scroll-mt-20 min-w-0">
+        <div className="min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <h3 className="font-display font-bold text-slate-900 text-base">
               Catatan Wali Kelas &amp; Kehadiran
@@ -770,143 +818,183 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           </div>
         </div>
 
-        <div
-          className="lg:col-span-5 min-w-0 text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
-          style={{ backgroundColor: theme.darkPill }}
-        >
-          <div className="space-y-3 min-w-0">
-            <div className="inline-flex items-center gap-1.5 text-[#1DF27A] text-xs font-semibold">
-              <Link2 className="w-4 h-4 shrink-0" />
-              <span>Akses Karya Online</span>
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-base break-words">
-                {tpl.portalQrTitle}
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed mt-1 break-words">
-                {tpl.portalQrDescription}
-              </p>
-            </div>
-
+        {/* Perkembangan Karya & Kompetensi (Bahasa Orang Tua) + 2 Link & QR Code */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 min-w-0">
+          <div className="lg:col-span-7 min-w-0 bg-white border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3">
             <div className="space-y-2.5">
-              {/* Link 1: Portofolio Behance */}
-              <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
-                    1. Link Portofolio (Behance)
-                  </span>
-                  {portfolioLinks.behanceUrl && (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void handleCopySpecificLink('link2', portfolioLinks.behanceUrl)
-                        }
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
-                      >
-                        {copiedKey === 'link2' ? (
-                          <Check className="w-3 h-3 text-[#1DF27A]" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                        <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
-                      </button>
-                      <a
-                        href={portfolioLinks.behanceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
-                      >
-                        <span>Buka</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  )}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2.5">
+                <div className="inline-flex items-center gap-1.5 text-emerald-800 font-display font-bold text-sm sm:text-base">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Perkembangan Karya &amp; Kompetensi</span>
                 </div>
-                {portfolioLinks.behanceUrl ? (
-                  <a
-                    href={portfolioLinks.behanceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
-                  >
-                    {portfolioLinks.behanceUrl}
-                  </a>
-                ) : (
-                  <div className="text-[11px] text-slate-400 italic">
-                    Belum ada link Behance ditambahkan.
-                  </div>
-                )}
+                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  {currentReport.semester} {currentReport.tahunAkademik}
+                </span>
               </div>
-
-              {/* Link 2: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
-              <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                    <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
-                      2. Link Kumpulan Karya (PDF)
-                    </span>
-                    {portfolioLinks.pdfSubject && (
-                      <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">
-                        {portfolioLinks.pdfSubject}
-                      </span>
-                    )}
-                  </div>
-                  {portfolioLinks.pdfUrl && (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void handleCopySpecificLink('link3', portfolioLinks.pdfUrl)
-                        }
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
-                      >
-                        {copiedKey === 'link3' ? (
-                          <Check className="w-3 h-3 text-[#1DF27A]" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                        <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
-                      </button>
-                      <a
-                        href={portfolioLinks.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 text-slate-950 text-[11px] font-bold"
-                      >
-                        <span>Buka</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-                {portfolioLinks.pdfUrl ? (
-                  <a
-                    href={portfolioLinks.pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-amber-100 break-all hover:underline"
-                  >
-                    {portfolioLinks.pdfUrl}
-                  </a>
-                ) : (
-                  <div className="text-[11px] text-slate-400 italic">
-                    Belum ada link PDF kumpulan karya semester.
-                  </div>
-                )}
+              <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">
+                {effectivePortfolioSummary}
               </div>
+            </div>
+            <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+              Rangkuman capaian praktik, proyek, dan kompetensi digital ananda selama 1 semester.
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2 border-t border-white/15">
-            <button
-              type="button"
-              onClick={() => onOpenPortfolio(student.id)}
-              className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
-            >
-              <span>Buka Halaman Galeri Portofolio</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </button>
+          <div
+            className="lg:col-span-5 min-w-0 text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
+            style={{ backgroundColor: theme.darkPill }}
+          >
+            <div className="space-y-3 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-1.5 text-[#1DF27A] text-xs font-semibold">
+                    <Link2 className="w-4 h-4 shrink-0" />
+                    <span>Akses Karya Online</span>
+                  </div>
+                  <h3 className="font-display font-bold text-base break-words mt-1">
+                    {tpl.portalQrTitle}
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed mt-0.5 break-words">
+                    {tpl.portalQrDescription}
+                  </p>
+                </div>
+
+                {qrTargetUrl && qrDataUrl && (
+                  <div className="shrink-0 flex flex-col items-center gap-1">
+                    <div className="w-20 h-20 rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center">
+                      <img
+                        src={qrDataUrl}
+                        alt="QR Code Portofolio Santri"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <span className="text-[9.5px] text-emerald-200 font-semibold text-center leading-tight max-w-[88px]">
+                      Scan untuk lihat semua karya
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2.5">
+                {/* Link 1: Portofolio Behance */}
+                <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
+                      1. Link Portofolio (Behance)
+                    </span>
+                    {portfolioLinks.behanceUrl && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void handleCopySpecificLink('link2', portfolioLinks.behanceUrl)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                        >
+                          {copiedKey === 'link2' ? (
+                            <Check className="w-3 h-3 text-[#1DF27A]" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
+                        </button>
+                        <a
+                          href={portfolioLinks.behanceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
+                        >
+                          <span>Buka</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {portfolioLinks.behanceUrl ? (
+                    <a
+                      href={portfolioLinks.behanceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
+                    >
+                      {portfolioLinks.behanceUrl}
+                    </a>
+                  ) : (
+                    <div className="text-[11px] text-slate-400 italic">
+                      Belum ada link Behance ditambahkan.
+                    </div>
+                  )}
+                </div>
+
+                {/* Link 2: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
+                <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
+                        2. Link Kumpulan Karya (PDF)
+                      </span>
+                      {portfolioLinks.pdfSubject && (
+                        <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">
+                          {portfolioLinks.pdfSubject}
+                        </span>
+                      )}
+                    </div>
+                    {portfolioLinks.pdfUrl && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void handleCopySpecificLink('link3', portfolioLinks.pdfUrl)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                        >
+                          {copiedKey === 'link3' ? (
+                            <Check className="w-3 h-3 text-[#1DF27A]" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
+                        </button>
+                        <a
+                          href={portfolioLinks.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 text-slate-950 text-[11px] font-bold"
+                        >
+                          <span>Buka</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {portfolioLinks.pdfUrl ? (
+                    <a
+                      href={portfolioLinks.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-[11px] font-mono text-amber-100 break-all hover:underline"
+                    >
+                      {portfolioLinks.pdfUrl}
+                    </a>
+                  ) : (
+                    <div className="text-[11px] text-slate-400 italic">
+                      Belum ada link PDF kumpulan karya semester.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-white/15">
+              <button
+                type="button"
+                onClick={() => onOpenPortfolio(student.id)}
+                className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
+              >
+                <span>Buka Halaman Galeri Portofolio</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -949,26 +1037,27 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {studentProjects.map((proj) => {
               const firstMedia = proj.mediaItems[0];
+              const resolvedFirstUrl = normalizeDisplayImageUrl(firstMedia?.url);
               return (
                 <div
                   key={proj.id}
                   className="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col justify-between hover:border-emerald-300 transition-colors"
                 >
                   <div>
-                    <div className="h-44 sm:h-40 bg-slate-100 relative overflow-hidden">
-                      {firstMedia?.url ? (
-                        firstMedia.type === 'video' ? (
+                    <div className="h-44 sm:h-40 bg-white relative overflow-hidden p-1.5 flex items-center justify-center border-b border-slate-100">
+                      {resolvedFirstUrl ? (
+                        firstMedia?.type === 'video' ? (
                           <iframe
-                            src={firstMedia.url}
+                            src={resolvedFirstUrl}
                             title={proj.judul}
-                            className="w-full h-full pointer-events-none"
+                            className="w-full h-full pointer-events-none rounded-lg"
                           />
                         ) : (
                           <img
-                            src={firstMedia.url}
+                            src={resolvedFirstUrl}
                             alt={proj.judul}
                             referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
+                            className="max-w-full max-h-full object-contain"
                           />
                         )
                       ) : (
@@ -986,12 +1075,11 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                       <h3 className="font-display font-bold text-sm text-slate-900 leading-snug">
                         {proj.judul}
                       </h3>
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                        {proj.keteranganSingkat || proj.description}
-                      </p>
-                      <div className="text-[11px] font-mono text-slate-500 pt-0.5 truncate">
-                        Tools: {proj.technology || '—'}
-                      </div>
+                      {proj.keteranganSingkat && (
+                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                          {proj.keteranganSingkat}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1001,7 +1089,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                         type="button"
                         onClick={() =>
                           setPreviewMedia({
-                            item: firstMedia,
+                            item: { ...firstMedia, url: resolvedFirstUrl },
                             title: proj.judul,
                             jenis: proj.jenis,
                           })

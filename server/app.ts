@@ -1612,6 +1612,66 @@ export function createApiApp(): express.Express {
     }
   });
 
+  // Safe Image Proxy for PDF export (inlines Google Drive / public HTTPS images without CORS failure)
+  app.get('/api/image-proxy', async (req, res) => {
+    try {
+      const rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+      if (!rawUrl) {
+        res.status(400).json({ error: 'Parameter url diperlukan.' });
+        return;
+      }
+      let parsed: URL;
+      try {
+        parsed = new URL(rawUrl);
+      } catch {
+        res.status(400).json({ error: 'URL tidak valid.' });
+        return;
+      }
+      if (parsed.protocol !== 'https:') {
+        res.status(400).json({ error: 'Hanya URL HTTPS yang didukung.' });
+        return;
+      }
+      const host = parsed.hostname.toLowerCase();
+      if (
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host === '::1' ||
+        host.endsWith('.local') ||
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^169\.254\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+      ) {
+        res.status(403).json({ error: 'Host tidak diizinkan.' });
+        return;
+      }
+
+      const upstream = await fetch(parsed.toString(), {
+        redirect: 'follow',
+        headers: { Accept: 'image/*,*/*;q=0.8' },
+      });
+      if (!upstream.ok) {
+        res.status(502).json({ error: `Gagal memuat gambar (${upstream.status}).` });
+        return;
+      }
+      const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+      if (!contentType.toLowerCase().startsWith('image/')) {
+        res.status(415).json({ error: 'Tautan tidak mengembalikan file gambar.' });
+        return;
+      }
+      const arrayBuf = await upstream.arrayBuffer();
+      if (arrayBuf.byteLength > 8 * 1024 * 1024) {
+        res.status(413).json({ error: 'Ukuran gambar melebihi batas 8 MB.' });
+        return;
+      }
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(Buffer.from(arrayBuf));
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal memuat proxy gambar.' });
+    }
+  });
+
   // 12. Standalone Public Portfolio Link (NO PINs, NO grades, NO other students)
   app.get('/api/public/portfolio', async (req, res) => {
     try {

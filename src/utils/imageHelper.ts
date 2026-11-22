@@ -426,3 +426,200 @@ export async function compressImageSharpForSheet(
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Converts Google Drive share URLs (file/d/ID/view, open?id=ID, uc?id=ID) into direct
+ * image URLs compatible with <img> rendering and PDF export.
+ */
+export function normalizeDisplayImageUrl(rawUrl?: string | null): string {
+  const clean = (rawUrl || '').replace(/[\r\n\t]+/g, '').trim();
+  if (!clean) return '';
+  if (clean.startsWith('data:')) return clean;
+
+  if (/drive\.google\.com/i.test(clean)) {
+    const fileMatch =
+      clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+      clean.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+      clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (fileMatch && fileMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${fileMatch[1]}`;
+    }
+  }
+
+  if (/^www\./i.test(clean)) {
+    return `https://${clean}`;
+  }
+  return clean;
+}
+
+function detectWebpEncoderSupport(): boolean {
+  try {
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 2;
+    testCanvas.height = 2;
+    return testCanvas.toDataURL('image/webp', 0.85).startsWith('data:image/webp');
+  } catch {
+    return false;
+  }
+}
+
+function encodeImageWithSteps(
+  img: HTMLImageElement,
+  maxChars: number
+): { dataUrl: string; byteLength: number; width: number; height: number; mimeType: string } {
+  const srcW = Math.max(1, img.width);
+  const srcH = Math.max(1, img.height);
+  const supportsWebp = detectWebpEncoderSupport();
+  const mimeCandidates = supportsWebp ? ['image/webp', 'image/jpeg'] : ['image/jpeg'];
+  const widthSteps = Array.from(
+    new Set([
+      Math.min(srcW, 960),
+      Math.min(srcW, 800),
+      Math.min(srcW, 680),
+      Math.min(srcW, 560),
+      Math.min(srcW, 480),
+    ])
+  ).filter((w) => w >= 40);
+  const qualitySteps = [0.85, 0.75, 0.65, 0.55];
+
+  let smallestFallback = {
+    dataUrl: '',
+    byteLength: Number.MAX_SAFE_INTEGER,
+    width: srcW,
+    height: srcH,
+    mimeType: mimeCandidates[0],
+  };
+
+  // Prefer WebP first; step down width (960 -> 800 -> 680 -> 560 -> 480) & quality (0.85 -> 0.55)
+  for (const mime of mimeCandidates) {
+    for (const targetW of widthSteps) {
+      const scale = targetW / srcW;
+      const outW = Math.max(1, Math.round(srcW * scale));
+      const outH = Math.max(1, Math.round(srcH * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) continue;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, outW, outH);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, outW, outH);
+
+      for (const q of qualitySteps) {
+        const dataUrl = canvas.toDataURL(mime, q);
+        const byteLength = estimateDataUrlBinaryBytes(dataUrl);
+        if (!smallestFallback.dataUrl || dataUrl.length < smallestFallback.dataUrl.length) {
+          smallestFallback = { dataUrl, byteLength, width: outW, height: outH, mimeType: mime };
+        }
+        if (dataUrl.length <= maxChars) {
+          canvas.width = 0;
+          canvas.height = 0;
+          return { dataUrl, byteLength, width: outW, height: outH, mimeType: mime };
+        }
+      }
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+  }
+
+  // Emergency micro-step only if 480px @ 0.55 still exceeded maxChars on an ultra-complex image
+  for (const emergencyW of [380, 300]) {
+    const scale = Math.min(1, emergencyW / srcW);
+    const outW = Math.max(1, Math.round(srcW * scale));
+    const outH = Math.max(1, Math.round(srcH * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) continue;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, outW, outH);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, outW, outH);
+    for (const q of [0.55, 0.45]) {
+      const dataUrl = canvas.toDataURL(mimeCandidates[0], q);
+      const byteLength = estimateDataUrlBinaryBytes(dataUrl);
+      if (dataUrl.length < smallestFallback.dataUrl.length) {
+        smallestFallback = {
+          dataUrl,
+          byteLength,
+          width: outW,
+          height: outH,
+          mimeType: mimeCandidates[0],
+        };
+      }
+      if (dataUrl.length <= maxChars) {
+        canvas.width = 0;
+        canvas.height = 0;
+        return smallestFallback;
+      }
+    }
+    canvas.width = 0;
+    canvas.height = 0;
+  }
+
+  return smallestFallback;
+}
+
+/**
+ * Compresses any uploaded photo/PNG (regardless of raw file size) 100% in browser to WebP
+ * (fallback JPEG) under the requested Data URL char budget (36,000 for 1 image, 18,000 for 2).
+ */
+export async function compressSidangImageWebp(
+  file: File,
+  options: { maxChars?: number } = {}
+): Promise<{ dataUrl: string; byteLength: number; width: number; height: number; mimeType: string }> {
+  const maxChars = options.maxChars ?? 36000;
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      // Fallback to FileReader if objectURL fails on some mobile browsers
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+      reader.onload = () => {
+        const img2 = new Image();
+        img2.onerror = () => reject(new Error('Format gambar tidak didukung.'));
+        img2.onload = () => resolve(encodeImageWithSteps(img2, maxChars));
+        img2.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    };
+    img.onload = () => {
+      try {
+        resolve(encodeImageWithSteps(img, maxChars));
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    img.src = objectUrl;
+  });
+}
+
+/**
+ * Re-compresses an existing data:image/... URL to fit a smaller character budget
+ * (used when adding a 2nd Sidang Karya image so both fit comfortably below Google Sheets limits).
+ */
+export async function shrinkImageDataUrlWebp(
+  dataUrl: string,
+  maxChars = 18000
+): Promise<string> {
+  if (!dataUrl || !dataUrl.startsWith('data:image/') || dataUrl.length <= maxChars) {
+    return dataUrl;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onerror = () => resolve(dataUrl);
+    img.onload = () => {
+      const encoded = encodeImageWithSteps(img, maxChars);
+      resolve(encoded.dataUrl || dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+

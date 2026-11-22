@@ -291,6 +291,7 @@ export interface SemesterReport {
   catatanWali: TeacherNotes;
   keputusanSemester: KeputusanSemester;
   keputusanLainnya?: string;
+  ringkasanPortofolio?: string;
   published: boolean;
   updatedAt: string;
 }

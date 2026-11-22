@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 import {
   ArrowLeft,
   Download,
@@ -13,6 +14,7 @@ import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import { BrandingTemplateConfig, MdaDatabase } from '../types/mda';
 import {
   formatRupiah,
+  generateParentPortfolioNarrative,
   getKkmPredicateBounds,
   getStudentPortfolioLinks,
   hitungPredikatByKkm,
@@ -20,6 +22,7 @@ import {
   hitungRataRataDiniyah,
   resolveTanggalRapor,
 } from '../utils/grading';
+import { normalizeDisplayImageUrl } from '../utils/imageHelper';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { MdaLogo, PortfolioArtwork, StudentAvatar } from './MdaLogo';
 
@@ -79,6 +82,54 @@ async function waitForImagesInElement(el: HTMLElement): Promise<void> {
   );
 }
 
+async function inlineExternalImagesForPdf(el: HTMLElement): Promise<() => void> {
+  const imgs = Array.from(el.querySelectorAll('img'));
+  const restorations: Array<{ img: HTMLImageElement; prevSrc: string }> = [];
+
+  await Promise.all(
+    imgs.map(async (img) => {
+      const src = img.getAttribute('src') || '';
+      if (!/^https?:\/\//i.test(src)) return;
+      try {
+        let res: Response | null = null;
+        try {
+          res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+          if (!res.ok) res = null;
+        } catch {
+          res = null;
+        }
+        if (!res) {
+          res = await fetch(src, { mode: 'cors' });
+          if (!res.ok) return;
+        }
+        const blob = await res.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('read error'));
+          reader.readAsDataURL(blob);
+        });
+        if (dataUrl.startsWith('data:')) {
+          restorations.push({ img, prevSrc: src });
+          img.setAttribute('src', dataUrl);
+        }
+      } catch {
+        // Keep original src if network proxy unavailable
+      }
+    })
+  );
+
+  if (restorations.length > 0) {
+    await waitForImagesInElement(el);
+  }
+
+  return () => {
+    for (const item of restorations) {
+      item.img.setAttribute('src', item.prevSrc);
+    }
+  };
+}
+
 function normalizePdfLinkUrl(rawUrl: string | undefined | null): string {
   const cleanUrl = (rawUrl || '').replace(/[\r\n\t]+/g, '').trim();
   if (!cleanUrl || cleanUrl.startsWith('#') || /^javascript:/i.test(cleanUrl)) {
@@ -121,6 +172,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
   const [zoomMode, setZoomMode] = useState<'fit' | 'actual'>('fit');
   const [exportProgress, setExportProgress] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const pageRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -179,6 +231,74 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     [db.teachers, student]
   );
 
+  const portfolioLinks = useMemo(
+    () =>
+      student
+        ? getStudentPortfolioLinks(student, db.spreadsheetId)
+        : { sidangUrl: '', behanceUrl: '', pdfUrl: '', pdfSubject: '' },
+    [student, db.spreadsheetId]
+  );
+
+  const behancePdfLink = normalizePdfLinkUrl(portfolioLinks.behanceUrl);
+  const pdfKaryaLink = normalizePdfLinkUrl(portfolioLinks.pdfUrl);
+  const pdfKaryaSubject = portfolioLinks.pdfSubject;
+  const qrTargetUrl = pdfKaryaLink || behancePdfLink;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!qrTargetUrl) {
+      setQrDataUrl('');
+      return;
+    }
+    QRCode.toDataURL(qrTargetUrl, {
+      width: 260,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#0E2228', light: '#FFFFFF' },
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrTargetUrl]);
+
+  const sidangProject = useMemo(
+    () =>
+      projects.find(
+        (p) =>
+          p.jenis.toLowerCase().includes('sidang') || p.judul.toLowerCase().includes('sidang')
+      ) ||
+      projects.find((p) => (p.mediaItems || []).some((m) => m.url && m.url.trim() !== '')) ||
+      projects.find((p) => p.featured) ||
+      projects[0],
+    [projects]
+  );
+
+  const sidangVisualItems = useMemo(() => {
+    const primaryMedia = (sidangProject?.mediaItems || [])
+      .map((m) => ({ ...m, url: normalizeDisplayImageUrl(m.url) }))
+      .filter((m) => m.url !== '');
+    if (primaryMedia.length > 0) {
+      return primaryMedia.slice(0, 2);
+    }
+    const fallbackMedia = projects
+      .flatMap((p) => p.mediaItems || [])
+      .map((m) => ({ ...m, url: normalizeDisplayImageUrl(m.url) }))
+      .filter((m) => m.url !== '');
+    return fallbackMedia.slice(0, 2);
+  }, [sidangProject, projects]);
+
+  const effectivePortfolioSummary = useMemo(() => {
+    const manual = (report?.ringkasanPortofolio || '').trim();
+    if (manual) return manual;
+    return generateParentPortfolioNarrative({ report, projects });
+  }, [report, projects]);
+
   if (!student || !report) {
     return (
       <div className="p-8 text-center">
@@ -193,11 +313,6 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
       </div>
     );
   }
-
-  const portfolioLinks = getStudentPortfolioLinks(student, db.spreadsheetId);
-  const behancePdfLink = normalizePdfLinkUrl(portfolioLinks.behanceUrl);
-  const pdfKaryaLink = normalizePdfLinkUrl(portfolioLinks.pdfUrl);
-  const pdfKaryaSubject = portfolioLinks.pdfSubject;
 
   const kkmDiniyah = period?.kkmDiniyah || 60;
   const kkmTahfidz = period?.kkmTahfidz || 70;
@@ -214,27 +329,6 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     report.semester,
     report.tahunAkademik
   );
-  const sidangProject =
-    projects.find(
-      (p) =>
-        p.jenis.toLowerCase().includes('sidang') || p.judul.toLowerCase().includes('sidang')
-    ) ||
-    projects.find((p) => (p.mediaItems || []).some((m) => m.url && m.url.trim() !== '')) ||
-    projects.find((p) => p.featured) ||
-    projects[0];
-
-  const sidangVisualItems = useMemo(() => {
-    const primaryMedia = (sidangProject?.mediaItems || []).filter(
-      (m) => m.url && m.url.trim() !== ''
-    );
-    if (primaryMedia.length > 0) {
-      return primaryMedia.slice(0, 2);
-    }
-    const fallbackMedia = projects
-      .flatMap((p) => p.mediaItems || [])
-      .filter((m) => m.url && m.url.trim() !== '');
-    return fallbackMedia.slice(0, 2);
-  }, [sidangProject, projects]);
 
   const totalPages = 5;
 
@@ -263,6 +357,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         setExportProgress(`Membuat PDF (${i + 1}/${pages.length})...`);
         const pageEl = pages[i];
         await waitForImagesInElement(pageEl);
+        const restoreExternalImages = await inlineExternalImagesForPdf(pageEl);
 
         // Ukur koordinat link pada ukuran A4 murni (1:1 tanpa pengaruh scale/zoom layar HP)
         interface MeasuredPdfLink {
@@ -277,6 +372,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
           void pageEl.offsetWidth;
         }
 
+        let pngDataUrl = '';
         try {
           const pageRect = pageEl.getBoundingClientRect();
           if (pageRect.width > 0 && pageRect.height > 0) {
@@ -319,30 +415,31 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               }
             }
           }
+
+          pngDataUrl = await toPng(pageEl, {
+            width: A4_WIDTH_PX,
+            height: A4_HEIGHT_PX,
+            canvasWidth: A4_WIDTH_PX * 2,
+            canvasHeight: A4_HEIGHT_PX * 2,
+            pixelRatio: 2,
+            backgroundColor: '#ffffff',
+            skipFonts: true,
+            skipAutoScale: true,
+            cacheBust: false,
+            imagePlaceholder: TRANSPARENT_PIXEL,
+            style: {
+              transform: 'none',
+              margin: '0',
+              width: `${A4_WIDTH_PX}px`,
+              height: `${A4_HEIGHT_PX}px`,
+            },
+          });
         } finally {
           if (scaleContainer) {
             scaleContainer.style.transform = prevTransform;
           }
+          restoreExternalImages();
         }
-
-        const pngDataUrl = await toPng(pageEl, {
-          width: A4_WIDTH_PX,
-          height: A4_HEIGHT_PX,
-          canvasWidth: A4_WIDTH_PX * 2,
-          canvasHeight: A4_HEIGHT_PX * 2,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          skipFonts: true,
-          skipAutoScale: true,
-          cacheBust: false,
-          imagePlaceholder: TRANSPARENT_PIXEL,
-          style: {
-            transform: 'none',
-            margin: '0',
-            width: `${A4_WIDTH_PX}px`,
-            height: `${A4_HEIGHT_PX}px`,
-          },
-        });
 
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
@@ -414,80 +511,105 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
 
   const PortfolioLinksBanner = () => (
     <div
-      className="shrink-0 text-white rounded-2xl p-4 space-y-2.5 shadow-md"
+      className="shrink-0 text-white rounded-2xl p-3.5 shadow-md"
       style={{ backgroundColor: theme.darkPill }}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="inline-block text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 text-[#1DF27A]">
-          LIHAT KARYA SELENGKAPNYA
+      <div className="flex items-stretch justify-between gap-3.5">
+        {/* Kolom Kiri: 2 Link Clickable */}
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-block text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-[#1DF27A]">
+              LIHAT KARYA SELENGKAPNYA
+            </div>
+            {behancePdfLink && (
+              <a
+                href={behancePdfLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-pdf-link="true"
+                className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-md no-underline shrink-0"
+              >
+                Buka Behance ↗
+              </a>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            {behancePdfLink ? (
+              <a
+                href={behancePdfLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-pdf-link="true"
+                className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3 py-1.5 no-underline"
+              >
+                <div className="text-[8.5px] uppercase tracking-wide text-emerald-200 font-bold">
+                  1. Link Portofolio (Behance):
+                </div>
+                <div className="text-[9.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug mt-0.5">
+                  {behancePdfLink}
+                </div>
+              </a>
+            ) : (
+              <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3 py-1.5">
+                <div className="text-[8.5px] uppercase tracking-wide text-slate-300 font-bold">
+                  1. Link Portofolio (Behance):
+                </div>
+                <div className="text-[9.5px] text-slate-400 italic mt-0.5">
+                  Link Behance santri belum diisi.
+                </div>
+              </div>
+            )}
+
+            {pdfKaryaLink ? (
+              <a
+                href={pdfKaryaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-pdf-link="true"
+                className="block bg-slate-950/60 border border-amber-400/35 rounded-lg px-3 py-1.5 no-underline"
+              >
+                <div className="text-[8.5px] uppercase tracking-wide text-amber-200 font-bold">
+                  2. Link Kumpulan Karya 1 Semester (PDF)
+                  {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
+                </div>
+                <div className="text-[9.5px] font-bold text-amber-300 break-all underline decoration-amber-400/50 leading-snug mt-0.5">
+                  {pdfKaryaLink}
+                </div>
+              </a>
+            ) : (
+              <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3 py-1.5">
+                <div className="text-[8.5px] uppercase tracking-wide text-slate-300 font-bold">
+                  2. Link Kumpulan Karya 1 Semester (PDF)
+                  {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
+                </div>
+                <div className="text-[9.5px] text-slate-400 italic mt-0.5">
+                  Link Google Drive PDF kumpulan karya belum diisi.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        {behancePdfLink && (
-          <a
-            href={behancePdfLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-pdf-link="true"
-            className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[10px] px-3 py-1 rounded-lg no-underline"
-          >
-            Buka Portofolio Behance ↗
-          </a>
-        )}
-      </div>
 
-      <div className="space-y-2">
-        {behancePdfLink ? (
-          <a
-            href={behancePdfLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-pdf-link="true"
-            className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3.5 py-2 no-underline"
-          >
-            <div className="text-[9px] uppercase tracking-wide text-emerald-200 font-bold">
-              1. Link Portofolio (Behance):
+        {/* Kolom Kanan: QR Code Otomatis (Lokal PNG via qrcode) */}
+        <div className="shrink-0 flex flex-col items-center justify-center gap-1 pl-2 border-l border-white/15">
+          {qrTargetUrl && qrDataUrl ? (
+            <div className="w-[88px] h-[88px] rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center">
+              <img
+                src={qrDataUrl}
+                alt="QR Code Kumpulan Karya Santri"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="text-[10px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug mt-0.5">
-              {behancePdfLink}
+          ) : (
+            <div className="w-[88px] h-[88px] rounded-xl bg-white/10 border border-white/20 p-2 flex items-center justify-center text-center text-[8.5px] text-slate-300 leading-tight">
+              QR otomatis aktif setelah link PDF / Behance diisi
             </div>
-          </a>
-        ) : (
-          <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3.5 py-2">
-            <div className="text-[9px] uppercase tracking-wide text-slate-300 font-bold">
-              1. Link Portofolio (Behance):
-            </div>
-            <div className="text-[10px] text-slate-400 italic mt-0.5">
-              Link Behance santri belum diisi.
-            </div>
+          )}
+          <div className="text-[8.5px] font-semibold text-emerald-200 text-center leading-tight max-w-[94px]">
+            Scan untuk lihat semua karya
           </div>
-        )}
-
-        {pdfKaryaLink ? (
-          <a
-            href={pdfKaryaLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-pdf-link="true"
-            className="block bg-slate-950/60 border border-amber-400/35 rounded-lg px-3.5 py-2 no-underline"
-          >
-            <div className="text-[9px] uppercase tracking-wide text-amber-200 font-bold">
-              2. Link Kumpulan Karya (PDF)
-              {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
-            </div>
-            <div className="text-[10px] font-bold text-amber-300 break-all underline decoration-amber-400/50 leading-snug mt-0.5">
-              {pdfKaryaLink}
-            </div>
-          </a>
-        ) : (
-          <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3.5 py-2">
-            <div className="text-[9px] uppercase tracking-wide text-slate-300 font-bold">
-              2. Link Kumpulan Karya (PDF)
-              {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
-            </div>
-            <div className="text-[10px] text-slate-400 italic mt-0.5">
-              Link Google Drive PDF kumpulan karya belum diisi.
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -1525,9 +1647,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               fontFamily: 'Arial, Helvetica, sans-serif',
             }}
           >
-            <div className="px-8 pt-6 pb-5 flex-1 min-h-0 flex flex-col gap-5 overflow-hidden">
+            <div className="px-8 pt-5 pb-4 flex-1 min-h-0 flex flex-col gap-3.5 overflow-hidden">
               {/* Header Page 5 */}
-              <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-3">
+              <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-2.5">
                 <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
                 <div className="text-right min-w-0 leading-snug">
                   <div className="font-bold text-base text-slate-900 uppercase tracking-tight">
@@ -1542,35 +1664,35 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 </div>
               </div>
 
-              {/* Judul Karya & Nama Pelajaran (Minimalis & Lega) */}
+              {/* Judul Karya & Nama Pelajaran */}
               <div className="shrink-0 flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <span
-                    className="inline-block text-slate-950 font-bold text-[10px] px-3 py-1 rounded-full tracking-wide uppercase"
+                    className="inline-block text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-full tracking-wide uppercase"
                     style={{ backgroundColor: theme.sectionSky }}
                   >
                     Dokumentasi Sidang Karya
                   </span>
-                  <div className="font-bold text-[20px] text-slate-950 leading-snug">
+                  <div className="font-bold text-[18px] text-slate-950 leading-snug truncate">
                     {sidangProject?.judul || 'Sidang Karya Akhir Semester'}
                   </div>
                   {sidangProject?.keteranganSingkat && (
-                    <div className="text-[11px] text-slate-600 leading-snug line-clamp-1">
+                    <div className="text-[10.5px] text-slate-600 leading-snug truncate">
                       {sidangProject.keteranganSingkat}
                     </div>
                   )}
                 </div>
                 <div className="shrink-0 pt-1">
-                  <span className="inline-block px-3.5 py-1.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10.5px] font-bold">
+                  <span className="inline-block px-3 py-1 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10px] font-bold">
                     {sidangProject?.jenis || pdfKaryaSubject || 'Sidang Karya'}
                   </span>
                 </div>
               </div>
 
-              {/* Area Gambar Utama Sidang Karya (1 Gambar Besar Tajam atau Maks. 2 Gambar Berdampingan) */}
+              {/* 1. Visual Hasil Sidang Karya (1 Gambar Besar atau 2 Gambar Berdampingan Tajam) */}
               <div className="flex-1 min-h-0 flex items-center justify-center">
                 {sidangVisualItems.length === 2 ? (
-                  <div className="grid grid-cols-2 gap-4 w-full h-full">
+                  <div className="grid grid-cols-2 gap-3.5 w-full h-full">
                     {sidangVisualItems.map((media, idx) => (
                       <div
                         key={idx}
@@ -1596,7 +1718,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                           )}
                         </div>
                         {media.caption && (
-                          <div className="shrink-0 bg-slate-900 text-white text-[10px] font-semibold px-3 py-1.5 text-center truncate">
+                          <div className="shrink-0 bg-slate-900 text-white text-[9.5px] font-semibold px-3 py-1 text-center truncate">
                             {media.caption}
                           </div>
                         )}
@@ -1605,7 +1727,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   </div>
                 ) : sidangVisualItems.length === 1 ? (
                   <div className="w-full h-full min-h-0 flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs">
-                    <div className="flex-1 min-h-0 w-full bg-white p-3 flex items-center justify-center overflow-hidden">
+                    <div className="flex-1 min-h-0 w-full bg-white p-2.5 flex items-center justify-center overflow-hidden">
                       {sidangVisualItems[0].type === 'video' ? (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-6 text-center">
                           <span className="text-[11px] font-bold uppercase tracking-widest text-[#1DF27A]">
@@ -1629,7 +1751,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                       )}
                     </div>
                     {sidangVisualItems[0].caption && (
-                      <div className="shrink-0 bg-slate-900 text-white text-[10.5px] font-semibold px-4 py-2 text-center truncate">
+                      <div className="shrink-0 bg-slate-900 text-white text-[10px] font-semibold px-4 py-1.5 text-center truncate">
                         {sidangVisualItems[0].caption}
                       </div>
                     )}
@@ -1642,14 +1764,29 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                         title={sidangProject?.judul || 'Dokumentasi Sidang Karya Santri'}
                       />
                     </div>
-                    <div className="shrink-0 bg-slate-900 text-slate-200 text-[10px] px-4 py-2 text-center">
+                    <div className="shrink-0 bg-slate-900 text-slate-200 text-[9.5px] px-4 py-1.5 text-center">
                       Silakan unggah 1–2 gambar hasil Sidang Karya di menu Student Portfolio
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Banner Bawah: Cukup 2 Link Portofolio (Behance & PDF Kumpulan Karya) */}
+              {/* 2. Blok "Ringkasan Perkembangan Karya & Kompetensi" (Bahasa Orang Tua) */}
+              <div className="shrink-0 bg-white border border-emerald-300 rounded-2xl px-4 py-3 shadow-xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2 border-b border-emerald-100 pb-1.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-900">
+                    Ringkasan Perkembangan Karya &amp; Kompetensi
+                  </div>
+                  <span className="text-[9.5px] font-semibold text-emerald-700">
+                    {report.semester} {report.tahunAkademik}
+                  </span>
+                </div>
+                <div className="text-[10.5px] text-slate-700 leading-[1.48] whitespace-pre-line">
+                  {effectivePortfolioSummary}
+                </div>
+              </div>
+
+              {/* 3. Banner Bawah: 2 Link Clickable + QR Code Otomatis */}
               <PortfolioLinksBanner />
             </div>
 

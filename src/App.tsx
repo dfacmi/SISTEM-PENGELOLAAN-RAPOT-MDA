@@ -35,7 +35,10 @@ import { AdminDashboardView } from './components/AdminDashboardView';
 import { CbtAdminView } from './components/CbtAdminView';
 import { CbtStudentView } from './components/CbtStudentView';
 import { ConfirmDialog } from './components/ConfirmDialog';
-import { GradeEditorView } from './components/GradeEditorView';
+import {
+  buildBaselineReportForStudent,
+  GradeEditorView,
+} from './components/GradeEditorView';
 import { MasterManagementView } from './components/MasterManagementView';
 import { MdaLogo } from './components/MdaLogo';
 import { PortfolioHubView } from './components/PortfolioHubView';
@@ -1117,6 +1120,37 @@ export default function App() {
         }
       },
     });
+  };
+
+  const handleSavePortfolioSummary = (
+    studentId: string,
+    tahunAkademik: string,
+    semester: 'Gasal' | 'Genap',
+    summaryText: string
+  ) => {
+    const targetStudent = db.students.find((s) => s.id === studentId);
+    if (!targetStudent) return;
+    const existing =
+      db.reports.find(
+        (r) =>
+          r.studentId === studentId &&
+          r.tahunAkademik === tahunAkademik &&
+          r.semester === semester
+      ) || db.reports.find((r) => r.studentId === studentId);
+
+    const updatedReport: SemesterReport = existing
+      ? {
+          ...existing,
+          ringkasanPortofolio: summaryText,
+          updatedAt: new Date().toISOString(),
+        }
+      : {
+          ...buildBaselineReportForStudent(targetStudent, tahunAkademik, semester, db),
+          ringkasanPortofolio: summaryText,
+          updatedAt: new Date().toISOString(),
+        };
+
+    handleSaveReport(updatedReport);
   };
 
   const handleSaveTeachers = (nextTeachers: TeacherClass[]) => {
@@ -3065,12 +3099,19 @@ export default function App() {
             <PortfolioHubView
               db={db}
               studentId={lockedStudentId || selectedStudentId}
+              selectedYear={selectedYear}
+              selectedSemester={selectedSemester}
               canEdit={effectiveRole === 'admin' || effectiveRole === 'guru'}
               templateConfig={tpl}
               onSelectStudent={
                 effectiveRole !== 'santri_ortu' ? setSelectedStudentId : undefined
               }
               onSavePortfolios={handleSavePortfolios}
+              onSavePortfolioSummary={
+                effectiveRole === 'admin' || effectiveRole === 'guru'
+                  ? handleSavePortfolioSummary
+                  : undefined
+              }
               onUpdatePortfolioLinks={
                 effectiveRole === 'admin' || effectiveRole === 'guru'
                   ? handleUpdateStudentPortfolioLinks

@@ -470,6 +470,7 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
       'Keputusan_Lainnya',
       'Published',
       'Updated_At',
+      'Ringkasan_Portofolio',
     ],
     ...db.reports.map((r) => [
       r.id,
@@ -500,6 +501,7 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
       r.keputusanLainnya || '',
       r.published ? 'YA' : 'TIDAK',
       r.updatedAt,
+      r.ringkasanPortofolio || '',
     ]),
   ];
 
@@ -959,6 +961,7 @@ export async function readDatabaseFromSheet(
         keputusanLainnya: String(r[25] || ''),
         published: String(r[26] || '').toUpperCase() === 'YA',
         updatedAt: String(r[27] || ''),
+        ringkasanPortofolio: String(r[28] || ''),
         sikap: rSikap,
         characterPrograms: rPrograms,
         tahfidz: tRow

@@ -562,3 +562,122 @@ export function resolveTanggalRapor(
   }
   return raw;
 }
+
+function joinIndonesianList(parts: string[]): string {
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return `${parts[0]} dan ${parts[1]}`;
+  return `${parts.slice(0, -1).join(', ')}, serta ${parts[parts.length - 1]}`;
+}
+
+function mapSkillToParentCompetence(materiSkill: string): string {
+  const s = materiSkill.trim();
+  if (!s || s === '...............') return '';
+  if (/graphic\s*design|desain\s*grafis|poster/i.test(s)) {
+    return 'merancang poster dakwah dan desain grafis secara mandiri';
+  }
+  if (/ui\s*\/?\s*ux|antarmuka|interface/i.test(s)) {
+    return 'menyusun tampilan aplikasi mobile dan website yang rapi (UI/UX)';
+  }
+  if (/prototype|prototipe|figma/i.test(s)) {
+    return 'membuat simulasi alur aplikasi interaktif sebelum diproduksi';
+  }
+  if (/canva|affinity|ilustrasi/i.test(s)) {
+    return 'mengolah materi visual dakwah dengan aplikasi desain kreatif';
+  }
+  if (/photo|fotografi/i.test(s)) {
+    return 'mengambil dan mengedit foto dokumentasi maupun publikasi';
+  }
+  if (/video|videografi|motion|editing/i.test(s)) {
+    return 'memproduksi dan mengedit konten video dakwah yang menarik';
+  }
+  if (/web|coding|html|react|frontend/i.test(s)) {
+    return 'membangun halaman web sederhana secara terstruktur';
+  }
+  return `menguasai dasar praktik ${s}`;
+}
+
+export function generateParentPortfolioNarrative(params: {
+  report?: SemesterReport | null;
+  projects?: Array<{ judul?: string; jenis?: string; mediaItems?: Array<{ url?: string }> }>;
+}): string {
+  const { report, projects = [] } = params;
+  const kpi = report?.kpiMda;
+
+  const konten = Number(kpi?.produksiKontenCount || 0);
+  const multimedia = Number(kpi?.multimediaProjectCount || 0);
+  const mengajar = Number(kpi?.mdaMengajarCount || 0);
+  const cb = Number(kpi?.characterBuildingCount || 0);
+  const client = Number(kpi?.clientProjectCount || 0);
+  const income = Number(kpi?.incomeRp || 0);
+
+  const mainActivities: string[] = [];
+  if (konten > 0) {
+    mainActivities.push(`menghasilkan ${konten} karya/konten dakwah digital`);
+  }
+  if (multimedia > 0) {
+    mainActivities.push(`menyelesaikan ${multimedia} proyek multimedia`);
+  }
+  if (mengajar > 0) {
+    mainActivities.push(`dipercaya ${mengajar} kali mengajar dan berbagi ilmu kepada sesama santri`);
+  }
+  if (cb > 0) {
+    mainActivities.push(`mengikuti ${cb} kegiatan pembinaan karakter (Character Building)`);
+  }
+
+  let paragraph1 =
+    mainActivities.length > 0
+      ? `Selama 1 semester ini, ananda telah ${joinIndonesianList(mainActivities)}.`
+      : `Selama 1 semester ini, ananda aktif mengikuti proses pembelajaran praktik dan pembinaan karya digital di kelas.`;
+
+  if (client > 0 && income > 0) {
+    paragraph1 += ` Selain itu, ananda juga telah menangani ${client} proyek nyata dari mitra/klien dan menghasilkan apresiasi karya sebesar ${formatRupiah(income)}.`;
+  } else if (client > 0) {
+    paragraph1 += ` Selain itu, ananda juga telah dipercaya menangani ${client} proyek nyata dari mitra/klien.`;
+  } else if (income > 0) {
+    paragraph1 += ` Selain itu, karya kreatif ananda telah menghasilkan apresiasi karya sebesar ${formatRupiah(income)}.`;
+  }
+
+  const skillItems = (report?.skillDigital || []).filter(
+    (s) =>
+      s.materiSkill.trim() !== '' &&
+      s.materiSkill.trim() !== '...............' &&
+      Number(s.nilaiAkhir || 0) >= 70
+  );
+
+  const competencePhrases: string[] = [];
+  const seen = new Set<string>();
+  for (const item of skillItems) {
+    const phrase = mapSkillToParentCompetence(item.materiSkill);
+    if (phrase && !seen.has(phrase)) {
+      seen.add(phrase);
+      competencePhrases.push(phrase);
+    }
+  }
+
+  const hasSidangKarya = projects.some(
+    (p) =>
+      (p.jenis || '').toLowerCase().includes('sidang') ||
+      (p.judul || '').toLowerCase().includes('sidang') ||
+      (p.mediaItems || []).some((m) => Boolean(m.url && m.url.trim() !== ''))
+  );
+  if (hasSidangKarya) {
+    const sidangPhrase = 'mempresentasikan hasil karya di hadapan penguji pada Sidang Karya';
+    if (!seen.has(sidangPhrase)) {
+      competencePhrases.push(sidangPhrase);
+    }
+  }
+
+  let paragraph2 = '';
+  if (competencePhrases.length > 0) {
+    const joined = joinIndonesianList(competencePhrases);
+    const capitalized = joined.charAt(0).toUpperCase() + joined.slice(1);
+    paragraph2 = `Kompetensi yang dikuasai: ${capitalized}.`;
+  } else {
+    paragraph2 =
+      'Kompetensi yang dikuasai: Memahami dasar-dasar desain digital, pembuatan konten dakwah, dan kerja sama tim dalam proyek kelas.';
+  }
+
+  return `${paragraph1}\n\n${paragraph2}`;
+}
+

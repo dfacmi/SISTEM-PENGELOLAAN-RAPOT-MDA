@@ -7,6 +7,7 @@ import {
   Printer,
   Save,
   SlidersHorizontal,
+  Sparkles,
   Users,
 } from 'lucide-react';
 import {
@@ -29,6 +30,7 @@ import {
   DEFAULT_GRADE_WEIGHTS,
   extractUniqueClasses,
   formatRupiah,
+  generateParentPortfolioNarrative,
   getKategoriPredikat,
   getKkmPredicateBounds,
   hasSubjectComponents,
@@ -73,7 +75,7 @@ interface ComponentDraftEntry {
   uasFromCbt?: boolean;
 }
 
-function buildBaselineReportForStudent(
+export function buildBaselineReportForStudent(
   student: Student,
   tahunAkademik: string,
   semester: 'Gasal' | 'Genap',
@@ -1987,6 +1989,57 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       }
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
                     />
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <label className="block text-xs font-semibold text-emerald-900">
+                        Ringkasan Perkembangan Karya &amp; Kompetensi (Tampil di Rapor Hal. 5 &amp; Portal Wali)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const studentProjects = db.portfolios.filter(
+                            (p) => p.studentId === draft.studentId
+                          );
+                          const regenerated = generateParentPortfolioNarrative({
+                            report: draft,
+                            projects: studentProjects,
+                          });
+                          updateDraft((p) => ({
+                            ...p,
+                            ringkasanPortofolio: regenerated,
+                          }));
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Buat Ulang Otomatis</span>
+                      </button>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={
+                        draft.ringkasanPortofolio && draft.ringkasanPortofolio.trim() !== ''
+                          ? draft.ringkasanPortofolio
+                          : generateParentPortfolioNarrative({
+                              report: draft,
+                              projects: db.portfolios.filter(
+                                (p) => p.studentId === draft.studentId
+                              ),
+                            })
+                      }
+                      onChange={(e) =>
+                        updateDraft((p) => ({
+                          ...p,
+                          ringkasanPortofolio: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 text-xs border border-emerald-200 bg-emerald-50/30 rounded-lg leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Otomatis dirangkum dalam bahasa yang mudah dipahami wali santri. Editan manual Anda tidak akan tertimpa kecuali Anda menekan &ldquo;Buat Ulang Otomatis&rdquo;.
+                    </p>
                   </div>
                 </div>
               </div>
