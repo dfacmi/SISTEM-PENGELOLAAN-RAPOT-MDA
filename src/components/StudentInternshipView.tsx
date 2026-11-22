@@ -4,17 +4,25 @@ import {
   BarChart3,
   Briefcase,
   Calendar,
+  Camera,
   Check,
   CheckCircle2,
   Clock,
   Edit3,
+  ExternalLink,
   FileText,
+  ImagePlus,
+  Loader2,
   Lock,
   PenLine,
+  PlayCircle,
   Printer,
   Save,
+  Trash2,
+  Video,
   Wallet,
   X,
+  ZoomIn,
 } from 'lucide-react';
 import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import {
@@ -27,6 +35,11 @@ import {
 } from '../types/mda';
 import { formatRupiah } from '../utils/grading';
 import {
+  compressSidangImageWebp,
+  normalizeDisplayImageUrl,
+  shrinkImageDataUrlWebp,
+} from '../utils/imageHelper';
+import {
   computeInternTrackerStats,
   computeTilawahProgress,
   EMPTY_HOURLY_BLOCKS,
@@ -36,8 +49,10 @@ import {
   getTodayIsoDateLocal,
   getTrackerGroupLabel,
   INTERN_HOURLY_BLOCK_DEFS,
-  resolveInternLembarPerJuz,
+  normalizeExternalMediaUrl,
+  resolveInternHalamanPerJuz,
   resolveInternTrackerItems,
+  resolveLogTilawahHalaman,
 } from '../utils/internship';
 import { mergeTemplateConfig } from '../utils/theme';
 import { MagangPeriodPicker } from './MagangPeriodPicker';
@@ -72,7 +87,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
     [templateConfig, db.templateConfig]
   );
   const trackerItems = useMemo(() => resolveInternTrackerItems(tpl), [tpl]);
-  const lembarPerJuz = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+  const halamanPerJuz = useMemo(() => resolveInternHalamanPerJuz(tpl), [tpl]);
 
   const student = useMemo(
     () => db.students.find((s) => s.id === studentId) || db.students[0],
@@ -127,9 +142,14 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
   // Tab 3: Isi Hari Ini state
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIsoDateLocal());
   const [trackerResults, setTrackerResults] = useState<Record<string, 'yes' | 'no'>>({});
-  const [tilawahLembarInput, setTilawahLembarInput] = useState('');
+  const [tilawahHalamanInput, setTilawahHalamanInput] = useState('');
   const [hourlyBlocks, setHourlyBlocks] = useState<InternHourlyBlocks>({ ...EMPTY_HOURLY_BLOCKS });
   const [kejadianPenting, setKejadianPenting] = useState('');
+  const [fotoUrls, setFotoUrls] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [savingLog, setSavingLog] = useState(false);
 
@@ -140,23 +160,29 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
   useEffect(() => {
     setValidationError(null);
+    setPhotoError(null);
     if (logForSelectedDate) {
       setTrackerResults({ ...(logForSelectedDate.trackerResults || {}) });
-      setTilawahLembarInput(
-        typeof logForSelectedDate.tilawahLembar === 'number' && logForSelectedDate.tilawahLembar > 0
-          ? String(logForSelectedDate.tilawahLembar)
-          : ''
-      );
+      const resolvedHal = resolveLogTilawahHalaman(logForSelectedDate);
+      setTilawahHalamanInput(resolvedHal > 0 ? String(resolvedHal) : '');
       setHourlyBlocks({
         ...EMPTY_HOURLY_BLOCKS,
         ...(logForSelectedDate.hourlyBlocks || {}),
       });
       setKejadianPenting(logForSelectedDate.kejadianPenting || '');
+      setFotoUrls(
+        Array.isArray(logForSelectedDate.fotoUrls)
+          ? logForSelectedDate.fotoUrls.filter(Boolean).slice(0, 2)
+          : []
+      );
+      setVideoUrl(logForSelectedDate.videoUrl || '');
     } else {
       setTrackerResults({});
-      setTilawahLembarInput('');
+      setTilawahHalamanInput('');
       setHourlyBlocks({ ...EMPTY_HOURLY_BLOCKS });
       setKejadianPenting('');
+      setFotoUrls([]);
+      setVideoUrl('');
     }
   }, [logForSelectedDate, selectedDate, student?.id]);
 
@@ -165,8 +191,8 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
     [studentLogs, trackerItems]
   );
   const tilawahProgress = useMemo(
-    () => computeTilawahProgress(studentLogs, lembarPerJuz),
-    [studentLogs, lembarPerJuz]
+    () => computeTilawahProgress(studentLogs, halamanPerJuz),
+    [studentLogs, halamanPerJuz]
   );
 
   const formattedMagangPeriod = useMemo(
@@ -288,11 +314,14 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
       }
     }
 
-    const parsedLembar = Number(String(tilawahLembarInput).replace(',', '.'));
-    const tilawahLembar =
-      Number.isFinite(parsedLembar) && parsedLembar >= 0
-        ? Math.min(1000, Math.round(parsedLembar * 10) / 10)
+    const parsedHalaman = Number(String(tilawahHalamanInput).replace(',', '.'));
+    const tilawahHalaman =
+      Number.isFinite(parsedHalaman) && parsedHalaman >= 0
+        ? Math.min(2000, Math.round(parsedHalaman * 10) / 10)
         : 0;
+
+    const cleanVideoUrl = normalizeExternalMediaUrl(videoUrl);
+    const cleanedFotos = fotoUrls.filter(Boolean).slice(0, 2);
 
     setSavingLog(true);
     try {
@@ -301,7 +330,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         studentId: student.id,
         tanggal: selectedDate,
         trackerResults: sanitizedResults,
-        tilawahLembar,
+        tilawahHalaman,
         hourlyBlocks: {
           block_05_08: (hourlyBlocks.block_05_08 || '').trim(),
           block_08_12: (hourlyBlocks.block_08_12 || '').trim(),
@@ -310,11 +339,53 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
           block_22_03: (hourlyBlocks.block_22_03 || '').trim(),
         },
         kejadianPenting: kejadianPenting.trim(),
+        fotoUrls: cleanedFotos,
+        videoUrl: cleanVideoUrl,
         catatanPembimbing: logForSelectedDate?.catatanPembimbing || '',
         updatedAt: new Date().toISOString(),
       });
     } finally {
       setSavingLog(false);
+    }
+  };
+
+  const handleUploadActivityPhotos = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setPhotoError(null);
+    const remainingSlots = Math.max(0, 2 - fotoUrls.length);
+    if (remainingSlots <= 0) {
+      setPhotoError('Maksimal 2 foto dokumentasi kegiatan per hari.');
+      return;
+    }
+    const chosen = Array.from(files).slice(0, remainingSlots);
+    const projectedTotal = fotoUrls.length + chosen.length;
+    const perPhotoMaxChars = projectedTotal >= 2 ? 16000 : 30000;
+
+    setUploadingFoto(true);
+    try {
+      const existingShrunk =
+        projectedTotal >= 2
+          ? await Promise.all(
+              fotoUrls.map((u) => shrinkImageDataUrlWebp(u, 16000, 720))
+            )
+          : [...fotoUrls];
+
+      const newlyCompressed: string[] = [];
+      for (const file of chosen) {
+        const compressed = await compressSidangImageWebp(file, {
+          maxWidth: 720,
+          maxChars: perPhotoMaxChars,
+        });
+        if (compressed.dataUrl) {
+          newlyCompressed.push(compressed.dataUrl);
+        }
+      }
+
+      setFotoUrls([...existingShrunk, ...newlyCompressed].slice(0, 2));
+    } catch (err: any) {
+      setPhotoError(err?.message || 'Gagal memproses foto kegiatan.');
+    } finally {
+      setUploadingFoto(false);
     }
   };
 
@@ -594,7 +665,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               <TilawahDonutChart
                 summary={tilawahProgress}
                 title="Capaian Tilawah Al-Qur’an (Target 30 Juz)"
-                subtitle="Akumulasi lembar tilawah harian yang tercatat pada jurnal magang Anda."
+                subtitle="Akumulasi halaman tilawah harian yang tercatat pada jurnal magang Anda."
               />
             </div>
             <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-3">
@@ -682,6 +753,11 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                   const noCount = trackerItems.filter(
                     (it) => log.trackerResults?.[it.id] === 'no'
                   ).length;
+                  const logTilawahHalaman = resolveLogTilawahHalaman(log);
+                  const logFotos = Array.isArray(log.fotoUrls)
+                    ? log.fotoUrls.filter(Boolean).slice(0, 2)
+                    : [];
+                  const logVideoUrl = normalizeExternalMediaUrl(log.videoUrl);
 
                   return (
                     <article
@@ -697,11 +773,11 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                             <span className="font-bold text-emerald-700">✓ {yesCount} Terpenuhi</span>
                             <span>·</span>
                             <span className="font-bold text-rose-600">✗ {noCount} Tidak</span>
-                            {Number(log.tilawahLembar || 0) > 0 && (
+                            {logTilawahHalaman > 0 && (
                               <>
                                 <span>·</span>
                                 <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-                                  Tilawah: {log.tilawahLembar} Lembar
+                                  Tilawah: {logTilawahHalaman} Hal
                                 </span>
                               </>
                             )}
@@ -742,6 +818,48 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                         <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950">
                           <span className="font-bold text-amber-900">Kejadian Penting: </span>
                           <span className="whitespace-pre-line">{log.kejadianPenting}</span>
+                        </div>
+                      )}
+
+                      {(logFotos.length > 0 || logVideoUrl) && (
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
+                          <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                            <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Dokumentasi Kegiatan</span>
+                          </div>
+                          {logFotos.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 max-w-md">
+                              {logFotos.map((url, fIdx) => (
+                                <button
+                                  key={`${log.id}-foto-${fIdx}`}
+                                  type="button"
+                                  onClick={() => setLightboxPhoto(normalizeDisplayImageUrl(url))}
+                                  className="group relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video text-left"
+                                >
+                                  <img
+                                    src={normalizeDisplayImageUrl(url)}
+                                    alt={`Dokumentasi ${fIdx + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/70 text-white text-[10px] font-bold inline-flex items-center gap-1">
+                                    <ZoomIn className="w-2.5 h-2.5" />
+                                    <span>Perbesar</span>
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {logVideoUrl && (
+                            <a
+                              href={logVideoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold"
+                            >
+                              <PlayCircle className="w-3.5 h-3.5 text-[#1DF27A]" />
+                              <span>Putar / Buka Video ↗</span>
+                            </a>
+                          )}
                         </div>
                       )}
 
@@ -936,20 +1054,20 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                 })}
               </div>
 
-              {/* Input Tilawah Harian (Opsional Lembar) */}
+              {/* Input Tilawah Harian (Opsional Halaman) */}
               <div className="p-3.5 rounded-2xl border border-emerald-200 bg-[#E8FAF3]/60 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="text-xs font-bold text-emerald-950">
-                      Input Tilawah Harian (Opsional Lembar)
+                      Input Tilawah Harian (Opsional Halaman)
                     </div>
                     <div className="text-[11px] text-slate-600">
-                      Dihitung ke diagram capaian 30 Juz (Konversi: 1 Juz = {lembarPerJuz} Lembar).
+                      Dihitung ke diagram capaian 30 Juz (Konversi: 1 Juz = {halamanPerJuz} Halaman).
                     </div>
                   </div>
-                  {Number(tilawahLembarInput) > 0 && (
+                  {Number(tilawahHalamanInput) > 0 && (
                     <span className="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-[11px] font-bold text-emerald-800 tabular-nums">
-                      ≈ {(Number(tilawahLembarInput) / lembarPerJuz).toFixed(1).replace('.', ',')} Juz
+                      ≈ {(Number(tilawahHalamanInput) / halamanPerJuz).toFixed(1).replace('.', ',')} Juz
                     </span>
                   )}
                 </div>
@@ -959,35 +1077,35 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     <input
                       type="number"
                       min={0}
-                      max={1000}
+                      max={2000}
                       step="0.5"
-                      value={tilawahLembarInput}
-                      onChange={(e) => setTilawahLembarInput(e.target.value)}
+                      value={tilawahHalamanInput}
+                      onChange={(e) => setTilawahHalamanInput(e.target.value)}
                       placeholder="0"
                       className="w-24 min-h-[40px] px-3 py-1.5 text-xs font-bold tabular-nums bg-white border border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
-                    <span className="text-xs font-bold text-slate-700">Lembar</span>
+                    <span className="text-xs font-bold text-slate-700">Halaman</span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {[1, 2, 5, 10].map((inc) => (
+                    {[1, 2, 5, 10, 20].map((inc) => (
                       <button
                         key={inc}
                         type="button"
                         onClick={() =>
-                          setTilawahLembarInput((prev) =>
-                            String(Math.min(1000, (Number(prev) || 0) + inc))
+                          setTilawahHalamanInput((prev) =>
+                            String(Math.min(2000, (Number(prev) || 0) + inc))
                           )
                         }
-                        className="min-h-[38px] px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs font-bold tabular-nums"
+                        className="min-h-[38px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs font-bold tabular-nums"
                       >
-                        +{inc} Lbr
+                        +{inc} Hal
                       </button>
                     ))}
-                    {tilawahLembarInput && (
+                    {tilawahHalamanInput && (
                       <button
                         type="button"
-                        onClick={() => setTilawahLembarInput('')}
+                        onClick={() => setTilawahHalamanInput('')}
                         className="min-h-[38px] px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold"
                       >
                         Reset
@@ -1059,6 +1177,129 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     className="w-full px-3 py-2 text-xs bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
+
+                {/* Dokumentasi Foto / Video Kegiatan (Opsional) */}
+                <div className="md:col-span-2 p-3.5 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Dokumentasi Foto / Video Kegiatan (Opsional)</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 mt-0.5">
+                        Unggah maksimal 2 foto kegiatan (dikompres otomatis agar hemat kuota &amp; ringan di Google Sheets).
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-800 tabular-nums">
+                      {fotoUrls.length} / 2 Foto
+                    </span>
+                  </div>
+
+                  {fotoUrls.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {fotoUrls.map((url, idx) => (
+                        <div
+                          key={`draft-foto-${idx}`}
+                          className="relative rounded-xl border border-slate-200 bg-white overflow-hidden"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setLightboxPhoto(normalizeDisplayImageUrl(url))}
+                            className="w-full aspect-video bg-slate-100 block"
+                          >
+                            <img
+                              src={normalizeDisplayImageUrl(url)}
+                              alt={`Foto Kegiatan ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                          <div className="px-2.5 py-1.5 flex items-center justify-between gap-2 bg-white border-t border-slate-100">
+                            <span className="text-[11px] font-bold text-slate-700">
+                              Foto Kegiatan {idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFotoUrls((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                              className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold inline-flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {fotoUrls.length < 2 && (
+                    <div>
+                      <label className="min-h-[42px] px-3.5 py-2 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                        {uploadingFoto ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
+                            <span>Mengompres Foto...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImagePlus className="w-4 h-4 text-emerald-700" />
+                            <span>
+                              {fotoUrls.length === 0
+                                ? '+ Tambah Foto Kegiatan (Maks. 2)'
+                                : '+ Tambah 1 Foto Lagi'}
+                            </span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          disabled={uploadingFoto}
+                          onChange={(e) => {
+                            void handleUploadActivityPhotos(e.target.files);
+                            e.target.value = '';
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {photoError && (
+                    <div className="text-[11px] font-semibold text-rose-700">{photoError}</div>
+                  )}
+
+                  <div className="pt-1 border-t border-emerald-200/70 space-y-1.5">
+                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Link Video Kegiatan (Opsional — Google Drive / YouTube / Sosmed)</span>
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        placeholder="https://drive.google.com/... atau https://youtu.be/..."
+                        className="flex-1 min-w-0 min-h-[40px] px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                      {normalizeExternalMediaUrl(videoUrl) && (
+                        <a
+                          href={normalizeExternalMediaUrl(videoUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="min-h-[40px] px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Buka Link</span>
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Unggah video dokumentasi ke Google Drive / YouTube / Media Sosial terlebih dahulu, lalu tempel link videonya di sini agar aplikasi tetap ringan.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1080,7 +1321,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
             <button
               type="submit"
-              disabled={savingLog || isBusy}
+              disabled={savingLog || isBusy || uploadingFoto}
               className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4 text-[#1DF27A]" />
@@ -1092,6 +1333,33 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             </button>
           </form>
         </section>
+      )}
+
+      {/* Lightbox Modal Preview Foto */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div
+            className="relative max-w-3xl w-full max-h-[90dvh] flex flex-col items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxPhoto}
+              alt="Pratinjau Dokumentasi Magang"
+              className="max-h-[80dvh] w-auto max-w-full rounded-2xl border border-white/20 shadow-2xl object-contain bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxPhoto(null)}
+              className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-bold inline-flex items-center gap-1.5 shadow-lg"
+            >
+              <X className="w-4 h-4" />
+              <span>Tutup Foto</span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

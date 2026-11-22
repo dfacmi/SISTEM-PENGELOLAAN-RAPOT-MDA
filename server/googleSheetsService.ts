@@ -63,6 +63,7 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   lockRaporMessage:
     'Rapor Akademik & Portofolio sedang dikunci sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Tab Magang & Tracker Ibadah tetap dapat diisi setiap hari.',
   internTrackerItems: DEFAULT_INTERN_TRACKER_ITEMS,
+  internHalamanPerJuz: 20,
 };
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -1070,10 +1071,18 @@ export async function readDatabaseFromSheet(
         } catch {
           // keep default
         }
+      } else if (key === 'internHalamanPerJuz') {
+        const num = Number(r[1]);
+        if (Number.isFinite(num) && num >= 1 && num <= 200) {
+          templateConfig.internHalamanPerJuz = Math.round(num);
+        }
       } else if (key === 'internLembarPerJuz') {
         const num = Number(r[1]);
         if (Number.isFinite(num) && num >= 1 && num <= 100) {
           templateConfig.internLembarPerJuz = Math.round(num);
+          if (num !== 10 && templateConfig.internHalamanPerJuz === 20) {
+            templateConfig.internHalamanPerJuz = Math.min(200, Math.round(num * 2));
+          }
         }
       } else {
         (templateConfig as unknown as Record<string, string>)[key] = String(r[1]);

@@ -85,7 +85,7 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   lockRaporMessage:
     'Rapor Akademik & Portofolio sedang dikunci sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Tab Magang & Tracker Ibadah tetap dapat diisi setiap hari.',
   internTrackerItems: DEFAULT_INTERN_TRACKER_ITEMS,
-  internLembarPerJuz: 10,
+  internHalamanPerJuz: 20,
 };
 
 export function generateRandomCbtToken(length = 6): string {

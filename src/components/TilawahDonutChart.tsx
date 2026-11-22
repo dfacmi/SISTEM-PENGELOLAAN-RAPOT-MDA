@@ -110,10 +110,10 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
         >
           Total:{' '}
           <span className="text-emerald-800 font-bold">
-            {summary.totalLembar.toLocaleString('id-ID')} Lembar
+            {summary.totalHalaman.toLocaleString('id-ID')} Halaman
           </span>{' '}
           <span className="text-slate-400">
-            / {summary.targetLembar.toLocaleString('id-ID')} Lembar
+            / {summary.targetHalaman.toLocaleString('id-ID')} Halaman
           </span>
         </div>
 
@@ -122,7 +122,7 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
             compact ? 'text-[8px]' : 'text-[11px]'
           } text-slate-500 tabular-nums leading-snug`}
         >
-          Konversi: 1 Juz = {summary.lembarPerJuz} Lembar · {summary.logsWithTilawahCount} hari tercatat
+          Konversi: 1 Juz = {summary.halamanPerJuz} Halaman · {summary.logsWithTilawahCount} hari tercatat
         </div>
       </div>
     </div>

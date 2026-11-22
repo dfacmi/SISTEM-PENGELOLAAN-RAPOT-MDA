@@ -67,10 +67,13 @@ export function mergeTemplateConfig(
   merged.internTrackerItems = Array.isArray(cfg?.internTrackerItems)
     ? cfg.internTrackerItems
     : fallback.internTrackerItems;
-  const rawPerJuz = Number(cfg?.internLembarPerJuz);
-  merged.internLembarPerJuz =
-    Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
-      ? Math.round(rawPerJuz)
-      : fallback.internLembarPerJuz || 10;
+  const rawHalamanPerJuz = Number(cfg?.internHalamanPerJuz);
+  const rawLegacyLembar = Number(cfg?.internLembarPerJuz);
+  merged.internHalamanPerJuz =
+    Number.isFinite(rawHalamanPerJuz) && rawHalamanPerJuz >= 1 && rawHalamanPerJuz <= 200
+      ? Math.round(rawHalamanPerJuz)
+      : Number.isFinite(rawLegacyLembar) && rawLegacyLembar >= 1 && rawLegacyLembar <= 100 && rawLegacyLembar !== 10
+        ? Math.min(200, Math.round(rawLegacyLembar * 2))
+        : fallback.internHalamanPerJuz || 20;
   return merged;
 }

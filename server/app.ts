@@ -1532,8 +1532,8 @@ export function createApiApp(): express.Express {
         return;
       }
       const currentDb = await loadDbFromStorage(storage);
-      const rawPerJuz = Number(templateConfig.internLembarPerJuz);
-      const existingPerJuz = Number(currentDb.templateConfig?.internLembarPerJuz);
+      const rawPerJuz = Number(templateConfig.internHalamanPerJuz);
+      const existingPerJuz = Number(currentDb.templateConfig?.internHalamanPerJuz);
       const mergedTemplate: BrandingTemplateConfig = {
         ...DEFAULT_TEMPLATE_CONFIG,
         ...(currentDb.templateConfig || {}),
@@ -1542,12 +1542,12 @@ export function createApiApp(): express.Express {
           ? templateConfig.internTrackerItems
           : currentDb.templateConfig?.internTrackerItems ||
             DEFAULT_TEMPLATE_CONFIG.internTrackerItems,
-        internLembarPerJuz:
-          Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
+        internHalamanPerJuz:
+          Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 200
             ? Math.round(rawPerJuz)
-            : Number.isFinite(existingPerJuz) && existingPerJuz >= 1 && existingPerJuz <= 100
+            : Number.isFinite(existingPerJuz) && existingPerJuz >= 1 && existingPerJuz <= 200
               ? Math.round(existingPerJuz)
-              : DEFAULT_TEMPLATE_CONFIG.internLembarPerJuz || 10,
+              : DEFAULT_TEMPLATE_CONFIG.internHalamanPerJuz || 20,
       };
       const nextDb =
         storage.mode === 'apps_script'
@@ -2408,18 +2408,45 @@ export function createApiApp(): express.Express {
         (l) => l.id === `${studentId}_${tanggal}` || (l.studentId === studentId && l.tanggal === tanggal)
       );
 
-      const rawLembar = Number(log.tilawahLembar);
-      const tilawahLembar =
-        Number.isFinite(rawLembar) && rawLembar >= 0
-          ? Math.min(1000, Math.round(rawLembar * 10) / 10)
+      const rawHalaman =
+        log.tilawahHalaman !== undefined
+          ? Number(log.tilawahHalaman)
+          : log.tilawahLembar !== undefined
+            ? Number(log.tilawahLembar) * 2
+            : 0;
+      const tilawahHalaman =
+        Number.isFinite(rawHalaman) && rawHalaman >= 0
+          ? Math.min(2000, Math.round(rawHalaman * 10) / 10)
           : 0;
+
+      const rawFotoUrls = Array.isArray(log.fotoUrls) ? log.fotoUrls.slice(0, 2) : [];
+      const fotoUrls = rawFotoUrls
+        .map((u) => String(u || '').trim())
+        .filter((u) => {
+          if (!u) return false;
+          if (u.startsWith('data:image/')) return u.length <= 36000;
+          if (/^https?:\/\//i.test(u)) return u.length <= 1200;
+          return false;
+        });
+
+      const sanitizeVideoUrl = (raw?: string) => {
+        const clean = String(raw || '').replace(/[\r\n\t]+/g, '').trim();
+        if (!clean || /^(javascript|vbscript|data):/i.test(clean)) return '';
+        const normalized = /^https?:\/\//i.test(clean)
+          ? clean
+          : clean.startsWith('//')
+            ? `https:${clean}`
+            : `https://${clean}`;
+        return normalized.slice(0, 1200);
+      };
+      const videoUrl = sanitizeVideoUrl(log.videoUrl);
 
       const sanitizedLog: InternDailyLog = {
         id: `${studentId}_${tanggal}`,
         studentId,
         tanggal,
         trackerResults: cleanResults,
-        tilawahLembar,
+        tilawahHalaman,
         hourlyBlocks: {
           block_05_08: String(blocks.block_05_08 || '').trim().slice(0, 2000),
           block_08_12: String(blocks.block_08_12 || '').trim().slice(0, 2000),
@@ -2428,6 +2455,8 @@ export function createApiApp(): express.Express {
           block_22_03: String(blocks.block_22_03 || '').trim().slice(0, 2000),
         },
         kejadianPenting: String(log.kejadianPenting || '').trim().slice(0, 2000),
+        fotoUrls,
+        videoUrl,
         // Santri tidak boleh menimpa catatan pembimbing
         catatanPembimbing:
           session.role === 'santri_ortu'
@@ -2466,8 +2495,9 @@ export function createApiApp(): express.Express {
         return;
       }
 
-      const { internTrackerItems, internLembarPerJuz } = req.body as {
+      const { internTrackerItems, internHalamanPerJuz, internLembarPerJuz } = req.body as {
         internTrackerItems?: InternTrackerItem[];
+        internHalamanPerJuz?: number;
         internLembarPerJuz?: number;
       };
       if (!Array.isArray(internTrackerItems)) {
@@ -2494,20 +2524,27 @@ export function createApiApp(): express.Express {
         .filter((item) => item.label.length > 0);
 
       const currentDb = await loadDbFromStorage(storage);
-      const rawPerJuz = Number(internLembarPerJuz);
-      const existingPerJuz = Number(currentDb.templateConfig?.internLembarPerJuz);
-      const cleanLembarPerJuz =
-        Number.isFinite(rawPerJuz) && rawPerJuz >= 1 && rawPerJuz <= 100
-          ? Math.round(rawPerJuz)
-          : Number.isFinite(existingPerJuz) && existingPerJuz >= 1 && existingPerJuz <= 100
-            ? Math.round(existingPerJuz)
-            : 10;
+      const rawHalamanPerJuz =
+        internHalamanPerJuz !== undefined
+          ? Number(internHalamanPerJuz)
+          : internLembarPerJuz !== undefined
+            ? Number(internLembarPerJuz) * 2
+            : NaN;
+      const existingHalamanPerJuz = Number(currentDb.templateConfig?.internHalamanPerJuz);
+      const cleanHalamanPerJuz =
+        Number.isFinite(rawHalamanPerJuz) && rawHalamanPerJuz >= 1 && rawHalamanPerJuz <= 200
+          ? Math.round(rawHalamanPerJuz)
+          : Number.isFinite(existingHalamanPerJuz) &&
+              existingHalamanPerJuz >= 1 &&
+              existingHalamanPerJuz <= 200
+            ? Math.round(existingHalamanPerJuz)
+            : 20;
 
       const nextTemplate: BrandingTemplateConfig = {
         ...DEFAULT_TEMPLATE_CONFIG,
         ...(currentDb.templateConfig || {}),
         internTrackerItems: cleanItems,
-        internLembarPerJuz: cleanLembarPerJuz,
+        internHalamanPerJuz: cleanHalamanPerJuz,
       };
 
       const nextDb =

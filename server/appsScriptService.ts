@@ -98,12 +98,17 @@ function normalizeDatabasePayload(
           internTrackerItems: Array.isArray(d.templateConfig.internTrackerItems)
             ? d.templateConfig.internTrackerItems
             : DEFAULT_TEMPLATE_CONFIG.internTrackerItems,
-          internLembarPerJuz:
-            Number.isFinite(Number(d.templateConfig.internLembarPerJuz)) &&
-            Number(d.templateConfig.internLembarPerJuz) >= 1 &&
-            Number(d.templateConfig.internLembarPerJuz) <= 100
-              ? Math.round(Number(d.templateConfig.internLembarPerJuz))
-              : DEFAULT_TEMPLATE_CONFIG.internLembarPerJuz || 10,
+          internHalamanPerJuz:
+            Number.isFinite(Number(d.templateConfig.internHalamanPerJuz)) &&
+            Number(d.templateConfig.internHalamanPerJuz) >= 1 &&
+            Number(d.templateConfig.internHalamanPerJuz) <= 200
+              ? Math.round(Number(d.templateConfig.internHalamanPerJuz))
+              : Number.isFinite(Number(d.templateConfig.internLembarPerJuz)) &&
+                  Number(d.templateConfig.internLembarPerJuz) >= 1 &&
+                  Number(d.templateConfig.internLembarPerJuz) <= 100 &&
+                  Number(d.templateConfig.internLembarPerJuz) !== 10
+                ? Math.min(200, Math.round(Number(d.templateConfig.internLembarPerJuz) * 2))
+                : DEFAULT_TEMPLATE_CONFIG.internHalamanPerJuz || 20,
         }
       : { ...DEFAULT_TEMPLATE_CONFIG };
 

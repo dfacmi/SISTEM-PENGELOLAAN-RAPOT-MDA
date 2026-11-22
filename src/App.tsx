@@ -1463,12 +1463,12 @@ export default function App() {
 
   const handleSaveInternTrackerItems = async (
     items: InternTrackerItem[],
-    lembarPerJuz?: number
+    halamanPerJuz?: number
   ): Promise<boolean> => {
     const cleanPerJuz =
-      typeof lembarPerJuz === 'number' && Number.isFinite(lembarPerJuz) && lembarPerJuz >= 1
-        ? Math.round(lembarPerJuz)
-        : tpl.internLembarPerJuz || 10;
+      typeof halamanPerJuz === 'number' && Number.isFinite(halamanPerJuz) && halamanPerJuz >= 1
+        ? Math.round(halamanPerJuz)
+        : tpl.internHalamanPerJuz || 20;
 
     if (previewSampleMode) {
       setDb((prev) => ({
@@ -1476,7 +1476,7 @@ export default function App() {
         templateConfig: {
           ...tpl,
           internTrackerItems: items,
-          internLembarPerJuz: cleanPerJuz,
+          internHalamanPerJuz: cleanPerJuz,
         },
       }));
       showToast('ok', 'Item tracker ibadah diperbarui di mode pratinjau.');
@@ -2337,7 +2337,7 @@ export default function App() {
                     Aplikasi Lintas Perangkat (PWA)
                   </div>
                   <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 break-words">
-                    Pasang Rapor &amp; CBT MDA di Perangkat Anda
+                    Pasang SIAKAD MDA di Perangkat Anda
                   </h3>
                 </div>
                 <button
@@ -2350,7 +2350,7 @@ export default function App() {
               </div>
 
               <p className="text-xs text-slate-600 leading-relaxed break-words">
-                Buka portal Rapor, Ujian CBT, dan Pengelolaan Nilai lebih cepat langsung dari layar utama HP atau Desktop tanpa harus membuka tab browser berulang kali.
+                Buka SIAKAD MDA (Rapor, Magang &amp; Tracker Ibadah, Portofolio, dan Ujian CBT) lebih cepat langsung dari layar utama HP atau Desktop tanpa membuka tab browser berulang kali.
               </p>
 
               <div className="space-y-2.5 text-xs">
@@ -2420,7 +2420,7 @@ export default function App() {
                     )}
                   </div>
                   <p className="text-slate-600 leading-relaxed">
-                    Klik ikon <strong>Install App</strong> di ujung kanan kolom alamat browser (address bar), atau buka menu browser lalu pilih <strong>Simpan &amp; Bagikan → Instal Aplikasi MDA</strong>.
+                    Klik ikon <strong>Install App</strong> di ujung kanan kolom alamat browser (address bar), atau buka menu browser lalu pilih <strong>Simpan &amp; Bagikan → Instal SIAKAD MDA</strong>.
                   </p>
                 </div>
               </div>

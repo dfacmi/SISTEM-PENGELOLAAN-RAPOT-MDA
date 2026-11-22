@@ -1,12 +1,14 @@
-const CACHE_NAME = 'mda-rapor-cbt-shell-v1';
+const CACHE_NAME = 'siakad-mda-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/favicon-32x32.png',
+  '/favicon-64x64.png',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
+  '/pwa-maskable-512x512.png',
   '/apple-touch-icon.png',
-  '/mda-icon.svg',
   '/mda-logo-official.png',
 ];
 

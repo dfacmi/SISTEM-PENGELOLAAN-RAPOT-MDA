@@ -4,10 +4,15 @@ import {
   ArrowUp,
   Briefcase,
   Calendar,
+  Camera,
   Check,
   ClipboardList,
   Edit3,
+  ExternalLink,
+  ImagePlus,
+  Loader2,
   Lock,
+  PlayCircle,
   Plus,
   Printer,
   RotateCcw,
@@ -15,7 +20,9 @@ import {
   Search,
   SlidersHorizontal,
   Trash2,
+  Video,
   X,
+  ZoomIn,
 } from 'lucide-react';
 import { DEFAULT_INTERN_TRACKER_ITEMS, DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import {
@@ -30,6 +37,11 @@ import {
 } from '../types/mda';
 import { extractUniqueClasses, formatRupiah, matchesClassFilter } from '../utils/grading';
 import {
+  compressSidangImageWebp,
+  normalizeDisplayImageUrl,
+  shrinkImageDataUrlWebp,
+} from '../utils/imageHelper';
+import {
   computeInternTrackerStats,
   computeTilawahProgress,
   EMPTY_HOURLY_BLOCKS,
@@ -40,8 +52,10 @@ import {
   getTrackerButtonLabels,
   getTrackerGroupLabel,
   INTERN_HOURLY_BLOCK_DEFS,
-  resolveInternLembarPerJuz,
+  normalizeExternalMediaUrl,
+  resolveInternHalamanPerJuz,
   resolveInternTrackerItems,
+  resolveLogTilawahHalaman,
 } from '../utils/internship';
 import { mergeTemplateConfig } from '../utils/theme';
 import { MagangPeriodPicker } from './MagangPeriodPicker';
@@ -57,7 +71,7 @@ interface InternAdminViewProps {
   onSaveDailyLog: (log: InternDailyLog) => Promise<boolean> | boolean;
   onSaveTrackerItems: (
     items: InternTrackerItem[],
-    lembarPerJuz?: number
+    halamanPerJuz?: number
   ) => Promise<boolean> | boolean;
   onOpenPrintInternReport: (studentId: string) => void;
 }
@@ -94,17 +108,22 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     () => db.students[0]?.id || ''
   );
 
-  const lembarPerJuzConfig = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+  const halamanPerJuzConfig = useMemo(() => resolveInternHalamanPerJuz(tpl), [tpl]);
 
   // Detail & Pembimbing modal state
   const [inspectedStudentId, setInspectedStudentId] = useState<string | null>(null);
   const [modalDate, setModalDate] = useState<string>(() => getTodayIsoDateLocal());
   const [modalTrackerDraft, setModalTrackerDraft] = useState<Record<string, 'yes' | 'no'>>({});
-  const [modalTilawahLembar, setModalTilawahLembar] = useState('');
+  const [modalTilawahHalaman, setModalTilawahHalaman] = useState('');
   const [modalBlocksDraft, setModalBlocksDraft] = useState<InternHourlyBlocks>({
     ...EMPTY_HOURLY_BLOCKS,
   });
   const [modalKejadianPenting, setModalKejadianPenting] = useState('');
+  const [modalFotoUrls, setModalFotoUrls] = useState<string[]>([]);
+  const [modalVideoUrl, setModalVideoUrl] = useState('');
+  const [uploadingModalFoto, setUploadingModalFoto] = useState(false);
+  const [modalPhotoError, setModalPhotoError] = useState<string | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
@@ -120,7 +139,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
   // Sub-tab 2: Tracker Items Config state
   const [draftItems, setDraftItems] = useState<InternTrackerItem[]>(trackerItems);
-  const [draftLembarPerJuz, setDraftLembarPerJuz] = useState<number>(lembarPerJuzConfig);
+  const [draftHalamanPerJuz, setDraftHalamanPerJuz] = useState<number>(halamanPerJuzConfig);
   const [newLabel, setNewLabel] = useState('');
   const [newGroup, setNewGroup] = useState<InternTrackerGroup>('lainnya');
   const [newMode, setNewMode] = useState<InternTrackerMode>('terlaksana');
@@ -133,8 +152,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   }, [trackerConfigSignature]);
 
   useEffect(() => {
-    setDraftLembarPerJuz(lembarPerJuzConfig);
-  }, [lembarPerJuzConfig]);
+    setDraftHalamanPerJuz(halamanPerJuzConfig);
+  }, [halamanPerJuzConfig]);
 
   const profileMap = useMemo(() => {
     const map = new Map<string, InternProfile>();
@@ -199,20 +218,20 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     const allLogsInScope = (db.internDailyLogs || []).filter((l) =>
       scopeStudentIds.has(l.studentId)
     );
-    const totalScopeTilawah = computeTilawahProgress(allLogsInScope, lembarPerJuzConfig);
-    const avgLembarPerStudent =
+    const totalScopeTilawah = computeTilawahProgress(allLogsInScope, halamanPerJuzConfig);
+    const avgHalamanPerStudent =
       studentsInClass.length > 0
-        ? Math.round((totalScopeTilawah.totalLembar / studentsInClass.length) * 10) / 10
+        ? Math.round((totalScopeTilawah.totalHalaman / studentsInClass.length) * 10) / 10
         : 0;
     const avgJuzPerStudent =
-      Math.round((avgLembarPerStudent / lembarPerJuzConfig) * 10) / 10;
+      Math.round((avgHalamanPerStudent / halamanPerJuzConfig) * 10) / 10;
     const avgTilawahSummary = {
       ...totalScopeTilawah,
-      totalLembar: avgLembarPerStudent,
+      totalHalaman: avgHalamanPerStudent,
       totalJuz: avgJuzPerStudent,
       pct:
-        totalScopeTilawah.targetLembar > 0
-          ? Math.min(100, Math.round((avgLembarPerStudent / totalScopeTilawah.targetLembar) * 100))
+        totalScopeTilawah.targetHalaman > 0
+          ? Math.min(100, Math.round((avgHalamanPerStudent / totalScopeTilawah.targetHalaman) * 100))
           : 0,
     };
 
@@ -231,7 +250,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     logsByStudentDate,
     selectedDate,
     trackerItems,
-    lembarPerJuzConfig,
+    halamanPerJuzConfig,
   ]);
 
   const sholatItems = useMemo(
@@ -257,8 +276,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   }, [db.internDailyLogs, inspectedStudent]);
 
   const inspectedStudentTilawah = useMemo(
-    () => computeTilawahProgress(inspectedStudentLogs, lembarPerJuzConfig),
-    [inspectedStudentLogs, lembarPerJuzConfig]
+    () => computeTilawahProgress(inspectedStudentLogs, halamanPerJuzConfig),
+    [inspectedStudentLogs, halamanPerJuzConfig]
   );
 
   const activeModalLog = useMemo(() => {
@@ -278,17 +297,21 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   }, [inspectedStudent, inspectedProfile]);
 
   useEffect(() => {
+    setModalPhotoError(null);
     setModalTrackerDraft({ ...(activeModalLog?.trackerResults || {}) });
-    setModalTilawahLembar(
-      typeof activeModalLog?.tilawahLembar === 'number' && activeModalLog.tilawahLembar > 0
-        ? String(activeModalLog.tilawahLembar)
-        : ''
-    );
+    const resolvedHal = resolveLogTilawahHalaman(activeModalLog);
+    setModalTilawahHalaman(resolvedHal > 0 ? String(resolvedHal) : '');
     setModalBlocksDraft({
       ...EMPTY_HOURLY_BLOCKS,
       ...(activeModalLog?.hourlyBlocks || {}),
     });
     setModalKejadianPenting(activeModalLog?.kejadianPenting || '');
+    setModalFotoUrls(
+      Array.isArray(activeModalLog?.fotoUrls)
+        ? activeModalLog.fotoUrls.filter(Boolean).slice(0, 2)
+        : []
+    );
+    setModalVideoUrl(activeModalLog?.videoUrl || '');
     setNoteDraft(activeModalLog?.catatanPembimbing || '');
   }, [activeModalLog, modalDate]);
 
@@ -305,6 +328,46 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
     }
   };
 
+  const handleUploadModalPhotos = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setModalPhotoError(null);
+    const remainingSlots = Math.max(0, 2 - modalFotoUrls.length);
+    if (remainingSlots <= 0) {
+      setModalPhotoError('Maksimal 2 foto dokumentasi kegiatan per hari.');
+      return;
+    }
+    const chosen = Array.from(files).slice(0, remainingSlots);
+    const projectedTotal = modalFotoUrls.length + chosen.length;
+    const perPhotoMaxChars = projectedTotal >= 2 ? 16000 : 30000;
+
+    setUploadingModalFoto(true);
+    try {
+      const existingShrunk =
+        projectedTotal >= 2
+          ? await Promise.all(
+              modalFotoUrls.map((u) => shrinkImageDataUrlWebp(u, 16000, 720))
+            )
+          : [...modalFotoUrls];
+
+      const newlyCompressed: string[] = [];
+      for (const file of chosen) {
+        const compressed = await compressSidangImageWebp(file, {
+          maxWidth: 720,
+          maxChars: perPhotoMaxChars,
+        });
+        if (compressed.dataUrl) {
+          newlyCompressed.push(compressed.dataUrl);
+        }
+      }
+
+      setModalFotoUrls([...existingShrunk, ...newlyCompressed].slice(0, 2));
+    } catch (err: any) {
+      setModalPhotoError(err?.message || 'Gagal memproses foto kegiatan.');
+    } finally {
+      setUploadingModalFoto(false);
+    }
+  };
+
   const handleSaveModalDailyLog = async () => {
     if (!inspectedStudent || !/^\d{4}-\d{2}-\d{2}$/.test(modalDate)) return;
     const cleanResults: Record<string, 'yes' | 'no'> = {};
@@ -314,10 +377,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
         cleanResults[item.id] = v;
       }
     }
-    const parsedLembar = Number(String(modalTilawahLembar).replace(',', '.'));
-    const tilawahLembar =
-      Number.isFinite(parsedLembar) && parsedLembar >= 0
-        ? Math.min(1000, Math.round(parsedLembar * 10) / 10)
+    const parsedHalaman = Number(String(modalTilawahHalaman).replace(',', '.'));
+    const tilawahHalaman =
+      Number.isFinite(parsedHalaman) && parsedHalaman >= 0
+        ? Math.min(2000, Math.round(parsedHalaman * 10) / 10)
         : 0;
 
     setSavingNote(true);
@@ -327,7 +390,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
         studentId: inspectedStudent.id,
         tanggal: modalDate,
         trackerResults: cleanResults,
-        tilawahLembar,
+        tilawahHalaman,
         hourlyBlocks: {
           block_05_08: (modalBlocksDraft.block_05_08 || '').trim(),
           block_08_12: (modalBlocksDraft.block_08_12 || '').trim(),
@@ -336,6 +399,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
           block_22_03: (modalBlocksDraft.block_22_03 || '').trim(),
         },
         kejadianPenting: modalKejadianPenting.trim(),
+        fotoUrls: modalFotoUrls.filter(Boolean).slice(0, 2),
+        videoUrl: normalizeExternalMediaUrl(modalVideoUrl),
         catatanPembimbing: noteDraft.trim(),
         updatedAt: new Date().toISOString(),
       });
@@ -413,7 +478,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       .map((it) => ({ ...it, label: it.label.trim(), active: true }))
       .filter((it) => it.label.length > 0);
     if (cleaned.length === 0) return;
-    const safePerJuz = Math.max(1, Math.min(100, Math.round(Number(draftLembarPerJuz) || 10)));
+    const safePerJuz = Math.max(1, Math.min(200, Math.round(Number(draftHalamanPerJuz) || 20)));
     setSavingTrackerConfig(true);
     try {
       await onSaveTrackerItems(cleaned, safePerJuz);
@@ -596,7 +661,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               <TilawahDonutChart
                 summary={summaryStats.avgTilawahSummary}
                 title="Rata-rata Capaian Tilawah (Target 30 Juz)"
-                subtitle={`Total kelas/filter: ${summaryStats.totalScopeTilawah.totalLembar.toLocaleString('id-ID')} lembar (${summaryStats.totalScopeTilawah.totalJuz.toLocaleString('id-ID')} Juz) dari ${summaryStats.totalStudentsInScope} santri.`}
+                subtitle={`Total kelas/filter: ${summaryStats.totalScopeTilawah.totalHalaman.toLocaleString('id-ID')} halaman (${summaryStats.totalScopeTilawah.totalJuz.toLocaleString('id-ID')} Juz) dari ${summaryStats.totalStudentsInScope} santri.`}
               />
             </div>
 
@@ -710,9 +775,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                     <Check className="w-3 h-3" />
                                     <span>Sudah Mengisi</span>
                                   </span>
-                                  {Number(log.tilawahLembar || 0) > 0 && (
+                                  {resolveLogTilawahHalaman(log) > 0 && (
                                     <div className="text-[10px] font-semibold text-emerald-700 tabular-nums">
-                                      Tilawah: {log.tilawahLembar} Lbr
+                                      Tilawah: {resolveLogTilawahHalaman(log)} Hal
                                     </div>
                                   )}
                                 </div>
@@ -763,6 +828,18 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                   <span className="font-bold text-emerald-700">
                                     ✓ {otherYes}/{nonSholatItems.length}
                                   </span>
+                                  {(log.fotoUrls?.filter(Boolean).length || 0) > 0 && (
+                                    <div className="text-[10px] text-sky-700 font-semibold inline-flex items-center gap-1">
+                                      <Camera className="w-3 h-3" />
+                                      <span>{log.fotoUrls?.filter(Boolean).length} Foto</span>
+                                    </div>
+                                  )}
+                                  {normalizeExternalMediaUrl(log.videoUrl) && (
+                                    <div className="text-[10px] text-indigo-700 font-semibold flex items-center gap-1">
+                                      <Video className="w-3 h-3" />
+                                      <span>Ada Link Video</span>
+                                    </div>
+                                  )}
                                   {(log.kejadianPenting || '').trim() && (
                                     <div className="text-[10px] text-amber-800 font-semibold">
                                       Ada kejadian penting
@@ -847,14 +924,35 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         <div className="font-semibold">
                           {prof?.tempatMagang || 'Tempat magang belum diisi'}
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 tabular-nums">
                           <span>Income: {formatRupiah(prof?.incomeMagangRp || 0)}</span>
                           {log && (
                             <span className="font-bold text-emerald-700">
                               Sholat ✓ {sholatYes}/{sholatItems.length}
+                              {resolveLogTilawahHalaman(log) > 0
+                                ? ` · ${resolveLogTilawahHalaman(log)} Hal`
+                                : ''}
                             </span>
                           )}
                         </div>
+                        {log &&
+                          ((log.fotoUrls?.filter(Boolean).length || 0) > 0 ||
+                            normalizeExternalMediaUrl(log.videoUrl)) && (
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px] font-bold">
+                              {(log.fotoUrls?.filter(Boolean).length || 0) > 0 && (
+                                <span className="text-sky-700 inline-flex items-center gap-1">
+                                  <Camera className="w-3 h-3" />
+                                  <span>{log.fotoUrls?.filter(Boolean).length} Foto</span>
+                                </span>
+                              )}
+                              {normalizeExternalMediaUrl(log.videoUrl) && (
+                                <span className="text-indigo-700 inline-flex items-center gap-1">
+                                  <Video className="w-3 h-3" />
+                                  <span>Video</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
@@ -971,7 +1069,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
           )}
 
-          {/* Konversi Lembar ke Juz (Target 30 Juz) */}
+          {/* Konversi Halaman ke Juz (Target 30 Juz) */}
           <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-xs font-bold text-slate-900">
@@ -986,18 +1084,18 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               <input
                 type="number"
                 min={1}
-                max={100}
+                max={200}
                 disabled={!canManageTrackerItems}
-                value={draftLembarPerJuz}
+                value={draftHalamanPerJuz}
                 onChange={(e) =>
-                  setDraftLembarPerJuz(
-                    Math.max(1, Math.min(100, Math.round(Number(e.target.value) || 10)))
+                  setDraftHalamanPerJuz(
+                    Math.max(1, Math.min(200, Math.round(Number(e.target.value) || 20)))
                   )
                 }
                 className="w-20 min-h-[38px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl text-center disabled:bg-slate-100"
               />
               <span className="text-xs font-semibold text-slate-700">
-                Lembar (30 Juz = {draftLembarPerJuz * 30} Lbr)
+                Halaman (30 Juz = {draftHalamanPerJuz * 30} Hal)
               </span>
             </div>
           </div>
@@ -1231,7 +1329,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             <TilawahDonutChart
               summary={inspectedStudentTilawah}
               title={`Capaian Tilawah ${inspectedStudent.nama} (Target 30 Juz)`}
-              subtitle="Akumulasi lembar tilawah dari seluruh jurnal magang santri ini."
+              subtitle="Akumulasi halaman tilawah dari seluruh jurnal magang santri ini."
             />
 
             {/* Edit Profil Magang oleh Admin / Guru */}
@@ -1406,40 +1504,40 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   })}
                 </div>
 
-                {/* Editable Tilawah Lembar */}
+                {/* Editable Tilawah Halaman */}
                 <div className="p-3 rounded-xl border border-emerald-200 bg-[#E8FAF3]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                   <div>
                     <div className="font-bold text-emerald-950">
-                      Lembar Tilawah Hari Ini (Opsional)
+                      Halaman Tilawah Hari Ini (Opsional)
                     </div>
                     <div className="text-[11px] text-slate-600">
-                      1 Juz = {lembarPerJuzConfig} Lembar
+                      1 Juz = {halamanPerJuzConfig} Halaman
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <input
                       type="number"
                       min={0}
-                      max={1000}
+                      max={2000}
                       step="0.5"
-                      value={modalTilawahLembar}
-                      onChange={(e) => setModalTilawahLembar(e.target.value)}
+                      value={modalTilawahHalaman}
+                      onChange={(e) => setModalTilawahHalaman(e.target.value)}
                       placeholder="0"
                       className="w-24 min-h-[36px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-emerald-200 rounded-lg"
                     />
-                    <span className="text-xs font-semibold text-slate-700">Lbr</span>
-                    {[1, 5, 10].map((inc) => (
+                    <span className="text-xs font-semibold text-slate-700">Hal</span>
+                    {[1, 2, 5, 10, 20].map((inc) => (
                       <button
                         key={inc}
                         type="button"
                         onClick={() =>
-                          setModalTilawahLembar((prev) =>
-                            String(Math.min(1000, (Number(prev) || 0) + inc))
+                          setModalTilawahHalaman((prev) =>
+                            String(Math.min(2000, (Number(prev) || 0) + inc))
                           )
                         }
-                        className="min-h-[34px] px-2 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-[11px] font-bold"
+                        className="min-h-[34px] px-2 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-[11px] font-bold tabular-nums"
                       >
-                        +{inc}
+                        +{inc} Hal
                       </button>
                     ))}
                   </div>
@@ -1485,6 +1583,126 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   />
                 </div>
 
+                {/* Dokumentasi Foto & Link Video Kegiatan */}
+                <div className="p-3.5 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Dokumentasi Foto &amp; Video Kegiatan</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-800 tabular-nums">
+                      {modalFotoUrls.length} / 2 Foto
+                    </span>
+                  </div>
+
+                  {modalFotoUrls.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {modalFotoUrls.map((url, idx) => (
+                        <div
+                          key={`modal-foto-${idx}`}
+                          className="rounded-xl border border-slate-200 bg-white overflow-hidden"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setLightboxPhoto(normalizeDisplayImageUrl(url))}
+                            className="relative w-full aspect-video bg-slate-100 block group"
+                          >
+                            <img
+                              src={normalizeDisplayImageUrl(url)}
+                              alt={`Dokumentasi ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/75 text-white text-[10px] font-bold inline-flex items-center gap-1">
+                              <ZoomIn className="w-2.5 h-2.5" />
+                              <span>Perbesar</span>
+                            </span>
+                          </button>
+                          <div className="px-2.5 py-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
+                            <span className="text-[11px] font-bold text-slate-700">
+                              Foto Kegiatan {idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModalFotoUrls((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                              className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold inline-flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {modalFotoUrls.length < 2 && (
+                    <div>
+                      <label className="min-h-[38px] px-3 py-1.5 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                        {uploadingModalFoto ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                            <span>Mengompres Foto...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImagePlus className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>
+                              {modalFotoUrls.length === 0
+                                ? '+ Tambah Foto Kegiatan (Maks. 2)'
+                                : '+ Tambah 1 Foto Lagi'}
+                            </span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          disabled={uploadingModalFoto}
+                          onChange={(e) => {
+                            void handleUploadModalPhotos(e.target.files);
+                            e.target.value = '';
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {modalPhotoError && (
+                    <div className="text-[11px] font-semibold text-rose-700">{modalPhotoError}</div>
+                  )}
+
+                  <div className="pt-1 border-t border-emerald-200/70 space-y-1.5">
+                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Link Video Kegiatan (Google Drive / YouTube / Sosmed)</span>
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={modalVideoUrl}
+                        onChange={(e) => setModalVideoUrl(e.target.value)}
+                        placeholder="https://drive.google.com/... atau https://youtu.be/..."
+                        className="flex-1 min-w-0 min-h-[38px] px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
+                      />
+                      {normalizeExternalMediaUrl(modalVideoUrl) && (
+                        <a
+                          href={normalizeExternalMediaUrl(modalVideoUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
+                        >
+                          <PlayCircle className="w-3.5 h-3.5 text-[#1DF27A]" />
+                          <span>Putar / Buka Video ↗</span>
+                          <ExternalLink className="w-3 h-3 opacity-80" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Catatan Pembimbing */}
                 <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-200 space-y-2">
                   <label className="block text-xs font-bold text-emerald-950">
@@ -1500,7 +1718,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      disabled={savingNote || isBusy}
+                      disabled={savingNote || isBusy || uploadingModalFoto}
                       onClick={() => void handleSaveModalDailyLog()}
                       className="min-h-[40px] px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
                     >
@@ -1515,6 +1733,33 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal Preview Foto */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div
+            className="relative max-w-3xl w-full max-h-[90dvh] flex flex-col items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxPhoto}
+              alt="Pratinjau Dokumentasi Kegiatan"
+              className="max-h-[80dvh] w-auto max-w-full rounded-2xl border border-white/20 shadow-2xl object-contain bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxPhoto(null)}
+              className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-bold inline-flex items-center gap-1.5 shadow-lg"
+            >
+              <X className="w-4 h-4" />
+              <span>Tutup Foto</span>
+            </button>
           </div>
         </div>
       )}

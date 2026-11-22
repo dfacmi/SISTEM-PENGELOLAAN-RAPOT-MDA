@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Download, Loader2, Maximize2, Minimize2, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Maximize2, Minimize2, PlayCircle, Printer } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import {
   BrandingTemplateConfig,
   InternDailyLog,
-  InternTrackerItem,
   MdaDatabase,
 } from '../types/mda';
 import { formatRupiah } from '../utils/grading';
+import { normalizeDisplayImageUrl } from '../utils/imageHelper';
 import {
   buildMutabaahMatrixData,
   computeInternTrackerStats,
@@ -23,8 +23,10 @@ import {
   getDaysInYearMonth,
   INTERN_HOURLY_BLOCK_DEFS,
   type MutabaahMatrixResult,
-  resolveInternLembarPerJuz,
+  normalizeExternalMediaUrl,
+  resolveInternHalamanPerJuz,
   resolveInternTrackerItems,
+  resolveLogTilawahHalaman,
 } from '../utils/internship';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { MdaLogo } from './MdaLogo';
@@ -134,13 +136,18 @@ async function inlineExternalImagesForPdf(el: HTMLElement): Promise<() => void> 
   };
 }
 
+function normalizePdfLinkUrl(rawUrl?: string | null): string {
+  return normalizeExternalMediaUrl(rawUrl);
+}
+
 function estimateTwoColJournalRowHeightPx(log: InternDailyLog): number {
   const kejadianText = (log.kejadianPenting || '').trim();
   const kejadianLeftHeight = kejadianText
     ? Math.max(1, Math.ceil(kejadianText.length / 26)) * 12 + 24
     : 0;
+  const tilawahHalaman = resolveLogTilawahHalaman(log);
   const leftHeight =
-    52 + (Number(log.tilawahLembar || 0) > 0 ? 18 : 0) + kejadianLeftHeight;
+    52 + (tilawahHalaman > 0 ? 18 : 0) + kejadianLeftHeight;
 
   let blockLinesHeight = 0;
   for (const def of INTERN_HOURLY_BLOCK_DEFS) {
@@ -156,7 +163,11 @@ function estimateTwoColJournalRowHeightPx(log: InternDailyLog): number {
     ? Math.max(1, Math.ceil(noteText.length / 70)) * 12.5 + 22
     : 0;
 
-  return Math.max(leftHeight, blockLinesHeight + noteHeight) + 22;
+  const fotoCount = Array.isArray(log.fotoUrls) ? log.fotoUrls.filter(Boolean).slice(0, 2).length : 0;
+  const photoHeight = fotoCount > 0 ? 116 : 0;
+  const videoHeight = normalizeExternalMediaUrl(log.videoUrl) ? 34 : 0;
+
+  return Math.max(leftHeight, blockLinesHeight + noteHeight + photoHeight + videoHeight) + 22;
 }
 
 interface InternPageSpec {
@@ -446,15 +457,15 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
     () => trackerItems.filter((it) => it.group !== 'sholat'),
     [trackerItems]
   );
-  const lembarPerJuz = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+  const halamanPerJuz = useMemo(() => resolveInternHalamanPerJuz(tpl), [tpl]);
 
   const stats = useMemo(
     () => computeInternTrackerStats(studentLogs, trackerItems),
     [studentLogs, trackerItems]
   );
   const tilawahProgress = useMemo(
-    () => computeTilawahProgress(studentLogs, lembarPerJuz),
-    [studentLogs, lembarPerJuz]
+    () => computeTilawahProgress(studentLogs, halamanPerJuz),
+    [studentLogs, halamanPerJuz]
   );
 
   const matrixFirstHalf = useMemo(
@@ -509,12 +520,22 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
         throw new Error('Halaman laporan magang tidak ditemukan.');
       }
 
+      const imgX = 0;
+      const imgY = 0;
+      const imgWidth = 210;
+      const imgHeight = 297;
+
       for (let i = 0; i < pageElements.length; i++) {
         setExportProgress(`Membuat PDF (${i + 1}/${pageElements.length})...`);
         const pageEl = pageElements[i];
         await waitForImagesInElement(pageEl);
         const restoreExternalImages = await inlineExternalImagesForPdf(pageEl);
 
+        interface MeasuredPdfLink {
+          cleanUrl: string;
+          rects: Array<{ x: number; y: number; w: number; h: number }>;
+        }
+        const pageLinks: MeasuredPdfLink[] = [];
         const scaleContainer = pageEl.closest('.a4-scale-inner') as HTMLElement | null;
         const prevTransform = scaleContainer ? scaleContainer.style.transform : '';
         if (scaleContainer) {
@@ -524,6 +545,48 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
 
         let pngDataUrl = '';
         try {
+          const pageRect = pageEl.getBoundingClientRect();
+          if (pageRect.width > 0 && pageRect.height > 0) {
+            const linkElements = Array.from(
+              pageEl.querySelectorAll<HTMLElement>('a[href], [data-pdf-link]')
+            );
+            for (const linkEl of linkElements) {
+              const cleanUrl = normalizePdfLinkUrl(
+                linkEl.getAttribute('href') || linkEl.getAttribute('data-pdf-link-url')
+              );
+              if (!cleanUrl) continue;
+
+              const clientRects = linkEl.getClientRects();
+              const rawRects =
+                clientRects.length > 0
+                  ? Array.from(clientRects)
+                  : [linkEl.getBoundingClientRect()];
+
+              const mappedRects: Array<{ x: number; y: number; w: number; h: number }> = [];
+              for (const rect of rawRects) {
+                const x = imgX + ((rect.left - pageRect.left) / pageRect.width) * imgWidth;
+                const y = imgY + ((rect.top - pageRect.top) / pageRect.height) * imgHeight;
+                const w = (rect.width / pageRect.width) * imgWidth;
+                const h = (rect.height / pageRect.height) * imgHeight;
+
+                if (
+                  w > 0 &&
+                  h > 0 &&
+                  x + w > imgX &&
+                  y + h > imgY &&
+                  x < imgX + imgWidth &&
+                  y < imgY + imgHeight
+                ) {
+                  mappedRects.push({ x, y, w, h });
+                }
+              }
+
+              if (mappedRects.length > 0) {
+                pageLinks.push({ cleanUrl, rects: mappedRects });
+              }
+            }
+          }
+
           pngDataUrl = await toPng(pageEl, {
             width: A4_WIDTH_PX,
             height: A4_HEIGHT_PX,
@@ -552,7 +615,31 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
         }
-        pdf.addImage(pngDataUrl, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+
+        // 1. Lapisan teks URL asli di bawah gambar agar viewer PDF HP mengenali tautan video
+        for (const linkItem of pageLinks) {
+          const primaryRect = linkItem.rects[0];
+          const textX = Math.max(0, Math.min(imgWidth - 10, primaryRect.x));
+          const textY = Math.max(3, Math.min(imgHeight - 2, primaryRect.y + primaryRect.h * 0.7));
+          pdf.setFontSize(8);
+          pdf.text(linkItem.cleanUrl, textX, textY);
+        }
+
+        // 2. Gambar halaman A4 penuh di atas lapisan teks
+        pdf.addImage(pngDataUrl, 'PNG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
+
+        // 3. Anotasi link PDF interaktif
+        for (const linkItem of pageLinks) {
+          for (const rect of linkItem.rects) {
+            const linkX = Math.max(0, rect.x - 1.5);
+            const linkY = Math.max(0, rect.y - 1.5);
+            const linkW = Math.min(imgWidth - linkX, rect.w + 3);
+            const linkH = Math.min(imgHeight - linkY, Math.max(rect.h + 3, 9));
+            if (linkW > 0 && linkH > 0) {
+              pdf.link(linkX, linkY, linkW, linkH, { url: linkItem.cleanUrl });
+            }
+          }
+        }
       }
 
       const safeName = student.nama.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -1031,6 +1118,11 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                                     const otherYes = nonSholatItems.filter(
                                       (it) => log.trackerResults?.[it.id] === 'yes'
                                     ).length;
+                                    const logTilawahHalaman = resolveLogTilawahHalaman(log);
+                                    const logFotos = Array.isArray(log.fotoUrls)
+                                      ? log.fotoUrls.filter(Boolean).slice(0, 2)
+                                      : [];
+                                    const logVideoUrl = normalizeExternalMediaUrl(log.videoUrl);
 
                                     return (
                                       <tr
@@ -1062,9 +1154,9 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                                             </div>
                                           </div>
 
-                                          {Number(log.tilawahLembar || 0) > 0 && (
+                                          {logTilawahHalaman > 0 && (
                                             <div className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[8.5px] font-bold text-emerald-800 tabular-nums">
-                                              Tilawah {log.tilawahLembar} Lbr
+                                              Tilawah {logTilawahHalaman} Hal
                                             </div>
                                           )}
 
@@ -1096,6 +1188,57 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                                             <div className="mt-1.5 px-2 py-1 rounded bg-[#E8FAF3] border border-emerald-200 text-[8.5px] text-emerald-950 leading-snug">
                                               <strong>Catatan Pembimbing:</strong>{' '}
                                               {log.catatanPembimbing}
+                                            </div>
+                                          )}
+
+                                          {(logFotos.length > 0 || logVideoUrl) && (
+                                            <div className="mt-1.5 pt-1.5 border-t border-slate-200/80 space-y-1.5">
+                                              {logFotos.length > 0 && (
+                                                <div>
+                                                  <div className="text-[8px] font-bold uppercase tracking-wide text-slate-600 mb-1">
+                                                    Dokumentasi Foto Kegiatan ({logFotos.length})
+                                                  </div>
+                                                  <div
+                                                    className={`grid gap-2 ${
+                                                      logFotos.length > 1
+                                                        ? 'grid-cols-2 max-w-[340px]'
+                                                        : 'grid-cols-1 max-w-[170px]'
+                                                    }`}
+                                                  >
+                                                    {logFotos.map((foto, fIdx) => (
+                                                      <div
+                                                        key={`${log.id}-pdf-foto-${fIdx}`}
+                                                        className="rounded border border-slate-300 bg-slate-50 overflow-hidden h-[84px] flex items-center justify-center p-0.5"
+                                                      >
+                                                        <img
+                                                          src={normalizeDisplayImageUrl(foto)}
+                                                          alt={`Dokumentasi ${fIdx + 1}`}
+                                                          referrerPolicy="no-referrer"
+                                                          className="max-w-full max-h-full object-contain"
+                                                        />
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              {logVideoUrl && (
+                                                <div>
+                                                  <a
+                                                    href={logVideoUrl}
+                                                    data-pdf-link="true"
+                                                    data-pdf-link-url={logVideoUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0E2228] text-white text-[8.5px] font-bold underline decoration-[#1DF27A]"
+                                                  >
+                                                    <PlayCircle className="w-3 h-3 text-[#1DF27A] shrink-0" />
+                                                    <span>
+                                                      Putar / Buka Video Kegiatan ↗ ({logVideoUrl})
+                                                    </span>
+                                                  </a>
+                                                </div>
+                                              )}
                                             </div>
                                           )}
                                         </td>

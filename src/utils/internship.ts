@@ -291,61 +291,100 @@ export function formatMagangPeriodRange(
   return (fallbackWaktu || '').trim();
 }
 
-export function resolveInternLembarPerJuz(
+export function normalizeExternalMediaUrl(rawUrl?: string | null): string {
+  const clean = (rawUrl || '').replace(/[\r\n\t]+/g, '').trim();
+  if (!clean) return '';
+  if (/^(javascript|vbscript|data):/i.test(clean)) return '';
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (clean.startsWith('//')) return `https:${clean}`;
+  return `https://${clean}`;
+}
+
+export function resolveInternHalamanPerJuz(
   templateConfig?: BrandingTemplateConfig | null
 ): number {
-  const raw = Number(templateConfig?.internLembarPerJuz);
-  if (Number.isFinite(raw) && raw >= 1 && raw <= 100) {
-    return Math.round(raw);
+  const rawHalaman = Number(templateConfig?.internHalamanPerJuz);
+  if (Number.isFinite(rawHalaman) && rawHalaman >= 1 && rawHalaman <= 200) {
+    return Math.round(rawHalaman);
   }
-  return 10;
+  const rawLegacyLembar = Number(templateConfig?.internLembarPerJuz);
+  if (
+    Number.isFinite(rawLegacyLembar) &&
+    rawLegacyLembar >= 1 &&
+    rawLegacyLembar <= 100 &&
+    rawLegacyLembar !== 10
+  ) {
+    return Math.min(200, Math.round(rawLegacyLembar * 2));
+  }
+  return 20;
+}
+
+export function resolveLogTilawahHalaman(
+  log?: Pick<InternDailyLog, 'tilawahHalaman' | 'tilawahLembar'> | null
+): number {
+  if (!log) return 0;
+  if (
+    typeof log.tilawahHalaman === 'number' &&
+    Number.isFinite(log.tilawahHalaman) &&
+    log.tilawahHalaman >= 0
+  ) {
+    return Math.round(log.tilawahHalaman * 10) / 10;
+  }
+  if (
+    typeof log.tilawahLembar === 'number' &&
+    Number.isFinite(log.tilawahLembar) &&
+    log.tilawahLembar > 0
+  ) {
+    return Math.round(log.tilawahLembar * 2 * 10) / 10;
+  }
+  return 0;
 }
 
 export interface TilawahProgressSummary {
-  totalLembar: number;
-  lembarPerJuz: number;
+  totalHalaman: number;
+  halamanPerJuz: number;
   totalJuz: number;
   targetJuz: number;
-  targetLembar: number;
+  targetHalaman: number;
   pct: number;
   logsWithTilawahCount: number;
 }
 
 export function computeTilawahProgress(
   logs: InternDailyLog[],
-  lembarPerJuz = 10
+  halamanPerJuz = 20
 ): TilawahProgressSummary {
   const safePerJuz =
-    Number.isFinite(lembarPerJuz) && lembarPerJuz >= 1 && lembarPerJuz <= 100
-      ? Math.round(lembarPerJuz)
-      : 10;
+    Number.isFinite(halamanPerJuz) && halamanPerJuz >= 1 && halamanPerJuz <= 200
+      ? Math.round(halamanPerJuz)
+      : 20;
   const targetJuz = 30;
-  const targetLembar = targetJuz * safePerJuz;
+  const targetHalaman = targetJuz * safePerJuz;
 
-  let totalLembar = 0;
+  let totalHalaman = 0;
   let logsWithTilawahCount = 0;
 
   for (const log of logs) {
-    const raw = Number(log.tilawahLembar || 0);
-    if (Number.isFinite(raw) && raw > 0) {
-      totalLembar += raw;
+    const raw = resolveLogTilawahHalaman(log);
+    if (raw > 0) {
+      totalHalaman += raw;
       logsWithTilawahCount += 1;
     }
   }
 
-  const roundedLembar = Math.round(totalLembar * 10) / 10;
-  const totalJuz = Math.round((roundedLembar / safePerJuz) * 10) / 10;
+  const roundedHalaman = Math.round(totalHalaman * 10) / 10;
+  const totalJuz = Math.round((roundedHalaman / safePerJuz) * 10) / 10;
   const pct =
-    targetLembar > 0
-      ? Math.min(100, Math.round((roundedLembar / targetLembar) * 100))
+    targetHalaman > 0
+      ? Math.min(100, Math.round((roundedHalaman / targetHalaman) * 100))
       : 0;
 
   return {
-    totalLembar: roundedLembar,
-    lembarPerJuz: safePerJuz,
+    totalHalaman: roundedHalaman,
+    halamanPerJuz: safePerJuz,
     totalJuz,
     targetJuz,
-    targetLembar,
+    targetHalaman,
     pct,
     logsWithTilawahCount,
   };

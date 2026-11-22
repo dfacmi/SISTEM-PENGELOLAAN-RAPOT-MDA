@@ -962,10 +962,18 @@ export async function loadDatabaseFromSheet(
         } catch {
           // keep default
         }
+      } else if (key === 'internHalamanPerJuz') {
+        const num = Number(r[1]);
+        if (Number.isFinite(num) && num >= 1 && num <= 200) {
+          templateConfig.internHalamanPerJuz = Math.round(num);
+        }
       } else if (key === 'internLembarPerJuz') {
         const num = Number(r[1]);
         if (Number.isFinite(num) && num >= 1 && num <= 100) {
           templateConfig.internLembarPerJuz = Math.round(num);
+          if (num !== 10 && templateConfig.internHalamanPerJuz === 20) {
+            templateConfig.internHalamanPerJuz = Math.min(200, Math.round(num * 2));
+          }
         }
       } else {
         (templateConfig as any)[key] = String(r[1]);
