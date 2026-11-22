@@ -351,3 +351,135 @@ export function computeTilawahProgress(
   };
 }
 
+export function getCurrentYearMonthLocal(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getAvailableLogMonths(logs: InternDailyLog[]): string[] {
+  const set = new Set<string>();
+  for (const l of logs) {
+    if (l.tanggal && /^\d{4}-\d{2}-\d{2}$/.test(l.tanggal)) {
+      set.add(l.tanggal.slice(0, 7));
+    }
+  }
+  const currentYm = getCurrentYearMonthLocal();
+  set.add(currentYm);
+  return Array.from(set).sort((a, b) => b.localeCompare(a));
+}
+
+export function formatMonthYearIndonesia(yearMonth: string): string {
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) return yearMonth;
+  const [y, m] = yearMonth.split('-').map(Number);
+  const dt = new Date(y, m - 1, 1);
+  try {
+    return dt.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  } catch {
+    return yearMonth;
+  }
+}
+
+export function getDaysInYearMonth(yearMonth: string): number {
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) return 30;
+  const [y, m] = yearMonth.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+export type MatrixHalfRange = '1-15' | '16-end' | 'all';
+
+export interface MutabaahMatrixRow {
+  no: number;
+  item: InternTrackerItem;
+  cells: Array<'yes' | 'no' | null>;
+  yesCount: number;
+  noCount: number;
+  answeredCount: number;
+}
+
+export interface MutabaahMatrixResult {
+  yearMonth: string;
+  monthLabel: string;
+  dayNumbers: number[];
+  dayIsoDates: string[];
+  logByDay: Record<number, InternDailyLog | undefined>;
+  rows: MutabaahMatrixRow[];
+  hasFirstHalfLogs: boolean;
+  hasSecondHalfLogs: boolean;
+}
+
+export function buildMutabaahMatrixData(
+  logs: InternDailyLog[],
+  items: InternTrackerItem[],
+  yearMonth: string,
+  range: MatrixHalfRange = 'all'
+): MutabaahMatrixResult {
+  const safeYm = /^\d{4}-\d{2}$/.test(yearMonth) ? yearMonth : getCurrentYearMonthLocal();
+  const totalDaysInMonth = getDaysInYearMonth(safeYm);
+  const logByDay: Record<number, InternDailyLog | undefined> = {};
+  let hasFirstHalfLogs = false;
+  let hasSecondHalfLogs = false;
+
+  for (const log of logs) {
+    if (!log.tanggal || !log.tanggal.startsWith(`${safeYm}-`)) continue;
+    const day = Number(log.tanggal.slice(8, 10));
+    if (Number.isFinite(day) && day >= 1 && day <= totalDaysInMonth) {
+      logByDay[day] = log;
+      if (day <= 15) hasFirstHalfLogs = true;
+      else hasSecondHalfLogs = true;
+    }
+  }
+
+  let startDay = 1;
+  let endDay = totalDaysInMonth;
+  if (range === '1-15') {
+    startDay = 1;
+    endDay = Math.min(15, totalDaysInMonth);
+  } else if (range === '16-end') {
+    startDay = 16;
+    endDay = totalDaysInMonth;
+  }
+
+  const dayNumbers: number[] = [];
+  const dayIsoDates: string[] = [];
+  for (let d = startDay; d <= endDay; d++) {
+    dayNumbers.push(d);
+    dayIsoDates.push(`${safeYm}-${String(d).padStart(2, '0')}`);
+  }
+
+  const rows: MutabaahMatrixRow[] = items.map((item, idx) => {
+    let yesCount = 0;
+    let noCount = 0;
+    const cells = dayNumbers.map((day) => {
+      const log = logByDay[day];
+      const val = log?.trackerResults?.[item.id];
+      if (val === 'yes') {
+        yesCount += 1;
+        return 'yes' as const;
+      }
+      if (val === 'no') {
+        noCount += 1;
+        return 'no' as const;
+      }
+      return null;
+    });
+    return {
+      no: idx + 1,
+      item,
+      cells,
+      yesCount,
+      noCount,
+      answeredCount: yesCount + noCount,
+    };
+  });
+
+  return {
+    yearMonth: safeYm,
+    monthLabel: formatMonthYearIndonesia(safeYm),
+    dayNumbers,
+    dayIsoDates,
+    logByDay,
+    rows,
+    hasFirstHalfLogs,
+    hasSecondHalfLogs,
+  };
+}

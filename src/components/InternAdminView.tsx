@@ -45,6 +45,7 @@ import {
 } from '../utils/internship';
 import { mergeTemplateConfig } from '../utils/theme';
 import { MagangPeriodPicker } from './MagangPeriodPicker';
+import { MutabaahMatrixTable } from './MutabaahMatrixTable';
 import { TilawahDonutChart } from './TilawahDonutChart';
 
 interface InternAdminViewProps {
@@ -89,6 +90,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayIsoDateLocal());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'filled' | 'missing'>('all');
+  const [matrixStudentId, setMatrixStudentId] = useState<string>(
+    () => db.students[0]?.id || ''
+  );
 
   const lembarPerJuzConfig = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
 
@@ -166,6 +170,16 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       return true;
     });
   }, [db.students, classFilter, profileMap, searchQuery, logsByStudentDate, selectedDate, statusFilter]);
+
+  const activeMatrixStudent = useMemo(() => {
+    const pool = filteredStudents.length > 0 ? filteredStudents : db.students;
+    return pool.find((s) => s.id === matrixStudentId) || pool[0] || null;
+  }, [filteredStudents, db.students, matrixStudentId]);
+
+  const activeMatrixLogs = useMemo(() => {
+    if (!activeMatrixStudent) return [];
+    return (db.internDailyLogs || []).filter((l) => l.studentId === activeMatrixStudent.id);
+  }, [db.internDailyLogs, activeMatrixStudent]);
 
   const summaryStats = useMemo(() => {
     const logsForFilteredOnDate: InternDailyLog[] = [];
@@ -417,10 +431,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             Kontrol &amp; Pembinaan Santri Magang
           </div>
           <h1 className="font-display font-bold text-lg sm:text-xl text-slate-900 mt-0.5">
-            Magang &amp; Tracker Ibadah Harian
+            Magang &amp; Jurnal Harian
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Pantau jurnaling 5 blok jam, mutabaah sholat berjamaah, amal kebersihan, catatan pembimbing, dan ekspor PDF.
+            Pantau jurnaling 5 blok jam, matriks mutabaah sholat berjamaah, amal kebersihan, catatan pembimbing, dan ekspor PDF.
           </p>
         </div>
 
@@ -866,6 +880,62 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 })}
               </div>
             </>
+          )}
+
+          {/* Matriks Mutabaah Ibadah Per Tanggal (Ala Excel) Untuk Santri Terpilih */}
+          {activeMatrixStudent && (
+            <div className="space-y-2.5">
+              <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-900">
+                    Pantau Matriks Mutabaah Ibadah Per Tanggal (1–15 / 16–31)
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Pilih santri untuk melihat bolong tidaknya ibadah dalam satu tampilan tabel bulanan. Ketuk tanggal untuk koreksi jurnal &amp; catatan.
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <select
+                    value={activeMatrixStudent.id}
+                    onChange={(e) => setMatrixStudentId(e.target.value)}
+                    aria-label="Pilih Santri untuk Matriks Mutabaah"
+                    className="min-h-[40px] px-3 py-1.5 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl text-slate-900 max-w-[260px]"
+                  >
+                    {(filteredStudents.length > 0 ? filteredStudents : db.students).map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.nama} ({st.kelas})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => openStudentDetail(activeMatrixStudent.id)}
+                    className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit Santri</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpenPrintInternReport(activeMatrixStudent.id)}
+                    className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                    <span>PDF</span>
+                  </button>
+                </div>
+              </div>
+
+              <MutabaahMatrixTable
+                logs={activeMatrixLogs}
+                trackerItems={trackerItems}
+                studentName={activeMatrixStudent.nama}
+                onSelectDate={(isoDate) => {
+                  setInspectedStudentId(activeMatrixStudent.id);
+                  setModalDate(isoDate);
+                }}
+              />
+            </div>
           )}
         </div>
       ) : (

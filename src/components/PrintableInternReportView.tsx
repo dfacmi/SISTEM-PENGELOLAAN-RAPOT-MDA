@@ -3,16 +3,26 @@ import { ArrowLeft, Download, Loader2, Maximize2, Minimize2, Printer } from 'luc
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
-import { BrandingTemplateConfig, InternDailyLog, InternTrackerItem, MdaDatabase } from '../types/mda';
+import {
+  BrandingTemplateConfig,
+  InternDailyLog,
+  InternTrackerItem,
+  MdaDatabase,
+} from '../types/mda';
 import { formatRupiah } from '../utils/grading';
 import {
+  buildMutabaahMatrixData,
   computeInternTrackerStats,
   computeTilawahProgress,
   formatMagangPeriodRange,
+  formatMonthYearIndonesia,
   formatTanggalIndonesia,
   formatTanggalShort,
-  getTrackerButtonLabels,
+  getAvailableLogMonths,
+  getCurrentYearMonthLocal,
+  getDaysInYearMonth,
   INTERN_HOURLY_BLOCK_DEFS,
+  type MutabaahMatrixResult,
   resolveInternLembarPerJuz,
   resolveInternTrackerItems,
 } from '../utils/internship';
@@ -124,75 +134,108 @@ async function inlineExternalImagesForPdf(el: HTMLElement): Promise<() => void> 
   };
 }
 
-function estimateDailyLogRowHeightPx(log: InternDailyLog, items: InternTrackerItem[]): number {
-  const dateColHeight = 48 + (Number(log.tilawahLembar || 0) > 0 ? 16 : 0);
-  const trackerRows = Math.max(1, Math.ceil(items.length / 2));
-  const trackerColHeight = trackerRows * 16 + 22;
+function estimateTwoColJournalRowHeightPx(log: InternDailyLog): number {
+  const kejadianText = (log.kejadianPenting || '').trim();
+  const kejadianLeftHeight = kejadianText
+    ? Math.max(1, Math.ceil(kejadianText.length / 26)) * 12 + 24
+    : 0;
+  const leftHeight =
+    52 + (Number(log.tilawahLembar || 0) > 0 ? 18 : 0) + kejadianLeftHeight;
 
   let blockLinesHeight = 0;
   for (const def of INTERN_HOURLY_BLOCK_DEFS) {
     const val = (log.hourlyBlocks?.[def.key] || '').trim();
     if (!val) continue;
-    const lines = Math.max(1, Math.ceil(val.length / 58));
-    blockLinesHeight += lines * 12.5 + 4;
+    const lines = Math.max(1, Math.ceil(val.length / 72));
+    blockLinesHeight += lines * 13 + 6;
   }
-  if (blockLinesHeight === 0) blockLinesHeight = 24;
-
-  const kejadianText = (log.kejadianPenting || '').trim();
-  const kejadianHeight = kejadianText
-    ? Math.max(1, Math.ceil(kejadianText.length / 58)) * 12.5 + 18
-    : 0;
+  if (blockLinesHeight === 0) blockLinesHeight = 28;
 
   const noteText = (log.catatanPembimbing || '').trim();
-  const noteHeight = noteText ? Math.max(1, Math.ceil(noteText.length / 62)) * 12 + 18 : 0;
+  const noteHeight = noteText
+    ? Math.max(1, Math.ceil(noteText.length / 70)) * 12.5 + 22
+    : 0;
 
-  return Math.max(dateColHeight, trackerColHeight, blockLinesHeight + kejadianHeight + noteHeight) + 20;
+  return Math.max(leftHeight, blockLinesHeight + noteHeight) + 22;
 }
 
-interface LogPageChunk {
+interface InternPageSpec {
+  type: 'summary' | 'journal';
   logs: InternDailyLog[];
-  showHeaderMeta: boolean;
+  showOverflowSecondMatrix?: boolean;
   showSignature: boolean;
-  usedBudgetPx: number;
 }
 
-function paginateInternLogs(
+function buildInternPdfPages(
   logs: InternDailyLog[],
-  items: InternTrackerItem[]
-): LogPageChunk[] {
-  const page1TableBudget = Math.max(165, 390 - Math.ceil(items.length / 2) * 23);
-  const nextPageTableBudget = 835;
-  const signatureNeededPx = 170;
+  itemsCount: number,
+  hasSecondMatrixBlock: boolean
+): InternPageSpec[] {
+  const singleMatrixPage1WithSigPossible =
+    logs.length === 0 && !hasSecondMatrixBlock && itemsCount <= 12;
 
-  if (logs.length === 0) {
+  if (logs.length === 0 && !hasSecondMatrixBlock) {
     return [
       {
+        type: 'summary',
         logs: [],
-        showHeaderMeta: true,
-        showSignature: true,
-        usedBudgetPx: 60,
+        showOverflowSecondMatrix: false,
+        showSignature: singleMatrixPage1WithSigPossible,
       },
+      ...(singleMatrixPage1WithSigPossible
+        ? []
+        : [
+            {
+              type: 'journal' as const,
+              logs: [],
+              showOverflowSecondMatrix: false,
+              showSignature: true,
+            },
+          ]),
     ];
   }
 
-  const pages: LogPageChunk[] = [];
+  const secondMatrixNeedsPage2 = hasSecondMatrixBlock && itemsCount > 10;
+  const pages: InternPageSpec[] = [
+    {
+      type: 'summary',
+      logs: [],
+      showOverflowSecondMatrix: false,
+      showSignature: false,
+    },
+  ];
+
+  const journalPageBudget = 875;
+  const signatureNeededPx = 175;
+  const secondMatrixReservePx = secondMatrixNeedsPage2 ? itemsCount * 22 + 70 : 0;
+
+  let currentBudget = journalPageBudget - secondMatrixReservePx;
   let currentLogs: InternDailyLog[] = [];
-  let isFirstPage = true;
-  let currentBudget = page1TableBudget;
   let usedPx = 0;
+  let firstJournalPage = true;
+
+  if (logs.length === 0) {
+    pages.push({
+      type: 'journal',
+      logs: [],
+      showOverflowSecondMatrix: secondMatrixNeedsPage2,
+      showSignature: true,
+    });
+    return pages;
+  }
 
   for (const log of logs) {
-    const rowH = Math.min(nextPageTableBudget - 20, estimateDailyLogRowHeightPx(log, items));
+    const rowH = Math.min(journalPageBudget - 25, estimateTwoColJournalRowHeightPx(log));
     if (currentLogs.length > 0 && usedPx + rowH > currentBudget) {
       pages.push({
+        type: 'journal',
         logs: currentLogs,
-        showHeaderMeta: isFirstPage,
+        showOverflowSecondMatrix: firstJournalPage && secondMatrixNeedsPage2,
         showSignature: false,
-        usedBudgetPx: usedPx,
       });
-      isFirstPage = false;
+      firstJournalPage = false;
       currentLogs = [log];
-      currentBudget = nextPageTableBudget;
+      currentBudget = journalPageBudget;
       usedPx = rowH;
     } else {
       currentLogs.push(log);
@@ -203,23 +246,110 @@ function paginateInternLogs(
   if (currentLogs.length > 0) {
     const fitsSignature = usedPx + signatureNeededPx <= currentBudget;
     pages.push({
+      type: 'journal',
       logs: currentLogs,
-      showHeaderMeta: isFirstPage,
+      showOverflowSecondMatrix: firstJournalPage && secondMatrixNeedsPage2,
       showSignature: fitsSignature,
-      usedBudgetPx: usedPx,
     });
     if (!fitsSignature) {
       pages.push({
+        type: 'journal',
         logs: [],
-        showHeaderMeta: false,
+        showOverflowSecondMatrix: false,
         showSignature: true,
-        usedBudgetPx: 0,
       });
     }
   }
 
   return pages;
 }
+
+const MatrixBlockTable: React.FC<{
+  matrix: MutabaahMatrixResult;
+  darkPill: string;
+}> = ({ matrix, darkPill }) => (
+  <table
+    className="w-full border-collapse text-[9.5px] bg-white"
+    style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+  >
+    <thead>
+      <tr className="text-white" style={{ backgroundColor: darkPill }}>
+        <th
+          rowSpan={2}
+          className="border border-slate-500 px-1 py-1 text-center font-bold w-[26px]"
+        >
+          No
+        </th>
+        <th
+          rowSpan={2}
+          className="border border-slate-500 px-2 py-1 text-left font-bold w-[235px]"
+        >
+          Kegiatan Ibadah &amp; Amal
+        </th>
+        <th
+          colSpan={matrix.dayNumbers.length}
+          className="border border-slate-500 px-1 py-0.5 text-center font-bold tracking-wide text-[#1DF27A]"
+        >
+          Tanggal ({matrix.monthLabel})
+        </th>
+        <th
+          rowSpan={2}
+          className="border border-slate-500 px-1.5 py-1 text-center font-bold w-[42px]"
+        >
+          Total
+        </th>
+      </tr>
+      <tr className="bg-[#163842] text-white">
+        {matrix.dayNumbers.map((d) => {
+          const hasLog = Boolean(matrix.logByDay[d]);
+          return (
+            <th
+              key={d}
+              className={`border border-slate-500 py-0.5 px-0 text-center font-bold tabular-nums ${
+                hasLog ? 'text-[#1DF27A]' : 'text-slate-200'
+              }`}
+            >
+              {d}
+            </th>
+          );
+        })}
+      </tr>
+    </thead>
+    <tbody>
+      {matrix.rows.map((row, idx) => (
+        <tr key={row.item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'}>
+          <td className="border border-slate-300 px-1 py-1 text-center font-bold text-slate-600 tabular-nums">
+            {row.no}
+          </td>
+          <td className="border border-slate-300 px-2 py-1 font-semibold text-slate-900 whitespace-normal leading-tight">
+            {row.item.label}
+          </td>
+          {row.cells.map((cell, cIdx) => {
+            const dNum = matrix.dayNumbers[cIdx];
+            return (
+              <td
+                key={`${row.item.id}-${dNum}`}
+                className={`border border-slate-300 py-1 px-0 text-center font-bold tabular-nums ${
+                  cell === 'yes'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : cell === 'no'
+                      ? 'bg-rose-50 text-rose-600'
+                      : 'text-slate-300'
+                }`}
+              >
+                {cell === 'yes' ? '✓' : cell === 'no' ? '✗' : '-'}
+              </td>
+            );
+          })}
+          <td className="border border-slate-300 px-1 py-1 text-center font-bold tabular-nums bg-slate-50 text-slate-900">
+            <span className="text-emerald-700">{row.yesCount}</span>
+            <span className="text-slate-400 font-normal">/{row.answeredCount}</span>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
 
 interface PrintableInternReportViewProps {
   db: MdaDatabase;
@@ -291,8 +421,33 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
     [db.internDailyLogs, student?.id]
   );
 
+  const availableMonths = useMemo(() => getAvailableLogMonths(studentLogs), [studentLogs]);
+  const preferredInitialMonth = useMemo(() => {
+    if (studentLogs.length > 0) {
+      return studentLogs[studentLogs.length - 1].tanggal.slice(0, 7);
+    }
+    return availableMonths[0] || getCurrentYearMonthLocal();
+  }, [studentLogs, availableMonths]);
+
+  const [selectedMatrixMonth, setSelectedMatrixMonth] = useState<string>(preferredInitialMonth);
+
+  useEffect(() => {
+    if (!availableMonths.includes(selectedMatrixMonth)) {
+      setSelectedMatrixMonth(preferredInitialMonth);
+    }
+  }, [availableMonths, preferredInitialMonth, selectedMatrixMonth]);
+
   const trackerItems = useMemo(() => resolveInternTrackerItems(tpl), [tpl]);
+  const sholatItems = useMemo(
+    () => trackerItems.filter((it) => it.group === 'sholat'),
+    [trackerItems]
+  );
+  const nonSholatItems = useMemo(
+    () => trackerItems.filter((it) => it.group !== 'sholat'),
+    [trackerItems]
+  );
   const lembarPerJuz = useMemo(() => resolveInternLembarPerJuz(tpl), [tpl]);
+
   const stats = useMemo(
     () => computeInternTrackerStats(studentLogs, trackerItems),
     [studentLogs, trackerItems]
@@ -302,14 +457,25 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
     [studentLogs, lembarPerJuz]
   );
 
+  const matrixFirstHalf = useMemo(
+    () => buildMutabaahMatrixData(studentLogs, trackerItems, selectedMatrixMonth, '1-15'),
+    [studentLogs, trackerItems, selectedMatrixMonth]
+  );
+  const matrixSecondHalf = useMemo(
+    () => buildMutabaahMatrixData(studentLogs, trackerItems, selectedMatrixMonth, '16-end'),
+    [studentLogs, trackerItems, selectedMatrixMonth]
+  );
+  const showSecondHalfBlock = matrixFirstHalf.hasSecondHalfLogs;
+  const secondHalfOnPage1 = showSecondHalfBlock && trackerItems.length <= 10;
+
   const activePeriod = useMemo(
     () => db.periods.find((p) => p.isActive) || db.periods[db.periods.length - 1],
     [db.periods]
   );
 
   const pages = useMemo(
-    () => paginateInternLogs(studentLogs, trackerItems),
-    [studentLogs, trackerItems]
+    () => buildInternPdfPages(studentLogs, trackerItems.length, showSecondHalfBlock),
+    [studentLogs, trackerItems.length, showSecondHalfBlock]
   );
 
   if (!student) {
@@ -400,8 +566,92 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
     }
   };
 
+  const MdaInternFooter = ({ pageNum, totalPages }: { pageNum: number; totalPages: number }) => (
+    <div
+      className="mt-auto shrink-0 px-8 py-2.5 flex items-center justify-between gap-4 text-[9.5px] text-slate-950"
+      style={{
+        background: theme.footerGradient,
+        fontFamily: 'Arial, Helvetica, sans-serif',
+      }}
+    >
+      <div className="font-semibold max-w-[290px] leading-snug">
+        {tpl.pesanPenutupHalaman2 ||
+          'Semoga ilmu, akhlak, dan amal ibadah yang terjaga selama magang membawa keberkahan.'}
+      </div>
+      <div className="text-right leading-snug tabular-nums">
+        <div className="font-bold">
+          WhatsApp: {tpl.whatsapp} · Hal. {pageNum} / {totalPages}
+        </div>
+        <div className="font-semibold">
+          {tpl.instagram} · {tpl.email}
+        </div>
+        <div>{tpl.alamat}</div>
+      </div>
+    </div>
+  );
+
+  const SignatureBlock = () => (
+    <div className="mt-4 pt-3 border-t border-emerald-700/25 bg-white/80 rounded-xl px-4 py-3 border border-emerald-200/70">
+      <div className="text-right text-[10px] text-slate-700 mb-2">
+        {tpl.kotaTanggal || 'Sukoharjo'},{' '}
+        {new Date().toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })}
+      </div>
+      <div className="grid grid-cols-3 gap-4 text-center text-[10px]">
+        <div className="flex flex-col items-center justify-between min-h-[96px]">
+          <div className="text-slate-600">Santri Peserta Magang,</div>
+          <div className="pt-10">
+            <div className="font-bold text-slate-900 underline">{student.nama}</div>
+            <div className="text-[9px] text-slate-500">ID: {student.nisnMda}</div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-between min-h-[96px]">
+          <div className="text-slate-600">Pembimbing Magang / Wali Kelas,</div>
+          <div className="pt-10">
+            <div className="font-bold text-slate-900 underline">
+              {profile?.pembimbingNama || student.waliKelasNama || 'Pembimbing Magang'}
+            </div>
+            <div className="text-[9px] text-slate-500">Pembimbing Lapangan</div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-between min-h-[96px]">
+          <div>
+            <div className="text-slate-600">Mengetahui,</div>
+            <div className="font-semibold text-slate-800">Kepala Unit MDA</div>
+          </div>
+          <div className="flex flex-col items-center">
+            {activePeriod?.ttdKepalaUnitUrl ? (
+              <img
+                src={activePeriod.ttdKepalaUnitUrl}
+                alt="TTD Kepala Unit"
+                referrerPolicy="no-referrer"
+                className="h-10 object-contain mb-1"
+              />
+            ) : (
+              <div className="h-10" />
+            )}
+            <div className="font-bold text-slate-900 underline">
+              {activePeriod?.kepalaUnitMda || 'Kepala Unit MDA'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const daysInSelectedMonth = getDaysInYearMonth(selectedMatrixMonth);
+  const activeRatioPct = Math.min(100, Math.round((stats.totalDays / 30) * 100));
+
   return (
-    <div className="min-h-screen bg-slate-200/90 pb-12 print:bg-white print:pb-0">
+    <div
+      className="min-h-screen bg-slate-200/90 pb-12 print:bg-white print:pb-0"
+      style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+    >
       {/* Screen Toolbar */}
       <div className="no-print sticky top-0 z-30 bg-[#0E2228] text-white border-b border-slate-700 px-3 sm:px-6 py-2.5 shadow-md">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
@@ -417,12 +667,25 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
             <div className="min-w-0 hidden sm:block">
               <div className="text-xs font-bold truncate">{student.nama}</div>
               <div className="text-[11px] text-slate-300 truncate">
-                Laporan Magang &amp; Mutabaah Ibadah · {pages.length} Halaman A4
+                Laporan Magang &amp; Mutabaah Ibadah · {pages.length} Halaman A4 (Font Arial)
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <select
+              value={selectedMatrixMonth}
+              onChange={(e) => setSelectedMatrixMonth(e.target.value)}
+              aria-label="Bulan Matriks PDF"
+              className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-semibold"
+            >
+              {availableMonths.map((ym) => (
+                <option key={ym} value={ym} className="text-slate-900">
+                  Matriks: {formatMonthYearIndonesia(ym)}
+                </option>
+              ))}
+            </select>
+
             <button
               type="button"
               onClick={() => setZoomMode((m) => (m === 'fit' ? 'actual' : 'fit'))}
@@ -478,8 +741,12 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
       </div>
 
       {/* A4 Pages */}
-      <div className="py-5 sm:py-8 px-2 sm:px-4 space-y-6 print:p-0 print:space-y-0">
-        {pages.map((chunk, idx) => {
+      <div
+        className={`py-5 sm:py-8 px-2 sm:px-4 space-y-6 print:p-0 print:space-y-0 ${
+          zoomMode === 'fit' ? 'overflow-x-hidden' : 'overflow-x-auto'
+        }`}
+      >
+        {pages.map((page, idx) => {
           const pageNum = idx + 1;
           const totalPages = pages.length;
 
@@ -494,336 +761,362 @@ export const PrintableInternReportView: React.FC<PrintableInternReportViewProps>
                 ref={(el) => {
                   pageRefs.current[idx] = el;
                 }}
-                className="a4-page relative w-[210mm] h-[297mm] mx-auto bg-white text-slate-900 flex flex-col justify-between overflow-hidden"
-                style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+                className="a4-page rapor-a4-page relative w-[210mm] h-[297mm] mx-auto text-slate-900 flex flex-col justify-between overflow-hidden"
+                style={{
+                  backgroundColor: theme.pageTint,
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                }}
               >
-                {/* Top Header */}
-                <div className="px-9 pt-7 pb-3">
-                  <div
-                    className="flex items-center justify-between gap-4 pb-3 border-b-2"
-                    style={{ borderColor: theme.darkPill }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
-                      <div>
-                        <div
-                          className="text-[11px] font-bold uppercase tracking-wide"
-                          style={{ color: theme.darkPill }}
-                        >
-                          {tpl.namaLembaga} · {tpl.namaPesantren}
+                {/* Page Main Body */}
+                <div className="px-8 pt-6 pb-3 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    {/* MDA Rapor Header */}
+                    <div
+                      className="flex items-center justify-between gap-4 pb-2.5 border-b-2"
+                      style={{ borderColor: theme.darkPill }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
+                        <div>
+                          <div className="text-[10px] font-bold uppercase tracking-wide text-sky-700">
+                            {tpl.namaLembaga} · {tpl.namaPesantren}
+                          </div>
+                          <div className="text-[14px] font-bold text-slate-950 mt-0.5 uppercase">
+                            LAPORAN KEGIATAN MAGANG &amp; MUTABAAH IBADAH
+                          </div>
+                          <div className="text-[9.5px] text-slate-600">
+                            Alamat: {tpl.alamat}
+                          </div>
                         </div>
-                        <div className="text-[14px] font-bold text-slate-900 mt-0.5">
-                          LAPORAN KEGIATAN MAGANG &amp; MUTABAAH IBADAH SANTRI
+                      </div>
+                      <div className="text-right text-[10px] text-slate-700 shrink-0 tabular-nums">
+                        <div className="font-bold text-slate-950">{student.nama}</div>
+                        <div>
+                          {student.nisnMda} · {student.kelas}
+                        </div>
+                        <div className="font-bold text-emerald-800">
+                          Hal. {pageNum} dari {totalPages}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right text-[10px] text-slate-600 shrink-0">
-                      <div className="font-bold text-slate-900">{student.nama}</div>
-                      <div>
-                        {student.nisnMda} · {student.kelas}
-                      </div>
-                      <div className="text-slate-500">
-                        Hal. {pageNum} dari {totalPages}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Page 1: Profile & Tracker Summary */}
-                  {chunk.showHeaderMeta && (
-                    <div className="mt-3 space-y-3">
-                      {/* Identitas & Profil Magang */}
-                      <div className="grid grid-cols-2 gap-3 border border-slate-300 rounded-md p-2.5 bg-slate-50/70 text-[10.5px]">
-                        <table className="w-full">
-                          <tbody>
-                            <tr>
-                              <td className="py-0.5 text-slate-500 w-32">Nama Santri</td>
-                              <td className="py-0.5 font-bold text-slate-900">: {student.nama}</td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">ID Santri MDA</td>
-                              <td className="py-0.5 font-semibold">: {student.nisnMda}</td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">Kelas / Program</td>
-                              <td className="py-0.5">: {student.kelas}</td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">Total Hari Log</td>
-                              <td className="py-0.5 font-bold tabular-nums">
-                                : {stats.totalDays} Hari Tercatat
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        <table className="w-full">
-                          <tbody>
-                            <tr>
-                              <td className="py-0.5 text-slate-500 w-32">Tempat Magang</td>
-                              <td className="py-0.5 font-bold text-slate-900">
-                                : {profile?.tempatMagang || '-'}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">Periode Magang</td>
-                              <td className="py-0.5">: {formattedMagangPeriod || '-'}</td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">Kompetensi</td>
-                              <td className="py-0.5">: {profile?.kompetensiMagang || '-'}</td>
-                            </tr>
-                            <tr>
-                              <td className="py-0.5 text-slate-500">Income Magang</td>
-                              <td className="py-0.5 font-bold text-emerald-800 tabular-nums">
-                                : {formatRupiah(profile?.incomeMagangRp || 0)}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Ringkasan Mutabaah Ibadah & Diagram Tilawah 30 Juz */}
-                      <div className="grid grid-cols-12 gap-2.5 items-stretch">
-                        <div className="col-span-7 border border-slate-300 rounded-md overflow-hidden flex flex-col">
+                    {/* ================= PAGE 1: RINGKASAN EKSEKUTIF & MATRIKS ================= */}
+                    {page.type === 'summary' && (
+                      <div className="space-y-3">
+                        {/* Pill Judul Seksi 1 */}
+                        <div className="flex items-center justify-between gap-2">
                           <div
-                            className="px-2.5 py-1.5 text-[10px] font-bold text-white flex items-center justify-between gap-2"
-                            style={{ backgroundColor: theme.darkPill }}
+                            className="inline-block text-slate-950 font-bold text-[10.5px] px-3.5 py-1 rounded-full tracking-wide"
+                            style={{ backgroundColor: theme.sectionSky }}
                           >
-                            <span>RINGKASAN MUTABAAH IBADAH</span>
-                            <span className="tabular-nums text-[9px]">
-                              Sholat: {stats.sholatPct}% · Amal: {stats.otherPct}%
-                            </span>
+                            PROFIL &amp; CAPAIAN MAGANG
                           </div>
-                          <div className="p-1.5 grid grid-cols-2 gap-1 text-[8.5px] bg-white flex-1">
-                            {stats.itemStats.map((st) => {
-                              const labels = getTrackerButtonLabels(st.item.mode);
-                              return (
-                                <div
-                                  key={st.item.id}
-                                  className="border border-slate-200 rounded px-1.5 py-1 flex items-center justify-between gap-1"
-                                >
-                                  <span className="font-semibold text-slate-800 truncate">
-                                    {st.item.label}
-                                  </span>
-                                  <span className="shrink-0 tabular-nums font-bold">
-                                    <span className="text-emerald-700">✓{st.yesCount}</span>{' '}
-                                    <span className="text-rose-600">✗{st.noCount}</span>{' '}
-                                    <span className="text-slate-500">({st.yesPct}%)</span>
-                                    <span className="sr-only">{labels.yesLabel}</span>
-                                  </span>
-                                </div>
-                              );
-                            })}
+                          <div className="text-[10px] font-bold text-slate-600 tabular-nums">
+                            {stats.totalDays} Hari Log Tercatat
                           </div>
                         </div>
 
-                        <div className="col-span-5 flex items-stretch">
-                          <div className="w-full flex">
-                            <TilawahDonutChart
-                              compact
-                              summary={tilawahProgress}
-                              accentColor={theme.barFill}
-                              title="Capaian Tilawah (Target 30 Juz)"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Daily Log Table */}
-                  {(chunk.logs.length > 0 || chunk.showHeaderMeta) && (
-                    <div className="mt-3">
-                      <div className="text-[10.5px] font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
-                        {chunk.showHeaderMeta
-                          ? 'RINCIAN JURNAL HARIAN MAGANG & TRACKER IBADAH (5 BLOK JAM)'
-                          : 'LANJUTAN RINCIAN JURNAL HARIAN MAGANG'}
-                      </div>
-                      {chunk.logs.length === 0 ? (
-                        <div className="border border-dashed border-slate-300 rounded-md p-6 text-center text-[11px] text-slate-500">
-                          Belum ada entri jurnal harian magang yang tersimpan untuk santri ini.
-                        </div>
-                      ) : (
-                        <table className="w-full border-collapse text-[9.5px]">
-                          <thead>
-                            <tr
-                              className="text-white text-left"
-                              style={{ backgroundColor: theme.darkPill }}
-                            >
-                              <th className="border border-slate-400 px-2 py-1.5 w-[96px]">
-                                Tanggal
-                              </th>
-                              <th className="border border-slate-400 px-2 py-1.5 w-[210px]">
-                                Ringkasan Tracker Ibadah &amp; Amal
-                              </th>
-                              <th className="border border-slate-400 px-2 py-1.5">
-                                Aktivitas Harian (05.00 – 03.00) &amp; Catatan
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {chunk.logs.map((log, rowIdx) => {
-                              const yesTotal = trackerItems.filter(
-                                (it) => log.trackerResults?.[it.id] === 'yes'
-                              ).length;
-                              const noTotal = trackerItems.filter(
-                                (it) => log.trackerResults?.[it.id] === 'no'
-                              ).length;
-
-                              return (
-                                <tr
-                                  key={log.id}
-                                  className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}
-                                >
-                                  <td className="border border-slate-300 px-2 py-1.5 align-top">
-                                    <div className="font-bold text-slate-900">
-                                      {formatTanggalShort(log.tanggal)}
-                                    </div>
-                                    <div className="text-[8.5px] text-slate-500 mt-0.5 leading-tight">
-                                      {formatTanggalIndonesia(log.tanggal).split(',')[0]}
-                                    </div>
-                                    <div className="mt-1 text-[8.5px] font-bold tabular-nums">
-                                      <span className="text-emerald-700">✓ {yesTotal}</span> ·{' '}
-                                      <span className="text-rose-600">✗ {noTotal}</span>
-                                    </div>
-                                    {Number(log.tilawahLembar || 0) > 0 && (
-                                      <div className="mt-1 inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[8px] font-bold text-emerald-800 tabular-nums">
-                                        Tilawah: {log.tilawahLembar} Lbr
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="border border-slate-300 px-2 py-1.5 align-top">
-                                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                                      {trackerItems.map((it) => {
-                                        const val = log.trackerResults?.[it.id];
-                                        return (
-                                          <div
-                                            key={it.id}
-                                            className="flex items-center justify-between gap-1 text-[8.5px] leading-snug"
-                                          >
-                                            <span className="truncate text-slate-700">
-                                              {it.label}
-                                            </span>
-                                            <span
-                                              className={`font-bold shrink-0 ${
-                                                val === 'yes'
-                                                  ? 'text-emerald-700'
-                                                  : val === 'no'
-                                                    ? 'text-rose-600'
-                                                    : 'text-slate-400'
-                                              }`}
-                                            >
-                                              {val === 'yes' ? '✓' : val === 'no' ? '✗' : '-'}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </td>
-                                  <td className="border border-slate-300 px-2 py-1.5 align-top space-y-1">
-                                    {INTERN_HOURLY_BLOCK_DEFS.map((def) => {
-                                      const text = (log.hourlyBlocks?.[def.key] || '').trim();
-                                      if (!text) return null;
-                                      return (
-                                        <div key={def.key} className="leading-snug">
-                                          <span className="font-bold text-slate-800">
-                                            [{def.timeRange}]
-                                          </span>{' '}
-                                          <span className="text-slate-700">{text}</span>
-                                        </div>
-                                      );
-                                    })}
-                                    {(log.kejadianPenting || '').trim() && (
-                                      <div className="mt-1 pt-1 border-t border-amber-200 text-[8.5px] text-amber-950 bg-amber-50/70 px-1.5 py-0.5 rounded">
-                                        <strong>Kejadian Penting:</strong> {log.kejadianPenting}
-                                      </div>
-                                    )}
-                                    {(log.catatanPembimbing || '').trim() && (
-                                      <div className="mt-1 pt-1 border-t border-slate-200 text-[8.5px] text-emerald-900">
-                                        <strong>Catatan Pembimbing:</strong> {log.catatanPembimbing}
-                                      </div>
-                                    )}
+                        {/* Kartu Profil Magang 2 Kolom */}
+                        <div className="bg-white/95 border border-[#728C81] rounded-xl p-3 text-[10.5px] shadow-xs">
+                          <div className="grid grid-cols-2 gap-4">
+                            <table className="w-full">
+                              <tbody>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500 w-28">Nama Santri</td>
+                                  <td className="py-0.5 font-bold text-slate-950">
+                                    : {student.nama}
                                   </td>
                                 </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  )}
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">ID Santri MDA</td>
+                                  <td className="py-0.5 font-bold tabular-nums">
+                                    : {student.nisnMda}
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">Kelas / Program</td>
+                                  <td className="py-0.5">: {student.kelas}</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">Pembimbing</td>
+                                  <td className="py-0.5 font-semibold">
+                                    : {profile?.pembimbingNama || student.waliKelasNama || '-'}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+
+                            <table className="w-full">
+                              <tbody>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500 w-28">Tempat Magang</td>
+                                  <td className="py-0.5 font-bold text-slate-950">
+                                    : {profile?.tempatMagang || '-'}
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">Periode Magang</td>
+                                  <td className="py-0.5">: {formattedMagangPeriod || '-'}</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">Kompetensi</td>
+                                  <td className="py-0.5">: {profile?.kompetensiMagang || '-'}</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-0.5 text-slate-500">Income Magang</td>
+                                  <td className="py-0.5 font-bold text-emerald-800 tabular-nums">
+                                    : {formatRupiah(profile?.incomeMagangRp || 0)}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Kartu Capaian Visual: Bar Progres Emerald (Kiri) + Donut Tilawah 30 Juz (Kanan) */}
+                        <div className="grid grid-cols-12 gap-3 items-stretch">
+                          <div className="col-span-7 bg-white/95 border border-[#728C81] rounded-xl p-3 flex flex-col justify-between gap-2">
+                            <div className="text-[10px] font-bold text-slate-800 uppercase tracking-wide">
+                              Ringkasan Capaian Ibadah &amp; Jurnal
+                            </div>
+                            <div className="space-y-2">
+                              {[
+                                {
+                                  label: 'Sholat Berjamaah',
+                                  pct: stats.sholatPct,
+                                  pill: `${stats.sholatPct}%`,
+                                },
+                                {
+                                  label: 'Amal Kebersihan & Tambahan',
+                                  pct: stats.otherPct,
+                                  pill: `${stats.otherPct}%`,
+                                },
+                                {
+                                  label: 'Keaktifan Jurnal Magang',
+                                  pct: activeRatioPct,
+                                  pill: `${stats.totalDays} Hr`,
+                                },
+                              ].map((bar) => (
+                                <div key={bar.label} className="flex items-center gap-2">
+                                  <div className="relative flex-1 h-7 bg-slate-50 rounded-full border border-emerald-300 overflow-hidden flex items-center">
+                                    <div
+                                      className="h-full rounded-full"
+                                      style={{
+                                        width: `${Math.max(4, bar.pct)}%`,
+                                        backgroundColor: theme.barTrack,
+                                      }}
+                                    />
+                                    <span className="absolute left-3 text-[10px] font-bold text-slate-900">
+                                      {bar.label}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className="w-16 h-7 text-white rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0"
+                                    style={{ backgroundColor: theme.darkPill }}
+                                  >
+                                    {bar.pill}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="col-span-5 flex items-stretch">
+                            <div className="w-full flex">
+                              <TilawahDonutChart
+                                compact
+                                summary={tilawahProgress}
+                                accentColor={theme.barFill}
+                                title="Capaian Tilawah (Target 30 Juz)"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Pill Judul Seksi 2: Matriks Mutabaah */}
+                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                          <div
+                            className="inline-block text-slate-950 font-bold text-[10.5px] px-3.5 py-1 rounded-full tracking-wide"
+                            style={{ backgroundColor: theme.sectionSky }}
+                          >
+                            MATRIKS MUTABAAH IBADAH
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-700">
+                            Periode: {matrixFirstHalf.monthLabel} ·{' '}
+                            <span className="text-emerald-700">✓ Terpenuhi</span> /{' '}
+                            <span className="text-rose-600">✗ Tidak</span>
+                          </div>
+                        </div>
+
+                        {/* Tabel Matriks Blok 1 (Tgl 1..15) */}
+                        <div className="rounded-lg overflow-hidden border border-slate-400 shadow-xs">
+                          <MatrixBlockTable matrix={matrixFirstHalf} darkPill={theme.darkPill} />
+                        </div>
+
+                        {/* Tabel Matriks Blok 2 (Tgl 16..31) jika ada data di paruh kedua & muat di Hal 1 */}
+                        {secondHalfOnPage1 && (
+                          <div className="space-y-1">
+                            <div className="text-[9.5px] font-bold text-slate-700">
+                              Lanjutan Tanggal 16 – {daysInSelectedMonth} ({matrixSecondHalf.monthLabel})
+                            </div>
+                            <div className="rounded-lg overflow-hidden border border-slate-400 shadow-xs">
+                              <MatrixBlockTable
+                                matrix={matrixSecondHalf}
+                                darkPill={theme.darkPill}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ================= PAGE 2+: RINCIAN JURNAL 2 KOLOM LEGA ================= */}
+                    {page.type === 'journal' && (
+                      <div className="space-y-3">
+                        {page.showOverflowSecondMatrix && (
+                          <div className="space-y-1.5">
+                            <div
+                              className="inline-block text-slate-950 font-bold text-[10.5px] px-3.5 py-1 rounded-full tracking-wide"
+                              style={{ backgroundColor: theme.sectionSky }}
+                            >
+                              LANJUTAN MATRIKS MUTABAAH IBADAH (TGL 16–{daysInSelectedMonth})
+                            </div>
+                            <div className="rounded-lg overflow-hidden border border-slate-400 shadow-xs">
+                              <MatrixBlockTable
+                                matrix={matrixSecondHalf}
+                                darkPill={theme.darkPill}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {(page.logs.length > 0 || !page.showSignature) && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div
+                                className="inline-block text-slate-950 font-bold text-[10.5px] px-3.5 py-1 rounded-full tracking-wide"
+                                style={{ backgroundColor: theme.sectionSky }}
+                              >
+                                RINCIAN JURNAL AKTIVITAS HARIAN MAGANG (5 BLOK JAM)
+                              </div>
+                              <div className="text-[10px] font-semibold text-slate-600 tabular-nums">
+                                {page.logs.length} entri pada halaman ini
+                              </div>
+                            </div>
+
+                            {page.logs.length === 0 ? (
+                              <div className="bg-white/90 border border-dashed border-slate-300 rounded-xl p-6 text-center text-[11px] text-slate-500">
+                                Belum ada entri jurnal aktivitas harian magang yang tersimpan untuk santri ini.
+                              </div>
+                            ) : (
+                              <table className="w-full border-collapse text-[9.5px] bg-white rounded-lg overflow-hidden">
+                                <thead>
+                                  <tr
+                                    className="text-white text-left"
+                                    style={{ backgroundColor: theme.darkPill }}
+                                  >
+                                    <th className="border border-slate-500 px-2.5 py-1.5 w-[26%]">
+                                      Tanggal, Ringkasan &amp; Kejadian Penting
+                                    </th>
+                                    <th className="border border-slate-500 px-3 py-1.5 w-[74%]">
+                                      Aktivitas Harian (5 Blok Jam: 05.00 – 03.00) &amp; Catatan
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {page.logs.map((log, rowIdx) => {
+                                    const sholatYes = sholatItems.filter(
+                                      (it) => log.trackerResults?.[it.id] === 'yes'
+                                    ).length;
+                                    const otherYes = nonSholatItems.filter(
+                                      (it) => log.trackerResults?.[it.id] === 'yes'
+                                    ).length;
+
+                                    return (
+                                      <tr
+                                        key={log.id}
+                                        className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/75'}
+                                      >
+                                        <td className="border border-slate-300 px-2.5 py-2 align-top space-y-1.5">
+                                          <div>
+                                            <div className="font-bold text-[10px] text-slate-950">
+                                              {formatTanggalShort(log.tanggal)}
+                                            </div>
+                                            <div className="text-[8.5px] text-slate-500 leading-tight">
+                                              {formatTanggalIndonesia(log.tanggal).split(',')[0]}
+                                            </div>
+                                          </div>
+
+                                          <div className="text-[8.5px] font-bold tabular-nums text-slate-800 bg-slate-100 rounded px-1.5 py-1 border border-slate-200 leading-snug">
+                                            <div>
+                                              Sholat:{' '}
+                                              <span className="text-emerald-700">
+                                                {sholatYes}/{sholatItems.length}
+                                              </span>
+                                            </div>
+                                            <div>
+                                              Amal:{' '}
+                                              <span className="text-emerald-700">
+                                                {otherYes}/{nonSholatItems.length}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {Number(log.tilawahLembar || 0) > 0 && (
+                                            <div className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[8.5px] font-bold text-emerald-800 tabular-nums">
+                                              Tilawah {log.tilawahLembar} Lbr
+                                            </div>
+                                          )}
+
+                                          {(log.kejadianPenting || '').trim() && (
+                                            <div className="p-1.5 rounded bg-amber-50 border border-amber-200 text-[8.5px] text-amber-950 leading-snug">
+                                              <div className="font-bold text-amber-900">
+                                                Kejadian Penting:
+                                              </div>
+                                              <div>{log.kejadianPenting}</div>
+                                            </div>
+                                          )}
+                                        </td>
+
+                                        <td className="border border-slate-300 px-3 py-2 align-top space-y-1.5">
+                                          {INTERN_HOURLY_BLOCK_DEFS.map((def) => {
+                                            const text = (log.hourlyBlocks?.[def.key] || '').trim();
+                                            if (!text) return null;
+                                            return (
+                                              <div key={def.key} className="leading-relaxed">
+                                                <span className="font-bold text-emerald-900 tabular-nums">
+                                                  [{def.timeRange}]
+                                                </span>{' '}
+                                                <span className="text-slate-800">{text}</span>
+                                              </div>
+                                            );
+                                          })}
+
+                                          {(log.catatanPembimbing || '').trim() && (
+                                            <div className="mt-1.5 px-2 py-1 rounded bg-[#E8FAF3] border border-emerald-200 text-[8.5px] text-emerald-950 leading-snug">
+                                              <strong>Catatan Pembimbing:</strong>{' '}
+                                              {log.catatanPembimbing}
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Signature Block on Final Page */}
-                  {chunk.showSignature && (
-                    <div className="mt-5 pt-3 border-t border-slate-300">
-                      <div className="text-right text-[10px] text-slate-700 mb-3">
-                        {tpl.kotaTanggal || 'Sukoharjo'},{' '}
-                        {new Date().toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 text-center text-[10px]">
-                        <div className="flex flex-col items-center justify-between min-h-[105px]">
-                          <div>
-                            <div className="text-slate-600">Santri Peserta Magang,</div>
-                          </div>
-                          <div className="pt-12">
-                            <div className="font-bold text-slate-900 underline">{student.nama}</div>
-                            <div className="text-[9px] text-slate-500">ID: {student.nisnMda}</div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-between min-h-[105px]">
-                          <div>
-                            <div className="text-slate-600">Pembimbing Magang / Wali Kelas,</div>
-                          </div>
-                          <div className="pt-12">
-                            <div className="font-bold text-slate-900 underline">
-                              {profile?.pembimbingNama ||
-                                student.waliKelasNama ||
-                                'Pembimbing Magang'}
-                            </div>
-                            <div className="text-[9px] text-slate-500">Pembimbing Lapangan</div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-between min-h-[105px]">
-                          <div>
-                            <div className="text-slate-600">Mengetahui,</div>
-                            <div className="font-semibold text-slate-800">Kepala Unit MDA</div>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            {activePeriod?.ttdKepalaUnitUrl ? (
-                              <img
-                                src={activePeriod.ttdKepalaUnitUrl}
-                                alt="TTD Kepala Unit"
-                                referrerPolicy="no-referrer"
-                                className="h-11 object-contain mb-1"
-                              />
-                            ) : (
-                              <div className="h-11" />
-                            )}
-                            <div className="font-bold text-slate-900 underline">
-                              {activePeriod?.kepalaUnitMda || 'Kepala Unit MDA'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {page.showSignature && <SignatureBlock />}
                 </div>
 
-                {/* Page Footer */}
-                <div className="px-9 py-2.5 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500 bg-slate-50">
-                  <span>
-                    {tpl.namaLembaga} · {tpl.namaPesantren}
-                  </span>
-                  <span>Laporan Jurnaling Magang &amp; Mutabaah Ibadah Harian Santri</span>
-                  <span className="font-bold tabular-nums">
-                    Hal. {pageNum} / {totalPages}
-                  </span>
-                </div>
+                {/* MDA Gradient Footer Bar */}
+                <MdaInternFooter pageNum={pageNum} totalPages={totalPages} />
               </section>
             </ScaledA4Page>
           );
