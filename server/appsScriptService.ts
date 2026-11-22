@@ -17,6 +17,8 @@ import type {
   CbtAttempt,
   CbtExam,
   CbtQuestion,
+  InternDailyLog,
+  InternProfile,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
@@ -88,9 +90,15 @@ function normalizeDatabasePayload(
   updatedAt?: string
 ): MdaDatabase {
   const d = rawData && typeof rawData === 'object' ? rawData : {};
-  const tpl =
+  const tpl: BrandingTemplateConfig =
     d.templateConfig && typeof d.templateConfig === 'object'
-      ? { ...DEFAULT_TEMPLATE_CONFIG, ...d.templateConfig }
+      ? {
+          ...DEFAULT_TEMPLATE_CONFIG,
+          ...d.templateConfig,
+          internTrackerItems: Array.isArray(d.templateConfig.internTrackerItems)
+            ? d.templateConfig.internTrackerItems
+            : DEFAULT_TEMPLATE_CONFIG.internTrackerItems,
+        }
       : { ...DEFAULT_TEMPLATE_CONFIG };
 
   return {
@@ -103,6 +111,8 @@ function normalizeDatabasePayload(
     cbtExams: Array.isArray(d.cbtExams) ? d.cbtExams : [],
     cbtQuestions: Array.isArray(d.cbtQuestions) ? d.cbtQuestions : [],
     cbtAttempts: Array.isArray(d.cbtAttempts) ? d.cbtAttempts : [],
+    internProfiles: Array.isArray(d.internProfiles) ? d.internProfiles : [],
+    internDailyLogs: Array.isArray(d.internDailyLogs) ? d.internDailyLogs : [],
     templateConfig: tpl,
     spreadsheetId: apiUrl,
     spreadsheetUrl: apiUrl,
@@ -161,6 +171,8 @@ export async function saveAllToAppsScript(
       cbtExams: db.cbtExams || [],
       cbtQuestions: db.cbtQuestions || [],
       cbtAttempts: db.cbtAttempts || [],
+      internProfiles: db.internProfiles || [],
+      internDailyLogs: db.internDailyLogs || [],
       templateConfig: db.templateConfig,
     },
   });
@@ -705,6 +717,8 @@ export type AppsScriptSectionName =
   | 'cbtExams'
   | 'cbtQuestions'
   | 'cbtAttempts'
+  | 'internProfiles'
+  | 'internDailyLogs'
   | 'templateConfig';
 
 async function postToAppsScript(
@@ -766,6 +780,109 @@ export async function upsertCbtAttemptInAppsScript(
     attempt,
   });
   return { updatedAt: res.updatedAt };
+}
+
+export async function upsertInternProfileInAppsScript(
+  apiUrl: string,
+  secret: string,
+  incomingProfile: InternProfile
+): Promise<{ profile: InternProfile; db: MdaDatabase }> {
+  return enqueueSheetOperation(`apps_script:${apiUrl}`, async () => {
+    const currentDb = await readDatabaseFromAppsScript(apiUrl);
+    const stampedProfile: InternProfile = {
+      ...incomingProfile,
+      id: incomingProfile.studentId,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const existingList = currentDb.internProfiles || [];
+    const exists = existingList.some(
+      (p) => p.studentId === stampedProfile.studentId || p.id === stampedProfile.id
+    );
+    const nextProfiles = exists
+      ? existingList.map((p) =>
+          p.studentId === stampedProfile.studentId || p.id === stampedProfile.id
+            ? stampedProfile
+            : p
+        )
+      : [...existingList, stampedProfile];
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      internProfiles: nextProfiles,
+      lastSyncedAt: stampedProfile.updatedAt,
+    };
+
+    try {
+      const res = await postToAppsScript(apiUrl, secret, {
+        action: 'upsertInternProfile',
+        payload: stampedProfile,
+        internProfile: stampedProfile,
+      });
+      nextDb.lastSyncedAt = res.updatedAt || stampedProfile.updatedAt;
+    } catch {
+      const saved = await saveAllToAppsScript(apiUrl, secret, nextDb);
+      nextDb.lastSyncedAt = saved.updatedAt;
+    }
+
+    return { profile: stampedProfile, db: nextDb };
+  });
+}
+
+export async function upsertInternDailyLogInAppsScript(
+  apiUrl: string,
+  secret: string,
+  incomingLog: InternDailyLog
+): Promise<{ log: InternDailyLog; db: MdaDatabase }> {
+  return enqueueSheetOperation(`apps_script:${apiUrl}`, async () => {
+    const currentDb = await readDatabaseFromAppsScript(apiUrl);
+    const canonicalId = `${incomingLog.studentId}_${incomingLog.tanggal}`;
+    const existingList = currentDb.internDailyLogs || [];
+    const existing = existingList.find(
+      (l) =>
+        l.id === canonicalId ||
+        (l.studentId === incomingLog.studentId && l.tanggal === incomingLog.tanggal)
+    );
+
+    const stampedLog: InternDailyLog = {
+      ...incomingLog,
+      id: canonicalId,
+      catatanPembimbing:
+        incomingLog.catatanPembimbing !== undefined
+          ? incomingLog.catatanPembimbing
+          : existing?.catatanPembimbing || '',
+      updatedAt: new Date().toISOString(),
+    };
+
+    const nextLogs = existing
+      ? existingList.map((l) =>
+          l.id === canonicalId ||
+          (l.studentId === stampedLog.studentId && l.tanggal === stampedLog.tanggal)
+            ? stampedLog
+            : l
+        )
+      : [...existingList, stampedLog];
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      internDailyLogs: nextLogs,
+      lastSyncedAt: stampedLog.updatedAt,
+    };
+
+    try {
+      const res = await postToAppsScript(apiUrl, secret, {
+        action: 'upsertInternDailyLog',
+        payload: stampedLog,
+        internDailyLog: stampedLog,
+      });
+      nextDb.lastSyncedAt = res.updatedAt || stampedLog.updatedAt;
+    } catch {
+      const saved = await saveAllToAppsScript(apiUrl, secret, nextDb);
+      nextDb.lastSyncedAt = saved.updatedAt;
+    }
+
+    return { log: stampedLog, db: nextDb };
+  });
 }
 
 export function gradeAttemptAgainstQuestions(

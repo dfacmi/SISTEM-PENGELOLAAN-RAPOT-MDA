@@ -407,7 +407,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 <span className="text-xs font-bold text-slate-900 break-words">
                   Kunci Sementara Akses Rapor (Mode Pekan Ujian):{' '}
                   <span className={raporLocked ? 'text-amber-700' : 'text-emerald-700'}>
-                    {raporLocked ? 'AKTIF (Portal Rapor Ditutup Sementara)' : 'NONAKTIF (Portal Rapor Terbuka)'}
+                    {raporLocked
+                      ? 'AKTIF (Hanya Tab Rapor Dikunci · Magang & Ibadah Tetap Terbuka)'
+                      : 'NONAKTIF (Portal Rapor Terbuka)'}
                   </span>
                 </span>
               </div>

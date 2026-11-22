@@ -96,6 +96,48 @@ export interface BrandingTemplateConfig {
   // Pengaturan Mode Pekan Ujian (Kunci Sementara Rapor)
   lockRaporDuringExam?: boolean;
   lockRaporMessage?: string;
+  // Pengaturan Item Checklist Tracker Ibadah & Amal Magang (dikelola Admin)
+  internTrackerItems?: InternTrackerItem[];
+}
+
+export type InternTrackerMode = 'jamaah' | 'terlaksana';
+export type InternTrackerGroup = 'sholat' | 'tilawah' | 'kebersihan' | 'lainnya';
+
+export interface InternTrackerItem {
+  id: string;
+  label: string;
+  group: InternTrackerGroup;
+  mode: InternTrackerMode;
+  active?: boolean;
+}
+
+export interface InternProfile {
+  id: string; // studentId
+  studentId: string;
+  tempatMagang: string;
+  waktuMagang: string;
+  kompetensiMagang: string;
+  incomeMagangRp: number;
+  pembimbingNama?: string;
+  updatedAt: string;
+}
+
+export interface InternHourlyBlocks {
+  block_05_08: string;
+  block_08_12: string;
+  block_13_17: string;
+  block_18_21: string;
+  block_22_03: string;
+}
+
+export interface InternDailyLog {
+  id: string; // `${studentId}_${tanggal}`
+  studentId: string;
+  tanggal: string; // YYYY-MM-DD
+  trackerResults: Record<string, 'yes' | 'no'>;
+  hourlyBlocks: InternHourlyBlocks;
+  catatanPembimbing?: string;
+  updatedAt: string;
 }
 
 export type CbtExamStatus = 'draft' | 'active' | 'finished';
@@ -339,6 +381,8 @@ export interface MdaDatabase {
   cbtExams?: CbtExam[];
   cbtQuestions?: CbtQuestion[];
   cbtAttempts?: CbtAttempt[];
+  internProfiles?: InternProfile[];
+  internDailyLogs?: InternDailyLog[];
   templateConfig?: BrandingTemplateConfig;
   spreadsheetId?: string;
   spreadsheetUrl?: string;

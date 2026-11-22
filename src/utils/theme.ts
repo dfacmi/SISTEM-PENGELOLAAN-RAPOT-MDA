@@ -63,5 +63,9 @@ export function mergeTemplateConfig(
   cfg: Partial<BrandingTemplateConfig> | undefined,
   fallback: BrandingTemplateConfig
 ): BrandingTemplateConfig {
-  return { ...fallback, ...(cfg || {}) };
+  const merged = { ...fallback, ...(cfg || {}) };
+  merged.internTrackerItems = Array.isArray(cfg?.internTrackerItems)
+    ? cfg.internTrackerItems
+    : fallback.internTrackerItems;
+  return merged;
 }

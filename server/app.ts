@@ -50,6 +50,8 @@ import {
   seedDefaultCbtExamsInAppsScript,
   syncAttemptAndMaybeRaporInAppsScript,
   upsertCbtAttemptInAppsScript,
+  upsertInternDailyLogInAppsScript,
+  upsertInternProfileInAppsScript,
   upsertPeriodInAppsScript,
   upsertPortfolioInAppsScript,
   upsertPortfoliosBatchInAppsScript,
@@ -66,6 +68,9 @@ import type {
   CbtOptionKey,
   CbtQuestion,
   CbtViolationLog,
+  InternDailyLog,
+  InternProfile,
+  InternTrackerItem,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
@@ -386,6 +391,8 @@ function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaD
       cbtExams: db.cbtExams || [],
       cbtQuestions: db.cbtQuestions || [],
       cbtAttempts: (db.cbtAttempts || []).filter((a) => allowedIds.has(a.studentId)),
+      internProfiles: (db.internProfiles || []).filter((p) => allowedIds.has(p.studentId)),
+      internDailyLogs: (db.internDailyLogs || []).filter((l) => allowedIds.has(l.studentId)),
       templateConfig: db.templateConfig,
       spreadsheetId: db.spreadsheetId,
       spreadsheetUrl: db.spreadsheetUrl,
@@ -426,6 +433,12 @@ function scopeDatabaseForSession(db: MdaDatabase, session: SessionPayload): MdaD
           .filter((a) => a.studentId === myId)
           .map((a) => sanitizeAttemptForStudent(a, examsById.get(a.examId)))
       : [],
+    internProfiles: isCbtPortal
+      ? []
+      : (db.internProfiles || []).filter((p) => p.studentId === myId),
+    internDailyLogs: isCbtPortal
+      ? []
+      : (db.internDailyLogs || []).filter((l) => l.studentId === myId),
     templateConfig: db.templateConfig,
     spreadsheetId: db.spreadsheetId,
     spreadsheetUrl: db.spreadsheetUrl,
@@ -581,17 +594,8 @@ export function createApiApp(): express.Express {
 
       const db = await loadDbFromStorage(storage);
 
-      if (db.templateConfig?.lockRaporDuringExam) {
-        res.status(423).json({
-          code: 'RAPOR_LOCKED_FOR_EXAM',
-          error:
-            db.templateConfig.lockRaporMessage ||
-            DEFAULT_TEMPLATE_CONFIG.lockRaporMessage ||
-            'Portal Rapor & Portofolio ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai.',
-        });
-        return;
-      }
-
+      // Saat lockRaporDuringExam aktif, santri/wali TETAP bisa masuk untuk mengisi
+      // Jurnaling Magang & Tracker Ibadah. Hanya tab Rapor & Portofolio yang dikunci.
       const { matchedStudent, matchedAccess } = matchStudentCredential(db, q, normalizedPin);
 
       if (!matchedStudent && !matchedAccess) {
@@ -839,20 +843,6 @@ export function createApiApp(): express.Express {
         return;
       }
       const db = await loadDbFromStorage(storage);
-      if (
-        session.role === 'santri_ortu' &&
-        session.portalMode !== 'cbt' &&
-        db.templateConfig?.lockRaporDuringExam
-      ) {
-        res.status(423).json({
-          code: 'RAPOR_LOCKED_FOR_EXAM',
-          error:
-            db.templateConfig.lockRaporMessage ||
-            DEFAULT_TEMPLATE_CONFIG.lockRaporMessage ||
-            'Portal Rapor & Portofolio ditutup sementara selama Pekan Ujian berlangsung.',
-        });
-        return;
-      }
       res.json({
         user: session,
         data: scopeDatabaseForSession(db, session),
@@ -2261,6 +2251,226 @@ export function createApiApp(): express.Express {
       });
     } catch (err: any) {
       res.status(502).json({ error: err.message || 'Gagal mengumpulkan jawaban ujian.' });
+    }
+  });
+
+  // 14. Internship & Ibadah Tracker Module Endpoints
+  app.post('/api/internship/profile/upsert', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.portalMode === 'cbt') {
+        res.status(403).json({ error: 'Jalur CBT Lockdown tidak dapat mengubah data magang.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+      const { profile } = req.body as { profile?: Partial<InternProfile> };
+      const studentId = String(profile?.studentId || '').trim();
+      if (!profile || !studentId) {
+        res.status(400).json({ error: 'ID Santri pada profil magang tidak boleh kosong.' });
+        return;
+      }
+
+      if (session.role === 'santri_ortu') {
+        if (!session.studentId || session.studentId !== studentId) {
+          res.status(403).json({ error: 'Anda hanya dapat memperbarui profil magang milik Anda sendiri.' });
+          return;
+        }
+      }
+
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const targetStudent = db.students.find((s) => s.id === studentId);
+      if (!targetStudent) {
+        res.status(404).json({ error: 'Data santri tidak ditemukan.' });
+        return;
+      }
+
+      if (session.role === 'guru') {
+        const teacher = db.teachers.find((t) => t.id === session.teacherId);
+        if (!isTeacherAuthorizedForStudent(teacher, targetStudent)) {
+          res.status(403).json({ error: 'Anda tidak memiliki akses ke kelas santri ini.' });
+          return;
+        }
+      }
+
+      const incomeRaw = Number(profile.incomeMagangRp || 0);
+      const sanitizedProfile: InternProfile = {
+        id: studentId,
+        studentId,
+        tempatMagang: String(profile.tempatMagang || '').trim().slice(0, 300),
+        waktuMagang: String(profile.waktuMagang || '').trim().slice(0, 200),
+        kompetensiMagang: String(profile.kompetensiMagang || '').trim().slice(0, 500),
+        incomeMagangRp: Number.isFinite(incomeRaw) && incomeRaw >= 0 ? Math.round(incomeRaw) : 0,
+        pembimbingNama: String(profile.pembimbingNama || '').trim().slice(0, 150),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const saved = await upsertInternProfileInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        sanitizedProfile
+      );
+
+      res.json({
+        profile: saved.profile,
+        data: scopeDatabaseForSession(saved.db, session),
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan profil magang.' });
+    }
+  });
+
+  app.post('/api/internship/daily-log/upsert', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.portalMode === 'cbt') {
+        res.status(403).json({ error: 'Jalur CBT Lockdown tidak dapat mengisi jurnal magang.' });
+        return;
+      }
+      const appsScript = resolveAppsScriptConfig();
+      if (!appsScript.configured) {
+        res.status(503).json({ error: 'Google Apps Script belum terhubung.' });
+        return;
+      }
+
+      const { log } = req.body as { log?: Partial<InternDailyLog> };
+      const studentId = String(log?.studentId || '').trim();
+      const tanggal = String(log?.tanggal || '').trim();
+      if (!log || !studentId || !/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+        res.status(400).json({ error: 'Format ID santri atau tanggal jurnal (YYYY-MM-DD) tidak valid.' });
+        return;
+      }
+
+      if (session.role === 'santri_ortu') {
+        if (!session.studentId || session.studentId !== studentId) {
+          res.status(403).json({ error: 'Akses ditolak: santri hanya dapat mengisi jurnal miliknya sendiri.' });
+          return;
+        }
+      }
+
+      const db = await readDatabaseFromAppsScript(appsScript.url);
+      const targetStudent = db.students.find((s) => s.id === studentId);
+      if (!targetStudent) {
+        res.status(404).json({ error: 'Data santri tidak ditemukan.' });
+        return;
+      }
+
+      if (session.role === 'guru') {
+        const teacher = db.teachers.find((t) => t.id === session.teacherId);
+        if (!isTeacherAuthorizedForStudent(teacher, targetStudent)) {
+          res.status(403).json({ error: 'Anda tidak memiliki akses ke kelas santri ini.' });
+          return;
+        }
+      }
+
+      const rawResults =
+        log.trackerResults && typeof log.trackerResults === 'object' ? log.trackerResults : {};
+      const cleanResults: Record<string, 'yes' | 'no'> = {};
+      for (const [k, v] of Object.entries(rawResults)) {
+        const cleanKey = String(k || '').trim().slice(0, 80);
+        if (!cleanKey) continue;
+        if (v === 'yes' || v === 'no') {
+          cleanResults[cleanKey] = v;
+        }
+      }
+
+      const blocks = log.hourlyBlocks || ({} as InternDailyLog['hourlyBlocks']);
+      const existing = (db.internDailyLogs || []).find(
+        (l) => l.id === `${studentId}_${tanggal}` || (l.studentId === studentId && l.tanggal === tanggal)
+      );
+
+      const sanitizedLog: InternDailyLog = {
+        id: `${studentId}_${tanggal}`,
+        studentId,
+        tanggal,
+        trackerResults: cleanResults,
+        hourlyBlocks: {
+          block_05_08: String(blocks.block_05_08 || '').trim().slice(0, 2000),
+          block_08_12: String(blocks.block_08_12 || '').trim().slice(0, 2000),
+          block_13_17: String(blocks.block_13_17 || '').trim().slice(0, 2000),
+          block_18_21: String(blocks.block_18_21 || '').trim().slice(0, 2000),
+          block_22_03: String(blocks.block_22_03 || '').trim().slice(0, 2000),
+        },
+        // Santri tidak boleh menimpa catatan pembimbing
+        catatanPembimbing:
+          session.role === 'santri_ortu'
+            ? existing?.catatanPembimbing || ''
+            : log.catatanPembimbing !== undefined
+              ? String(log.catatanPembimbing || '').trim().slice(0, 1000)
+              : existing?.catatanPembimbing || '',
+        updatedAt: new Date().toISOString(),
+      };
+
+      const saved = await upsertInternDailyLogInAppsScript(
+        appsScript.url,
+        appsScript.secret,
+        sanitizedLog
+      );
+
+      res.json({
+        log: saved.log,
+        data: scopeDatabaseForSession(saved.db, session),
+      });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan jurnal harian magang.' });
+    }
+  });
+
+  app.post('/api/internship/tracker-config/save', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.role !== 'admin') {
+        res.status(403).json({ error: 'Hanya Admin yang dapat mengubah daftar item tracker ibadah & amal.' });
+        return;
+      }
+      const storage = await resolveBackendStorage(req);
+      if (storage.mode === 'none') {
+        res.status(503).json({ error: 'Google Sheets belum terhubung.' });
+        return;
+      }
+
+      const { internTrackerItems } = req.body as { internTrackerItems?: InternTrackerItem[] };
+      if (!Array.isArray(internTrackerItems)) {
+        res.status(400).json({ error: 'Daftar item tracker tidak valid.' });
+        return;
+      }
+
+      const cleanItems: InternTrackerItem[] = internTrackerItems
+        .map((item, idx) => {
+          const group = (['sholat', 'tilawah', 'kebersihan', 'lainnya'].includes(String(item?.group))
+            ? item.group
+            : 'lainnya') as InternTrackerItem['group'];
+          const mode = (item?.mode === 'jamaah' ? 'jamaah' : 'terlaksana') as InternTrackerItem['mode'];
+          const rawId = String(item?.id || `item-${idx + 1}`).trim().slice(0, 64);
+          const rawLabel = String(item?.label || '').trim().slice(0, 140);
+          return {
+            id: rawId || `item-${idx + 1}`,
+            label: rawLabel,
+            group,
+            mode,
+            active: item?.active !== false,
+          };
+        })
+        .filter((item) => item.label.length > 0);
+
+      const currentDb = await loadDbFromStorage(storage);
+      const nextTemplate: BrandingTemplateConfig = {
+        ...DEFAULT_TEMPLATE_CONFIG,
+        ...(currentDb.templateConfig || {}),
+        internTrackerItems: cleanItems,
+      };
+
+      const nextDb =
+        storage.mode === 'apps_script'
+          ? await saveTemplateConfigInAppsScript(storage.apiUrl, storage.secret, nextTemplate)
+          : await saveTemplateConfigInSheet(storage.token, storage.spreadsheetId, nextTemplate);
+
+      res.json({ data: scopeDatabaseForSession(nextDb, session) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan pengaturan item tracker.' });
     }
   });
 

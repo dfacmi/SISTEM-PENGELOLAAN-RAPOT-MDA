@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  Briefcase,
   CheckCircle2,
   ClipboardCheck,
   CloudOff,
@@ -39,11 +40,14 @@ import {
   buildBaselineReportForStudent,
   GradeEditorView,
 } from './components/GradeEditorView';
+import { InternAdminView } from './components/InternAdminView';
 import { MasterManagementView } from './components/MasterManagementView';
 import { MdaLogo } from './components/MdaLogo';
 import { PortfolioHubView } from './components/PortfolioHubView';
+import { PrintableInternReportView } from './components/PrintableInternReportView';
 import { PrintableReportView } from './components/PrintableReportView';
 import { SettingsSheetsView } from './components/SettingsSheetsView';
+import { StudentInternshipView } from './components/StudentInternshipView';
 import { StudentPortalView } from './components/StudentPortalView';
 import { TemplateSettingsView } from './components/TemplateSettingsView';
 import { DEFAULT_TEMPLATE_CONFIG, INITIAL_MDA_DATABASE } from './data/seedData';
@@ -72,6 +76,7 @@ import {
   saveAllAppsScriptOnServer,
   saveCbtExamOnServer,
   saveCbtQuestionsOnServer,
+  saveInternTrackerConfigOnServer,
   saveReportOnServer,
   saveReportsBatchOnServer,
   saveTemplateOnServer,
@@ -80,6 +85,8 @@ import {
   setStoredSessionToken,
   toggleRaporLockOnServer,
   uploadAssetToDriveViaServer,
+  upsertInternDailyLogOnServer,
+  upsertInternProfileOnServer,
   upsertPeriodOnServer,
   upsertPortfolioOnServer,
   upsertPortfoliosBatchOnServer,
@@ -93,6 +100,9 @@ import {
   CbtExam,
   CbtQuestion,
   ConfirmDialogState,
+  InternDailyLog,
+  InternProfile,
+  InternTrackerItem,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
@@ -111,6 +121,7 @@ type NavSection =
   | 'cbt'
   | 'portal'
   | 'portfolio'
+  | 'internship'
   | 'template'
   | 'sheets';
 
@@ -417,7 +428,7 @@ export default function App() {
           if (res.data.students[0]) {
             setSelectedStudentId(res.data.students[0].id);
           }
-          setActiveNav('portal');
+          setActiveNav(res.data.templateConfig?.lockRaporDuringExam ? 'internship' : 'portal');
           return;
         } catch (err: any) {
           setAuthError(err.message || 'Tautan akses wali tidak valid.');
@@ -437,7 +448,9 @@ export default function App() {
             if (scoped.data.students[0]) {
               setSelectedStudentId(scoped.data.students[0].id);
             }
-            setActiveNav('portal');
+            setActiveNav(
+              scoped.data.templateConfig?.lockRaporDuringExam ? 'internship' : 'portal'
+            );
           }
           setSyncState('saved');
         } catch (err: any) {
@@ -524,6 +537,7 @@ export default function App() {
 
   const [activeNav, setActiveNav] = useState<NavSection>('overview');
   const [printMode, setPrintMode] = useState(false);
+  const [internReportStudentId, setInternReportStudentId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [previewRole, setPreviewRole] = useState<UserRole>('admin');
 
@@ -543,11 +557,15 @@ export default function App() {
   useEffect(() => {
     if (effectiveRole === 'santri_ortu') {
       if (lockedStudentId) setSelectedStudentId(lockedStudentId);
-      if (activeNav !== 'portal' && activeNav !== 'portfolio') {
-        setActiveNav('portal');
+      if (
+        activeNav !== 'portal' &&
+        activeNav !== 'portfolio' &&
+        activeNav !== 'internship'
+      ) {
+        setActiveNav(tpl.lockRaporDuringExam ? 'internship' : 'portal');
       }
     }
-  }, [effectiveRole, lockedStudentId, activeNav]);
+  }, [effectiveRole, lockedStudentId, activeNav, tpl.lockRaporDuringExam]);
 
   const enterAlwanHanifPreview = (targetRole: UserRole = 'admin') => {
     setPreviewSampleMode(true);
@@ -559,7 +577,13 @@ export default function App() {
     setSelectedYear('2026/2027');
     setSelectedSemester('Gasal');
     setPreviewRole(targetRole);
-    setActiveNav(targetRole === 'santri_ortu' ? 'portal' : 'overview');
+    setActiveNav(
+      targetRole === 'santri_ortu'
+        ? tpl.lockRaporDuringExam
+          ? 'internship'
+          : 'portal'
+        : 'overview'
+    );
     showToast(
       'ok',
       'Mode Pratinjau aktif dengan data contoh santri Alwan Hanif (tidak mengubah Google Sheets).'
@@ -637,7 +661,7 @@ export default function App() {
       if (res.data.students[0]) {
         setSelectedStudentId(res.data.students[0].id);
       }
-      setActiveNav('portal');
+      setActiveNav(res.data.templateConfig?.lockRaporDuringExam ? 'internship' : 'portal');
       setSyncState('saved');
       showToast('ok', `Selamat datang ${res.user.name}`);
     } catch (err: any) {
@@ -1368,6 +1392,112 @@ export default function App() {
     });
   };
 
+  const handleSaveInternProfile = async (profile: InternProfile): Promise<boolean> => {
+    if (previewSampleMode) {
+      setDb((prev) => {
+        const list = prev.internProfiles || [];
+        const exists = list.some((p) => p.studentId === profile.studentId);
+        return {
+          ...prev,
+          internProfiles: exists
+            ? list.map((p) => (p.studentId === profile.studentId ? profile : p))
+            : [...list, profile],
+        };
+      });
+      showToast('ok', 'Profil magang diperbarui di mode pratinjau.');
+      return true;
+    }
+
+    if (!ensureOnlineForWrite()) return false;
+    setIsSyncing(true);
+    setSyncState('saving');
+    try {
+      const res = await upsertInternProfileOnServer(profile);
+      applyServerDatabase(res.data);
+      setSyncState('saved');
+      showToast('ok', 'Profil magang santri berhasil disimpan ke Google Sheets.');
+      return true;
+    } catch (err: any) {
+      setSyncState('error');
+      showToast('err', err.message || 'Gagal menyimpan profil magang.');
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSaveInternDailyLog = async (log: InternDailyLog): Promise<boolean> => {
+    if (previewSampleMode) {
+      setDb((prev) => {
+        const list = prev.internDailyLogs || [];
+        const exists = list.some(
+          (l) => l.studentId === log.studentId && l.tanggal === log.tanggal
+        );
+        return {
+          ...prev,
+          internDailyLogs: exists
+            ? list.map((l) =>
+                l.studentId === log.studentId && l.tanggal === log.tanggal ? log : l
+              )
+            : [...list, log],
+        };
+      });
+      showToast('ok', 'Jurnal harian & tracker ibadah diperbarui di mode pratinjau.');
+      return true;
+    }
+
+    if (!ensureOnlineForWrite()) return false;
+    setIsSyncing(true);
+    setSyncState('saving');
+    try {
+      const res = await upsertInternDailyLogOnServer(log);
+      applyServerDatabase(res.data);
+      setSyncState('saved');
+      showToast('ok', 'Jurnal harian magang & tracker ibadah tersimpan ke Google Sheets.');
+      return true;
+    } catch (err: any) {
+      setSyncState('error');
+      showToast('err', err.message || 'Gagal menyimpan jurnal harian magang.');
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSaveInternTrackerItems = async (items: InternTrackerItem[]): Promise<boolean> => {
+    if (previewSampleMode) {
+      setDb((prev) => ({
+        ...prev,
+        templateConfig: {
+          ...tpl,
+          internTrackerItems: items,
+        },
+      }));
+      showToast('ok', 'Item tracker ibadah diperbarui di mode pratinjau.');
+      return true;
+    }
+
+    if (!ensureOnlineForWrite()) return false;
+    setIsSyncing(true);
+    setSyncState('saving');
+    try {
+      const res = await saveInternTrackerConfigOnServer(items);
+      applyServerDatabase(res.data);
+      if (res.data.templateConfig) {
+        setPublicTemplateConfig(res.data.templateConfig);
+      }
+      setSyncState('saved');
+      showToast('ok', 'Daftar item tracker ibadah berhasil disimpan ke Google Sheets.');
+      return true;
+    } catch (err: any) {
+      setSyncState('error');
+      showToast('err', err.message || 'Gagal menyimpan item tracker ibadah.');
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleSaveUserAccess = (userAccess: UserAccess[]) => {
     if (previewSampleMode) {
       setDb({ ...db, userAccess });
@@ -1686,8 +1816,22 @@ export default function App() {
     );
   }
 
-  // 2. Printable 5-Page A4 PDF Report Mode
-  if (printMode) {
+  // 2A. Printable Laporan Magang & Tracker Ibadah PDF Mode
+  if (internReportStudentId) {
+    return (
+      <PrintableInternReportView
+        db={db}
+        studentId={lockedStudentId || internReportStudentId}
+        templateConfig={tpl}
+        onBack={() => setInternReportStudentId(null)}
+      />
+    );
+  }
+
+  // 2. Printable 5-Page A4 PDF Report Mode (Blocked for santri_ortu when lockRaporDuringExam is active)
+  const isRaporLockedForStudent =
+    effectiveRole === 'santri_ortu' && Boolean(tpl.lockRaporDuringExam);
+  if (printMode && !isRaporLockedForStudent) {
     return (
       <PrintableReportView
         db={db}
@@ -2009,25 +2153,27 @@ export default function App() {
                 <div>
                   <div className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-700">
                     <Lock className="w-3.5 h-3.5" />
-                    <span className="font-[Arial]">PORTAL RAPOR &amp; PORTOFOLIO (WALI/SANTRI)</span>
+                    <span className="font-[Arial]">PORTAL SANTRI, MAGANG &amp; RAPOR (WALI/SANTRI)</span>
                   </div>
                   <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
-                    Masuk Melihat Rapor Putra Anda
+                    {isRaporLocked
+                      ? 'Masuk Mengisi Magang & Tracker Ibadah'
+                      : 'Masuk Portal Santri & Rapor'}
                   </h2>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Masukkan ID Santri MDA atau Nama Lengkap Santri beserta PIN Akses. Data dibaca langsung dari Google Sheets secara privat — wali hanya melihat rapor anaknya sendiri.
+                    Masukkan ID Santri MDA atau Nama Lengkap Santri beserta PIN Akses. Data dibaca langsung dari Google Sheets secara privat.
                   </p>
                 </div>
 
-                {isRaporLocked ? (
-                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-2.5">
+                {isRaporLocked && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-2">
                     <div className="font-bold flex items-center gap-2 text-amber-800">
                       <Lock className="w-4 h-4 shrink-0" />
-                      <span>Portal Rapor Ditutup Sementara (Mode Pekan Ujian)</span>
+                      <span>Tab Rapor Dikunci Sementara · Magang &amp; Ibadah Tetap Buka</span>
                     </div>
                     <p className="leading-relaxed">
                       {tpl.lockRaporMessage ||
-                        'Akses Portal Rapor & Portofolio ditutup sementara hingga pekan ujian selesai.'}
+                        'Tab Rapor Akademik & Portofolio dikunci sementara selama pekan ujian CBT. Santri tetap dapat login di sini untuk mengisi Jurnal Magang Harian & Tracker Ibadah.'}
                     </p>
                     <button
                       type="button"
@@ -2035,106 +2181,112 @@ export default function App() {
                         setLoginTab('cbt');
                         setAuthError(null);
                       }}
-                      className="px-3.5 py-2 rounded-xl bg-[#0E2228] text-[#1DF27A] font-bold inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-[#0E2228] text-[#1DF27A] font-bold inline-flex items-center gap-1.5 text-[11px]"
                     >
                       <ClipboardCheck className="w-3.5 h-3.5" />
-                      <span>Buka Tab Ruang Ujian CBT</span>
+                      <span>Pindah ke Ruang Ujian CBT</span>
                     </button>
                   </div>
-                ) : (
-                  <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3">
-                    <div>
-                      <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
-                        Nama Lengkap Santri atau ID Santri MDA
-                      </label>
-                      <input
-                        type="text"
-                        name="username"
-                        autoComplete="username"
-                        list="mda-saved-parent-names"
-                        value={loginNisn}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setLoginNisn(val);
-                          const savedPin = findSavedPinForInput(savedDeviceCreds, 'parent', val);
-                          if (savedPin) {
-                            setLoginPin(savedPin);
-                          }
-                        }}
-                        placeholder="Contoh: Nama Lengkap Santri atau MDA02.2526.791"
-                        className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                      />
-                      <datalist id="mda-saved-parent-names">
-                        {savedDeviceCreds
-                          .filter((c) => c.roleGroup === 'parent')
-                          .map((c) => (
-                            <option key={c.identifier} value={c.displayName} />
-                          ))}
-                      </datalist>
-                    </div>
-                    <div>
-                      <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
-                        PIN / Password Akses Privat
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showParentPin ? 'text' : 'password'}
-                          name="password"
-                          autoComplete="current-password"
-                          value={loginPin}
-                          onChange={(e) => setLoginPin(e.target.value)}
-                          placeholder="Terisi otomatis jika tersimpan di perangkat ini"
-                          className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowParentPin((v) => !v)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
-                          title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
-                        >
-                          {showParentPin ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
-                      <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={rememberLoginOnDevice}
-                          onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
-                        />
-                        <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
-                      </label>
-                      {savedDeviceCreds.some((c) => c.roleGroup === 'parent') && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'parent');
-                            localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
-                            setSavedDeviceCreds(next);
-                            setLoginPin('');
-                          }}
-                          className="text-rose-600 hover:underline shrink-0"
-                        >
-                          Hapus tersimpan
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isLoggingIn}
-                      className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
-                    >
-                      <KeyRound className="w-4 h-4" />
-                      <span>{isLoggingIn ? 'Memverifikasi...' : 'Buka Rapor Santri'}</span>
-                    </button>
-                  </form>
                 )}
+
+                <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3">
+                  <div>
+                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                      Nama Lengkap Santri atau ID Santri MDA
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      autoComplete="username"
+                      list="mda-saved-parent-names"
+                      value={loginNisn}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLoginNisn(val);
+                        const savedPin = findSavedPinForInput(savedDeviceCreds, 'parent', val);
+                        if (savedPin) {
+                          setLoginPin(savedPin);
+                        }
+                      }}
+                      placeholder="Contoh: Nama Lengkap Santri atau MDA02.2526.791"
+                      className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                    <datalist id="mda-saved-parent-names">
+                      {savedDeviceCreds
+                        .filter((c) => c.roleGroup === 'parent')
+                        .map((c) => (
+                          <option key={c.identifier} value={c.displayName} />
+                        ))}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                      PIN / Password Akses Privat
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showParentPin ? 'text' : 'password'}
+                        name="password"
+                        autoComplete="current-password"
+                        value={loginPin}
+                        onChange={(e) => setLoginPin(e.target.value)}
+                        placeholder="Terisi otomatis jika tersimpan di perangkat ini"
+                        className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowParentPin((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                        title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
+                      >
+                        {showParentPin ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={rememberLoginOnDevice}
+                        onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
+                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
+                      />
+                      <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
+                    </label>
+                    {savedDeviceCreds.some((c) => c.roleGroup === 'parent') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'parent');
+                          localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
+                          setSavedDeviceCreds(next);
+                          setLoginPin('');
+                        }}
+                        className="text-rose-600 hover:underline shrink-0"
+                      >
+                        Hapus tersimpan
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoggingIn}
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>
+                      {isLoggingIn
+                        ? 'Memverifikasi...'
+                        : isRaporLocked
+                          ? 'Masuk Magang & Tracker Ibadah'
+                          : 'Buka Portal Santri & Rapor'}
+                    </span>
+                  </button>
+                </form>
               </div>
             )}
 
@@ -2367,6 +2519,12 @@ export default function App() {
       roles: ['admin', 'guru', 'santri_ortu'],
     },
     {
+      id: 'internship',
+      label: effectiveRole === 'santri_ortu' ? 'Magang & Tracker Ibadah' : 'Magang & Ibadah',
+      icon: Briefcase,
+      roles: ['admin', 'guru', 'santri_ortu'],
+    },
+    {
       id: 'template',
       label: 'Tampilan & Template',
       icon: Palette,
@@ -2423,6 +2581,8 @@ export default function App() {
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const active = activeNav === item.id;
+              const isItemLocked =
+                isRaporLockedForStudent && (item.id === 'portal' || item.id === 'portfolio');
               return (
                 <button
                   key={item.id}
@@ -2439,7 +2599,8 @@ export default function App() {
                   style={active ? { background: theme.bannerGradient } : undefined}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate flex-1 text-left">{item.label}</span>
+                  {isItemLocked && <Lock className="w-3.5 h-3.5 shrink-0 opacity-75" />}
                 </button>
               );
             })}
@@ -2638,15 +2799,33 @@ export default function App() {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setPrintMode(true)}
-              disabled={db.students.length === 0 || db.reports.length === 0}
-              className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
-              <span>Cetak PDF</span>
-            </button>
+            {activeNav === 'internship' ? (
+              <button
+                type="button"
+                onClick={() => setInternReportStudentId(lockedStudentId || selectedStudentId)}
+                disabled={db.students.length === 0}
+                className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                <span>PDF Magang</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPrintMode(true)}
+                disabled={
+                  isRaporLockedForStudent || db.students.length === 0 || db.reports.length === 0
+                }
+                className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
+              >
+                {isRaporLockedForStudent ? (
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                ) : (
+                  <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                )}
+                <span>{isRaporLockedForStudent ? 'Rapor Terkunci' : 'Cetak PDF'}</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -2687,24 +2866,37 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveNav('portal')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 ${
                   activeNav === 'portal'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700'
                 }`}
               >
-                Rapor
+                {isRaporLockedForStudent && <Lock className="w-3 h-3" />}
+                <span>Rapor</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveNav('portfolio')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 ${
                   activeNav === 'portfolio'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700'
                 }`}
               >
-                Karya
+                {isRaporLockedForStudent && <Lock className="w-3 h-3" />}
+                <span>Karya</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveNav('internship')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold ${
+                  activeNav === 'internship'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                Magang
               </button>
             </div>
           )}
@@ -3064,62 +3256,140 @@ export default function App() {
             />
           )}
 
-          {activeNav === 'portal' && (
-            <StudentPortalView
-              db={db}
-              studentId={lockedStudentId || selectedStudentId}
-              selectedYear={selectedYear}
-              selectedSemester={selectedSemester}
-              allowStudentSwitch={effectiveRole !== 'santri_ortu'}
-              templateConfig={tpl}
-              onSelectStudent={setSelectedStudentId}
-              onUpdateStudentPhoto={
-                effectiveRole !== 'santri_ortu' ? handleUpdateStudentPhoto : undefined
-              }
-              onUploadPhotoToDrive={
-                serverHealth?.serviceAccountConfigured
-                  ? async (file) => {
-                      const res = await handleUploadToDrive(file);
-                      return res ? res.url : null;
-                    }
-                  : undefined
-              }
-              onOpenPrint={(id) => {
-                setSelectedStudentId(id);
-                setPrintMode(true);
-              }}
-              onOpenPortfolio={(id) => {
-                setSelectedStudentId(id);
-                setActiveNav('portfolio');
-              }}
-            />
-          )}
+          {activeNav === 'portal' &&
+            (isRaporLockedForStudent ? (
+              <div className="bg-white border border-amber-300 rounded-2xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto">
+                  <Lock className="w-6 h-6 text-amber-700" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                    Mode Pekan Ujian CBT Aktif
+                  </div>
+                  <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900">
+                    Rapor Akademik Dikunci Sementara
+                  </h2>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {tpl.lockRaporMessage ||
+                      'Akses Rapor Akademik sedang dikunci sementara selama pekan ujian CBT berlangsung. Anda tetap dapat mengisi Laporan Jurnaling Magang & Tracker Ibadah Harian.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('internship')}
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Buka Magang &amp; Tracker Ibadah</span>
+                </button>
+              </div>
+            ) : (
+              <StudentPortalView
+                db={db}
+                studentId={lockedStudentId || selectedStudentId}
+                selectedYear={selectedYear}
+                selectedSemester={selectedSemester}
+                allowStudentSwitch={effectiveRole !== 'santri_ortu'}
+                templateConfig={tpl}
+                onSelectStudent={setSelectedStudentId}
+                onUpdateStudentPhoto={
+                  effectiveRole !== 'santri_ortu' ? handleUpdateStudentPhoto : undefined
+                }
+                onUploadPhotoToDrive={
+                  serverHealth?.serviceAccountConfigured
+                    ? async (file) => {
+                        const res = await handleUploadToDrive(file);
+                        return res ? res.url : null;
+                      }
+                    : undefined
+                }
+                onOpenPrint={(id) => {
+                  setSelectedStudentId(id);
+                  setPrintMode(true);
+                }}
+                onOpenPortfolio={(id) => {
+                  setSelectedStudentId(id);
+                  setActiveNav('portfolio');
+                }}
+              />
+            ))}
 
-          {activeNav === 'portfolio' && (
-            <PortfolioHubView
-              db={db}
-              studentId={lockedStudentId || selectedStudentId}
-              selectedYear={selectedYear}
-              selectedSemester={selectedSemester}
-              canEdit={effectiveRole === 'admin' || effectiveRole === 'guru'}
-              templateConfig={tpl}
-              onSelectStudent={
-                effectiveRole !== 'santri_ortu' ? setSelectedStudentId : undefined
-              }
-              onSavePortfolios={handleSavePortfolios}
-              onSavePortfolioSummary={
-                effectiveRole === 'admin' || effectiveRole === 'guru'
-                  ? handleSavePortfolioSummary
-                  : undefined
-              }
-              onUpdatePortfolioLinks={
-                effectiveRole === 'admin' || effectiveRole === 'guru'
-                  ? handleUpdateStudentPortfolioLinks
-                  : undefined
-              }
-              onUploadMediaToDrive={handleUploadToDrive}
-            />
-          )}
+          {activeNav === 'portfolio' &&
+            (isRaporLockedForStudent ? (
+              <div className="bg-white border border-amber-300 rounded-2xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto">
+                  <Lock className="w-6 h-6 text-amber-700" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                    Mode Pekan Ujian CBT Aktif
+                  </div>
+                  <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900">
+                    Tab Portofolio &amp; Rapor Dikunci Sementara
+                  </h2>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {tpl.lockRaporMessage ||
+                      'Akses Student Portfolio & Rapor Akademik sedang dikunci sementara selama pekan ujian CBT. Silakan lanjutkan pengisian Jurnaling Magang & Tracker Ibadah.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('internship')}
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Buka Magang &amp; Tracker Ibadah</span>
+                </button>
+              </div>
+            ) : (
+              <PortfolioHubView
+                db={db}
+                studentId={lockedStudentId || selectedStudentId}
+                selectedYear={selectedYear}
+                selectedSemester={selectedSemester}
+                canEdit={effectiveRole === 'admin' || effectiveRole === 'guru'}
+                templateConfig={tpl}
+                onSelectStudent={
+                  effectiveRole !== 'santri_ortu' ? setSelectedStudentId : undefined
+                }
+                onSavePortfolios={handleSavePortfolios}
+                onSavePortfolioSummary={
+                  effectiveRole === 'admin' || effectiveRole === 'guru'
+                    ? handleSavePortfolioSummary
+                    : undefined
+                }
+                onUpdatePortfolioLinks={
+                  effectiveRole === 'admin' || effectiveRole === 'guru'
+                    ? handleUpdateStudentPortfolioLinks
+                    : undefined
+                }
+                onUploadMediaToDrive={handleUploadToDrive}
+              />
+            ))}
+
+          {activeNav === 'internship' &&
+            (effectiveRole === 'santri_ortu' ? (
+              <StudentInternshipView
+                db={db}
+                studentId={lockedStudentId || selectedStudentId}
+                templateConfig={tpl}
+                isBusy={isSyncing}
+                onSaveInternProfile={handleSaveInternProfile}
+                onSaveDailyLog={handleSaveInternDailyLog}
+                onOpenPrintInternReport={(id) => setInternReportStudentId(id)}
+              />
+            ) : (
+              <InternAdminView
+                db={db}
+                canManageTrackerItems={effectiveRole === 'admin'}
+                templateConfig={tpl}
+                isBusy={isSyncing}
+                onSaveInternProfile={handleSaveInternProfile}
+                onSaveDailyLog={handleSaveInternDailyLog}
+                onSaveTrackerItems={handleSaveInternTrackerItems}
+                onOpenPrintInternReport={(id) => setInternReportStudentId(id)}
+              />
+            ))}
 
           {activeNav === 'template' && effectiveRole === 'admin' && (
             <TemplateSettingsView

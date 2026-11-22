@@ -6,6 +6,9 @@ import type {
   CbtOptionKey,
   CbtQuestion,
   CbtViolationLog,
+  InternDailyLog,
+  InternProfile,
+  InternTrackerItem,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
@@ -626,5 +629,36 @@ export async function submitCbtExamOnServer(params: {
   return apiFetch('/api/cbt/student/submit', {
     method: 'POST',
     body: params,
+  });
+}
+
+// ==========================================
+// Internship & Ibadah Tracker Module API
+// ==========================================
+
+export async function upsertInternProfileOnServer(
+  profile: InternProfile
+): Promise<{ profile: InternProfile; data: MdaDatabase }> {
+  return apiFetch('/api/internship/profile/upsert', {
+    method: 'POST',
+    body: { profile },
+  });
+}
+
+export async function upsertInternDailyLogOnServer(
+  log: InternDailyLog
+): Promise<{ log: InternDailyLog; data: MdaDatabase }> {
+  return apiFetch('/api/internship/daily-log/upsert', {
+    method: 'POST',
+    body: { log },
+  });
+}
+
+export async function saveInternTrackerConfigOnServer(
+  internTrackerItems: InternTrackerItem[]
+): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/internship/tracker-config/save', {
+    method: 'POST',
+    body: { internTrackerItems },
   });
 }

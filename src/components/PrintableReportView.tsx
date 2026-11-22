@@ -511,14 +511,14 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
 
   const PortfolioLinksBanner = () => (
     <div
-      className="shrink-0 text-white rounded-2xl p-3.5 shadow-md"
+      className="shrink-0 text-white rounded-2xl p-4 shadow-md"
       style={{ backgroundColor: theme.darkPill }}
     >
-      <div className="flex items-stretch justify-between gap-3.5">
+      <div className="flex items-stretch justify-between gap-4">
         {/* Kolom Kiri: 2 Link Clickable */}
-        <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex-1 min-w-0 space-y-2.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="inline-block text-[9.5px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-[#1DF27A]">
+            <div className="text-[15.5px] font-bold uppercase tracking-wide text-[#1DF27A] leading-tight">
               LIHAT KARYA SELENGKAPNYA
             </div>
             {behancePdfLink && (
@@ -527,35 +527,35 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 data-pdf-link="true"
-                className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-md no-underline shrink-0"
+                className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[11px] px-3 py-1 rounded-md no-underline shrink-0"
               >
                 Buka Behance ↗
               </a>
             )}
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {behancePdfLink ? (
               <a
                 href={behancePdfLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-pdf-link="true"
-                className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3 py-1.5 no-underline"
+                className="block bg-slate-950/60 border border-emerald-400/45 rounded-xl px-3.5 py-2.5 no-underline"
               >
-                <div className="text-[8.5px] uppercase tracking-wide text-emerald-200 font-bold">
-                  1. Link Portofolio (Behance):
+                <div className="text-[11px] uppercase tracking-wide text-emerald-200 font-bold leading-snug">
+                  1. LINK PORTOFOLIO (BEHANCE):
                 </div>
-                <div className="text-[9.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug mt-0.5">
+                <div className="text-[12px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/60 leading-snug mt-1">
                   {behancePdfLink}
                 </div>
               </a>
             ) : (
-              <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3 py-1.5">
-                <div className="text-[8.5px] uppercase tracking-wide text-slate-300 font-bold">
-                  1. Link Portofolio (Behance):
+              <div className="bg-slate-950/50 border border-white/15 rounded-xl px-3.5 py-2.5">
+                <div className="text-[11px] uppercase tracking-wide text-slate-300 font-bold leading-snug">
+                  1. LINK PORTOFOLIO (BEHANCE):
                 </div>
-                <div className="text-[9.5px] text-slate-400 italic mt-0.5">
+                <div className="text-[11.5px] text-slate-400 italic mt-1">
                   Link Behance santri belum diisi.
                 </div>
               </div>
@@ -567,23 +567,23 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 data-pdf-link="true"
-                className="block bg-slate-950/60 border border-amber-400/35 rounded-lg px-3 py-1.5 no-underline"
+                className="block bg-slate-950/60 border border-amber-400/40 rounded-xl px-3.5 py-2.5 no-underline"
               >
-                <div className="text-[8.5px] uppercase tracking-wide text-amber-200 font-bold">
-                  2. Link Kumpulan Karya 1 Semester (PDF)
+                <div className="text-[11px] uppercase tracking-wide text-amber-200 font-bold leading-snug">
+                  2. LINK KUMPULAN KARYA 1 SEMESTER (PDF)
                   {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
                 </div>
-                <div className="text-[9.5px] font-bold text-amber-300 break-all underline decoration-amber-400/50 leading-snug mt-0.5">
+                <div className="text-[12px] font-bold text-amber-300 break-all underline decoration-amber-400/60 leading-snug mt-1">
                   {pdfKaryaLink}
                 </div>
               </a>
             ) : (
-              <div className="bg-slate-950/50 border border-white/15 rounded-lg px-3 py-1.5">
-                <div className="text-[8.5px] uppercase tracking-wide text-slate-300 font-bold">
-                  2. Link Kumpulan Karya 1 Semester (PDF)
+              <div className="bg-slate-950/50 border border-white/15 rounded-xl px-3.5 py-2.5">
+                <div className="text-[11px] uppercase tracking-wide text-slate-300 font-bold leading-snug">
+                  2. LINK KUMPULAN KARYA 1 SEMESTER (PDF)
                   {pdfKaryaSubject ? ` — ${pdfKaryaSubject}` : ''}:
                 </div>
-                <div className="text-[9.5px] text-slate-400 italic mt-0.5">
+                <div className="text-[11.5px] text-slate-400 italic mt-1">
                   Link Google Drive PDF kumpulan karya belum diisi.
                 </div>
               </div>
@@ -592,9 +592,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         </div>
 
         {/* Kolom Kanan: QR Code Otomatis (Lokal PNG via qrcode) */}
-        <div className="shrink-0 flex flex-col items-center justify-center gap-1 pl-2 border-l border-white/15">
+        <div className="shrink-0 flex flex-col items-center justify-center gap-1.5 pl-3 border-l border-white/15">
           {qrTargetUrl && qrDataUrl ? (
-            <div className="w-[88px] h-[88px] rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center">
+            <div className="w-[100px] h-[100px] rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center">
               <img
                 src={qrDataUrl}
                 alt="QR Code Kumpulan Karya Santri"
@@ -602,11 +602,11 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               />
             </div>
           ) : (
-            <div className="w-[88px] h-[88px] rounded-xl bg-white/10 border border-white/20 p-2 flex items-center justify-center text-center text-[8.5px] text-slate-300 leading-tight">
+            <div className="w-[100px] h-[100px] rounded-xl bg-white/10 border border-white/20 p-2 flex items-center justify-center text-center text-[9.5px] text-slate-300 leading-tight">
               QR otomatis aktif setelah link PDF / Behance diisi
             </div>
           )}
-          <div className="text-[8.5px] font-semibold text-emerald-200 text-center leading-tight max-w-[94px]">
+          <div className="text-[9.5px] font-semibold text-emerald-200 text-center leading-tight max-w-[106px]">
             Scan untuk lihat semua karya
           </div>
         </div>
@@ -1647,147 +1647,155 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               fontFamily: 'Arial, Helvetica, sans-serif',
             }}
           >
-            <div className="px-8 pt-5 pb-4 flex-1 min-h-0 flex flex-col gap-3.5 overflow-hidden">
-              {/* Header Page 5 */}
-              <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-2.5">
-                <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
-                <div className="text-right min-w-0 leading-snug">
-                  <div className="font-bold text-base text-slate-900 uppercase tracking-tight">
-                    {tpl.labelCoverPortfolio}
-                  </div>
-                  <div className="text-[11px] font-bold text-sky-600 tabular-nums">
-                    Semester {report.semester} · Tahun Akademik {report.tahunAkademik}
-                  </div>
-                  <div className="text-[11px] text-slate-700 truncate">
-                    Nama Santri: <span className="font-bold">{student.nama}</span> ({student.kelas})
-                  </div>
-                </div>
-              </div>
-
-              {/* Judul Karya & Nama Pelajaran */}
-              <div className="shrink-0 flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <span
-                    className="inline-block text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-full tracking-wide uppercase"
-                    style={{ backgroundColor: theme.sectionSky }}
-                  >
-                    Dokumentasi Sidang Karya
-                  </span>
-                  <div className="font-bold text-[18px] text-slate-950 leading-snug truncate">
-                    {sidangProject?.judul || 'Sidang Karya Akhir Semester'}
-                  </div>
-                  {sidangProject?.keteranganSingkat && (
-                    <div className="text-[10.5px] text-slate-600 leading-snug truncate">
-                      {sidangProject.keteranganSingkat}
+            <div className="px-8 pt-5 pb-3.5 flex-1 min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
+              {/* Top Group: Header + Judul + Gambar Proporsional */}
+              <div className="flex-1 min-h-0 flex flex-col gap-3">
+                {/* Header Page 5 */}
+                <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-2.5">
+                  <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
+                  <div className="text-right min-w-0 leading-snug">
+                    <div className="font-bold text-base text-slate-900 uppercase tracking-tight">
+                      {tpl.labelCoverPortfolio}
                     </div>
-                  )}
-                </div>
-                <div className="shrink-0 pt-1">
-                  <span className="inline-block px-3 py-1 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10px] font-bold">
-                    {sidangProject?.jenis || pdfKaryaSubject || 'Sidang Karya'}
-                  </span>
-                </div>
-              </div>
-
-              {/* 1. Visual Hasil Sidang Karya (1 Gambar Besar atau 2 Gambar Berdampingan Tajam) */}
-              <div className="flex-1 min-h-0 flex items-center justify-center">
-                {sidangVisualItems.length === 2 ? (
-                  <div className="grid grid-cols-2 gap-3.5 w-full h-full">
-                    {sidangVisualItems.map((media, idx) => (
-                      <div
-                        key={idx}
-                        className="h-full min-h-0 flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs"
-                      >
-                        <div className="flex-1 min-h-0 w-full bg-white p-2 flex items-center justify-center overflow-hidden">
-                          {media.type === 'video' ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-4 text-center">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-[#1DF27A]">
-                                Dokumentasi Video Sidang Karya
-                              </span>
-                              <p className="text-xs font-bold mt-1.5 line-clamp-2">
-                                {media.caption || sidangProject?.judul}
-                              </p>
-                            </div>
-                          ) : (
-                            <img
-                              src={media.url}
-                              alt={media.caption || sidangProject?.judul || `Sidang Karya ${idx + 1}`}
-                              referrerPolicy="no-referrer"
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          )}
-                        </div>
-                        {media.caption && (
-                          <div className="shrink-0 bg-slate-900 text-white text-[9.5px] font-semibold px-3 py-1 text-center truncate">
-                            {media.caption}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : sidangVisualItems.length === 1 ? (
-                  <div className="w-full h-full min-h-0 flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs">
-                    <div className="flex-1 min-h-0 w-full bg-white p-2.5 flex items-center justify-center overflow-hidden">
-                      {sidangVisualItems[0].type === 'video' ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-6 text-center">
-                          <span className="text-[11px] font-bold uppercase tracking-widest text-[#1DF27A]">
-                            Dokumentasi Video Sidang Karya
-                          </span>
-                          <p className="text-sm font-bold mt-2 line-clamp-2">
-                            {sidangVisualItems[0].caption || sidangProject?.judul}
-                          </p>
-                        </div>
-                      ) : (
-                        <img
-                          src={sidangVisualItems[0].url}
-                          alt={
-                            sidangVisualItems[0].caption ||
-                            sidangProject?.judul ||
-                            'Dokumentasi Sidang Karya'
-                          }
-                          referrerPolicy="no-referrer"
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      )}
+                    <div className="text-[11px] font-bold text-sky-600 tabular-nums">
+                      Semester {report.semester} · Tahun Akademik {report.tahunAkademik}
                     </div>
-                    {sidangVisualItems[0].caption && (
-                      <div className="shrink-0 bg-slate-900 text-white text-[10px] font-semibold px-4 py-1.5 text-center truncate">
-                        {sidangVisualItems[0].caption}
+                    <div className="text-[11px] text-slate-700 truncate">
+                      Nama Santri: <span className="font-bold">{student.nama}</span> ({student.kelas})
+                    </div>
+                  </div>
+                </div>
+
+                {/* Judul Karya & Nama Pelajaran */}
+                <div className="shrink-0 flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <span
+                      className="inline-block text-slate-950 font-bold text-[9.5px] px-2.5 py-0.5 rounded-full tracking-wide uppercase"
+                      style={{ backgroundColor: theme.sectionSky }}
+                    >
+                      Dokumentasi Sidang Karya
+                    </span>
+                    <div className="font-bold text-[18px] text-slate-950 leading-snug truncate">
+                      {sidangProject?.judul || 'Sidang Karya Akhir Semester'}
+                    </div>
+                    {sidangProject?.keteranganSingkat && (
+                      <div className="text-[11px] text-slate-600 leading-snug truncate">
+                        {sidangProject.keteranganSingkat}
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="w-full h-full min-h-0 flex flex-col border border-emerald-300 rounded-2xl overflow-hidden bg-white shadow-xs">
-                    <div className="flex-1 min-h-0 w-full overflow-hidden">
-                      <PortfolioArtwork
-                        preset={sidangProject?.mediaItems?.[0]?.presetArt || 'poster'}
-                        title={sidangProject?.judul || 'Dokumentasi Sidang Karya Santri'}
-                      />
-                    </div>
-                    <div className="shrink-0 bg-slate-900 text-slate-200 text-[9.5px] px-4 py-1.5 text-center">
-                      Silakan unggah 1–2 gambar hasil Sidang Karya di menu Student Portfolio
-                    </div>
+                  <div className="shrink-0 pt-1">
+                    <span className="inline-block px-3 py-1 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10.5px] font-bold">
+                      {sidangProject?.jenis || pdfKaryaSubject || 'Sidang Karya'}
+                    </span>
                   </div>
-                )}
+                </div>
+
+                {/* 1. Visual Hasil Sidang Karya (Pas membungkus proporsi gambar, tidak melebar kosong) */}
+                <div className="flex-1 min-h-0 flex items-center justify-center py-0.5">
+                  {sidangVisualItems.length === 2 ? (
+                    <div className="grid grid-cols-2 gap-3.5 w-full items-center">
+                      {sidangVisualItems.map((media, idx) => (
+                        <div
+                          key={idx}
+                          className="w-fit max-w-full mx-auto flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs"
+                        >
+                          <div className="p-2 bg-white flex items-center justify-center overflow-hidden">
+                            {media.type === 'video' ? (
+                              <div className="w-[290px] h-[240px] flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-4 text-center">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1DF27A]">
+                                  Dokumentasi Video Sidang Karya
+                                </span>
+                                <p className="text-xs font-bold mt-1.5 line-clamp-2">
+                                  {media.caption || sidangProject?.judul}
+                                </p>
+                              </div>
+                            ) : (
+                              <img
+                                src={media.url}
+                                alt={
+                                  media.caption || sidangProject?.judul || `Sidang Karya ${idx + 1}`
+                                }
+                                referrerPolicy="no-referrer"
+                                className="block max-w-full max-h-[255px] w-auto h-auto object-contain rounded-lg"
+                              />
+                            )}
+                          </div>
+                          {media.caption && (
+                            <div className="w-0 min-w-full shrink-0 bg-slate-900 text-white text-[10px] font-semibold px-3 py-1.5 text-center truncate">
+                              {media.caption}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : sidangVisualItems.length === 1 ? (
+                    <div className="w-fit max-w-full mx-auto flex flex-col border border-emerald-400/75 rounded-2xl overflow-hidden bg-white shadow-xs">
+                      <div className="p-2 bg-white flex items-center justify-center overflow-hidden">
+                        {sidangVisualItems[0].type === 'video' ? (
+                          <div className="w-[440px] max-w-full h-[265px] flex flex-col items-center justify-center bg-slate-900 text-white rounded-xl p-6 text-center">
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-[#1DF27A]">
+                              Dokumentasi Video Sidang Karya
+                            </span>
+                            <p className="text-sm font-bold mt-2 line-clamp-2">
+                              {sidangVisualItems[0].caption || sidangProject?.judul}
+                            </p>
+                          </div>
+                        ) : (
+                          <img
+                            src={sidangVisualItems[0].url}
+                            alt={
+                              sidangVisualItems[0].caption ||
+                              sidangProject?.judul ||
+                              'Dokumentasi Sidang Karya'
+                            }
+                            referrerPolicy="no-referrer"
+                            className="block max-w-full max-h-[290px] w-auto h-auto object-contain rounded-lg"
+                          />
+                        )}
+                      </div>
+                      {sidangVisualItems[0].caption && (
+                        <div className="w-0 min-w-full shrink-0 bg-slate-900 text-white text-[10.5px] font-semibold px-3 py-1.5 text-center truncate">
+                          {sidangVisualItems[0].caption}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-[560px] h-[270px] mx-auto flex flex-col border border-emerald-300 rounded-2xl overflow-hidden bg-white shadow-xs">
+                      <div className="flex-1 min-h-0 w-full overflow-hidden">
+                        <PortfolioArtwork
+                          preset={sidangProject?.mediaItems?.[0]?.presetArt || 'poster'}
+                          title={sidangProject?.judul || 'Dokumentasi Sidang Karya Santri'}
+                        />
+                      </div>
+                      <div className="shrink-0 bg-slate-900 text-slate-200 text-[10px] px-4 py-1.5 text-center">
+                        Silakan unggah 1–2 gambar hasil Sidang Karya di menu Student Portfolio
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* 2. Blok "Ringkasan Perkembangan Karya & Kompetensi" (Bahasa Orang Tua) */}
-              <div className="shrink-0 bg-white border border-emerald-300 rounded-2xl px-4 py-3 shadow-xs space-y-1.5">
-                <div className="flex items-center justify-between gap-2 border-b border-emerald-100 pb-1.5">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-900">
-                    Ringkasan Perkembangan Karya &amp; Kompetensi
+              {/* Bottom Group: Ringkasan Narasi Besar & Banner Link + QR Code */}
+              <div className="shrink-0 flex flex-col gap-3">
+                {/* 2. Blok "Ringkasan Perkembangan Karya & Kompetensi" (Bahasa Orang Tua) */}
+                <div className="shrink-0 bg-white border border-emerald-300 rounded-2xl p-4 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between gap-2 border-b border-emerald-100 pb-2">
+                    <div className="text-[12.5px] font-bold uppercase tracking-wide text-emerald-900">
+                      Ringkasan Perkembangan Karya &amp; Kompetensi
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-700 shrink-0">
+                      {report.semester} {report.tahunAkademik}
+                    </span>
                   </div>
-                  <span className="text-[9.5px] font-semibold text-emerald-700">
-                    {report.semester} {report.tahunAkademik}
-                  </span>
+                  <div className="text-[13.5px] text-[#1E293B] leading-[1.55] whitespace-pre-line">
+                    {effectivePortfolioSummary}
+                  </div>
                 </div>
-                <div className="text-[10.5px] text-slate-700 leading-[1.48] whitespace-pre-line">
-                  {effectivePortfolioSummary}
-                </div>
-              </div>
 
-              {/* 3. Banner Bawah: 2 Link Clickable + QR Code Otomatis */}
-              <PortfolioLinksBanner />
+                {/* 3. Banner Bawah: 2 Link Clickable + QR Code Otomatis */}
+                <PortfolioLinksBanner />
+              </div>
             </div>
 
             <MdaFooter showMotto={false} />

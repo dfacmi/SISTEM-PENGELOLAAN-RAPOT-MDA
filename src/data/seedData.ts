@@ -1,4 +1,39 @@
-import { BrandingTemplateConfig, CbtExam, MdaDatabase } from '../types/mda';
+import {
+  BrandingTemplateConfig,
+  CbtExam,
+  InternTrackerItem,
+  MdaDatabase,
+} from '../types/mda';
+
+export const DEFAULT_INTERN_TRACKER_ITEMS: InternTrackerItem[] = [
+  { id: 'sholat-subuh', label: 'Subuh', group: 'sholat', mode: 'jamaah', active: true },
+  { id: 'sholat-dzuhur', label: 'Dzuhur', group: 'sholat', mode: 'jamaah', active: true },
+  { id: 'sholat-ashar', label: 'Ashar', group: 'sholat', mode: 'jamaah', active: true },
+  { id: 'sholat-maghrib', label: 'Maghrib', group: 'sholat', mode: 'jamaah', active: true },
+  { id: 'sholat-isya', label: 'Isya', group: 'sholat', mode: 'jamaah', active: true },
+  { id: 'tilawah-1juz', label: 'Tilawah 1 Juz', group: 'tilawah', mode: 'terlaksana', active: true },
+  {
+    id: 'kebersihan-kamar',
+    label: 'Kebersihan Kamar / Tempat Tinggal',
+    group: 'kebersihan',
+    mode: 'terlaksana',
+    active: true,
+  },
+  {
+    id: 'kebersihan-kerja',
+    label: 'Kebersihan Area Kerja Magang',
+    group: 'kebersihan',
+    mode: 'terlaksana',
+    active: true,
+  },
+  {
+    id: 'kebersihan-ibadah',
+    label: 'Kebersihan Lingkungan / Tempat Ibadah',
+    group: 'kebersihan',
+    mode: 'terlaksana',
+    active: true,
+  },
+];
 
 export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
   namaLembaga: 'Muslim Digital Academy (MDA)',
@@ -48,7 +83,8 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
     'Semua proyek, sidang karya, dan video santri semester ini dapat dilihat melalui link portofolio online di bawah ini.',
   lockRaporDuringExam: false,
   lockRaporMessage:
-    'Portal Rapor & Portofolio Wali Santri ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Santri silakan masuk melalui tab Ruang Ujian CBT.',
+    'Rapor Akademik & Portofolio sedang dikunci sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Tab Magang & Tracker Ibadah tetap dapat diisi setiap hari.',
+  internTrackerItems: DEFAULT_INTERN_TRACKER_ITEMS,
 };
 
 export function generateRandomCbtToken(length = 6): string {
@@ -893,4 +929,6 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       statusAktif: true,
     },
   ],
+  internProfiles: [],
+  internDailyLogs: [],
 };

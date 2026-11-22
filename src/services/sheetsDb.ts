@@ -2,6 +2,7 @@ import { DEFAULT_TEMPLATE_CONFIG } from '../data/seedData';
 import {
   AcademicPeriod,
   BrandingTemplateConfig,
+  InternTrackerItem,
   MdaDatabase,
   PortfolioProject,
   SemesterReport,
@@ -510,10 +511,13 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
   const tpl = db.templateConfig || DEFAULT_TEMPLATE_CONFIG;
   const templateRows: (string | number | boolean)[][] = [
     ['Kunci', 'Nilai'],
-    ...(Object.keys(tpl) as (keyof BrandingTemplateConfig)[]).map((k) => [
-      k,
-      String(tpl[k] ?? ''),
-    ]),
+    ...(Object.keys(tpl) as (keyof BrandingTemplateConfig)[]).map((k) => {
+      const val = tpl[k];
+      return [
+        k,
+        typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val ?? ''),
+      ];
+    }),
   ];
 
   return {
@@ -947,7 +951,20 @@ export async function loadDatabaseFromSheet(
   tplRows.forEach((r) => {
     const key = String(r[0] || '') as keyof BrandingTemplateConfig;
     if (key in templateConfig && r[1] !== undefined) {
-      (templateConfig as any)[key] = String(r[1]);
+      if (key === 'lockRaporDuringExam') {
+        templateConfig.lockRaporDuringExam = String(r[1]).trim().toLowerCase() === 'true';
+      } else if (key === 'internTrackerItems') {
+        try {
+          const parsed = JSON.parse(String(r[1]));
+          if (Array.isArray(parsed)) {
+            templateConfig.internTrackerItems = parsed as InternTrackerItem[];
+          }
+        } catch {
+          // keep default
+        }
+      } else {
+        (templateConfig as any)[key] = String(r[1]);
+      }
     }
   });
 

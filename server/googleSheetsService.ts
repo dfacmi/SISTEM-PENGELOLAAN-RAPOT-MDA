@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
+import { DEFAULT_INTERN_TRACKER_ITEMS } from '../src/data/seedData.ts';
 import type {
   AcademicPeriod,
   BrandingTemplateConfig,
+  InternTrackerItem,
   MdaDatabase,
   PortfolioProject,
   Predikat,
@@ -59,7 +61,8 @@ export const DEFAULT_TEMPLATE_CONFIG: BrandingTemplateConfig = {
     'Semua proyek, sidang karya, dan video santri semester ini dapat dilihat melalui link portofolio online di bawah ini.',
   lockRaporDuringExam: false,
   lockRaporMessage:
-    'Portal Rapor & Portofolio Wali Santri ditutup sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Santri silakan masuk melalui tab Ruang Ujian CBT.',
+    'Rapor Akademik & Portofolio sedang dikunci sementara selama Pekan Ujian berlangsung hingga pengumuman nilai selesai. Tab Magang & Tracker Ibadah tetap dapat diisi setiap hari.',
+  internTrackerItems: DEFAULT_INTERN_TRACKER_ITEMS,
 };
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -694,10 +697,13 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
   const tpl = db.templateConfig || DEFAULT_TEMPLATE_CONFIG;
   const templateRows: (string | number | boolean)[][] = [
     ['Kunci', 'Nilai'],
-    ...(Object.keys(tpl) as (keyof BrandingTemplateConfig)[]).map((k) => [
-      k,
-      String(tpl[k] ?? ''),
-    ]),
+    ...(Object.keys(tpl) as (keyof BrandingTemplateConfig)[]).map((k) => {
+      const val = tpl[k];
+      return [
+        k,
+        typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val ?? ''),
+      ];
+    }),
   ];
 
   return {
@@ -1053,7 +1059,20 @@ export async function readDatabaseFromSheet(
   tplRows.forEach((r) => {
     const key = String(r[0] || '') as keyof BrandingTemplateConfig;
     if (key in templateConfig && r[1] !== undefined) {
-      (templateConfig as unknown as Record<string, string>)[key] = String(r[1]);
+      if (key === 'lockRaporDuringExam') {
+        templateConfig.lockRaporDuringExam = String(r[1]).trim().toLowerCase() === 'true';
+      } else if (key === 'internTrackerItems') {
+        try {
+          const parsed = JSON.parse(String(r[1]));
+          if (Array.isArray(parsed)) {
+            templateConfig.internTrackerItems = parsed as InternTrackerItem[];
+          }
+        } catch {
+          // keep default
+        }
+      } else {
+        (templateConfig as unknown as Record<string, string>)[key] = String(r[1]);
+      }
     }
   });
 
