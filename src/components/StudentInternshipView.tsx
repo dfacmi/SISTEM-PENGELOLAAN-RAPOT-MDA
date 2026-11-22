@@ -58,7 +58,10 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
   onSaveDailyLog,
   onOpenPrintInternReport,
 }) => {
-  const tpl = mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG);
+  const tpl = useMemo(
+    () => mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG),
+    [templateConfig, db.templateConfig]
+  );
   const trackerItems = useMemo(() => resolveInternTrackerItems(tpl), [tpl]);
 
   const student = useMemo(

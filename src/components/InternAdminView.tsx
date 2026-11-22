@@ -62,8 +62,12 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
   onSaveTrackerItems,
   onOpenPrintInternReport,
 }) => {
-  const tpl = mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG);
+  const tpl = useMemo(
+    () => mergeTemplateConfig(templateConfig || db.templateConfig, DEFAULT_TEMPLATE_CONFIG),
+    [templateConfig, db.templateConfig]
+  );
   const trackerItems = useMemo(() => resolveInternTrackerItems(tpl), [tpl]);
+  const trackerConfigSignature = useMemo(() => JSON.stringify(trackerItems), [trackerItems]);
 
   const [subTab, setSubTab] = useState<'monitoring' | 'tracker_config'>('monitoring');
 
@@ -100,7 +104,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
   useEffect(() => {
     setDraftItems(trackerItems);
-  }, [trackerItems]);
+    // Only resync draftItems when the serialized server/template tracker config actually changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackerConfigSignature]);
 
   const profileMap = useMemo(() => {
     const map = new Map<string, InternProfile>();
