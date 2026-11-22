@@ -777,7 +777,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           <div className="space-y-3 min-w-0">
             <div className="inline-flex items-center gap-1.5 text-[#1DF27A] text-xs font-semibold">
               <Link2 className="w-4 h-4 shrink-0" />
-              <span>Akses Karya Online (3 Tautan Portofolio)</span>
+              <span>Akses Karya Online</span>
             </div>
             <div>
               <h3 className="font-display font-bold text-base break-words">
@@ -789,53 +789,11 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             </div>
 
             <div className="space-y-2.5">
-              {/* Link 1: Sidang Karya */}
+              {/* Link 1: Portofolio Behance */}
               <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
-                    1. Hasil / Presentasi Sidang Karya
-                  </span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void handleCopySpecificLink('link1', portfolioLinks.sidangUrl)
-                      }
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
-                    >
-                      {copiedKey === 'link1' ? (
-                        <Check className="w-3 h-3 text-[#1DF27A]" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                      <span>{copiedKey === 'link1' ? 'Disalin' : 'Salin'}</span>
-                    </button>
-                    <a
-                      href={portfolioLinks.sidangUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
-                    >
-                      <span>Buka</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-                <a
-                  href={portfolioLinks.sidangUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
-                >
-                  {portfolioLinks.sidangUrl}
-                </a>
-              </div>
-
-              {/* Link 2: Behance */}
-              <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[10.5px] font-bold uppercase tracking-wide text-sky-300">
-                    2. Portofolio Behance
+                    1. Link Portofolio (Behance)
                   </span>
                   {portfolioLinks.behanceUrl && (
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -857,7 +815,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                         href={portfolioLinks.behanceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-sky-400 text-slate-950 text-[11px] font-bold"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
                       >
                         <span>Buka</span>
                         <ExternalLink className="w-3 h-3" />
@@ -870,7 +828,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     href={portfolioLinks.behanceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-sky-100 break-all hover:underline"
+                    className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
                   >
                     {portfolioLinks.behanceUrl}
                   </a>
@@ -881,12 +839,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                 )}
               </div>
 
-              {/* Link 3: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
+              {/* Link 2: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
               <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                     <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
-                      3. PDF Kumpulan Karya 1 Semester
+                      2. Link Kumpulan Karya (PDF)
                     </span>
                     {portfolioLinks.pdfSubject && (
                       <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">

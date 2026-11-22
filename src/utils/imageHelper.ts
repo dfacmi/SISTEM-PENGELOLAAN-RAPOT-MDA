@@ -341,3 +341,88 @@ export async function compressImageToJpegUnderLimit(
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * High-clarity compression for Sidang Karya uploads:
+ * Starts at maxWidth 960px and JPEG quality 0.85, stepping down gently only if the
+ * resulting Base64 DataURL exceeds 42,000 characters (Google Sheets cell safety margin).
+ */
+export async function compressImageSharpForSheet(
+  file: File,
+  options: {
+    maxWidth?: number;
+    initialQuality?: number;
+    maxChars?: number;
+  } = {}
+): Promise<{ dataUrl: string; byteLength: number; width: number; height: number }> {
+  const maxWidth = options.maxWidth ?? 960;
+  const initialQuality = options.initialQuality ?? 0.85;
+  const maxChars = options.maxChars ?? 42000;
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Format gambar tidak didukung.'));
+      img.onload = () => {
+        const srcW = Math.max(1, img.width);
+        const srcH = Math.max(1, img.height);
+
+        const widthSteps = Array.from(
+          new Set([
+            Math.min(srcW, maxWidth),
+            Math.min(srcW, 840),
+            Math.min(srcW, 720),
+            Math.min(srcW, 600),
+          ])
+        );
+        const qualitySteps = [initialQuality, 0.78, 0.72, 0.65, 0.58, 0.5];
+
+        let fallbackResult = {
+          dataUrl: '',
+          byteLength: Number.MAX_SAFE_INTEGER,
+          width: srcW,
+          height: srcH,
+        };
+
+        for (const targetW of widthSteps) {
+          const scale = targetW / srcW;
+          const outW = Math.max(1, Math.round(srcW * scale));
+          const outH = Math.max(1, Math.round(srcH * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = outW;
+          canvas.height = outH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) continue;
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, outW, outH);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, outW, outH);
+
+          for (const q of qualitySteps) {
+            const dataUrl = canvas.toDataURL('image/jpeg', q);
+            const byteLength = estimateDataUrlBinaryBytes(dataUrl);
+            if (dataUrl.length < fallbackResult.dataUrl.length || !fallbackResult.dataUrl) {
+              fallbackResult = { dataUrl, byteLength, width: outW, height: outH };
+            }
+            if (dataUrl.length <= maxChars) {
+              canvas.width = 0;
+              canvas.height = 0;
+              resolve({ dataUrl, byteLength, width: outW, height: outH });
+              return;
+            }
+          }
+          canvas.width = 0;
+          canvas.height = 0;
+        }
+
+        resolve(fallbackResult);
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}

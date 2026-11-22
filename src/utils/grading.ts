@@ -497,7 +497,13 @@ export function getStudentPortfolioLinks(
   const sidangUrl = normalizeExternalUrl(
     getPortfolioUrl(student.portfolioSlug, spreadsheetId)
   );
-  const behanceUrl = normalizeExternalUrl(student.behanceUrl);
+  const explicitBehance = normalizeExternalUrl(student.behanceUrl);
+  const rawSlug = (student.portfolioSlug || '').trim();
+  const legacyExternalSlug =
+    /^https?:\/\//i.test(rawSlug) && !/[?&]portfolio=/i.test(rawSlug)
+      ? normalizeExternalUrl(rawSlug)
+      : '';
+  const behanceUrl = explicitBehance || legacyExternalSlug;
   const pdfUrl = normalizeExternalUrl(student.portfolioPdfUrl);
   const pdfSubject = (student.portfolioPdfSubject || '').trim();
   return {

@@ -1094,8 +1094,8 @@ export default function App() {
 
     setConfirmDialog({
       open: true,
-      title: 'Simpan 3 Link Portofolio Santri?',
-      message: `Link Sidang Karya, Behance, dan PDF Kumpulan Karya untuk ${target.nama} akan disimpan ke Google Sheets.`,
+      title: 'Simpan Link Portofolio Santri?',
+      message: `Link Portofolio Behance dan PDF Kumpulan Karya untuk ${target.nama} akan disimpan ke Google Sheets.`,
       confirmLabel: 'Simpan ke Google Sheets',
       onConfirm: async () => {
         if (!ensureOnlineForWrite()) return;
