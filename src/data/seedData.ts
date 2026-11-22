@@ -1,9 +1,9 @@
-import {
+import type {
   BrandingTemplateConfig,
   CbtExam,
   InternTrackerItem,
   MdaDatabase,
-} from '../types/mda';
+} from '../types/mda.ts';
 
 export const DEFAULT_INTERN_TRACKER_ITEMS: InternTrackerItem[] = [
   { id: 'sholat-subuh', label: 'Subuh', group: 'sholat', mode: 'jamaah', active: true },

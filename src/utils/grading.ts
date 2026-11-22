@@ -1,4 +1,4 @@
-import {
+import type {
   DiniyahSubject,
   DigitalSkillSubject,
   GradeWeights,
@@ -10,7 +10,7 @@ import {
   Student,
   TahfidzAssessment,
   TeacherClass,
-} from '../types/mda';
+} from '../types/mda.ts';
 
 export const DEFAULT_GRADE_WEIGHTS: GradeWeights = {
   sk: 25,
