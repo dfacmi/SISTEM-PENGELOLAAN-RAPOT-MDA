@@ -461,6 +461,53 @@ export function getPortfolioUrl(slug: string, spreadsheetId?: string): string {
   return url.toString();
 }
 
+export function normalizeExternalUrl(raw?: string | null): string {
+  const clean = (raw || '').replace(/[\r\n\t]+/g, '').trim();
+  if (!clean || clean === '#' || /^(javascript|data|vbscript):/i.test(clean)) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+  if (clean.startsWith('//')) {
+    return `https:${clean}`;
+  }
+  if (clean.startsWith('/') && typeof window !== 'undefined') {
+    return new URL(clean, window.location.origin).toString();
+  }
+  return `https://${clean}`;
+}
+
+export interface ResolvedPortfolioLinks {
+  sidangUrl: string;
+  behanceUrl: string;
+  pdfUrl: string;
+  pdfSubject: string;
+}
+
+export function getStudentPortfolioLinks(
+  student: {
+    portfolioSlug: string;
+    behanceUrl?: string;
+    portfolioPdfUrl?: string;
+    portfolioPdfSubject?: string;
+  },
+  spreadsheetId?: string
+): ResolvedPortfolioLinks {
+  const sidangUrl = normalizeExternalUrl(
+    getPortfolioUrl(student.portfolioSlug, spreadsheetId)
+  );
+  const behanceUrl = normalizeExternalUrl(student.behanceUrl);
+  const pdfUrl = normalizeExternalUrl(student.portfolioPdfUrl);
+  const pdfSubject = (student.portfolioPdfSubject || '').trim();
+  return {
+    sidangUrl,
+    behanceUrl,
+    pdfUrl,
+    pdfSubject,
+  };
+}
+
 export function generateSmartAccessPin(
   nama: string,
   nomorIdentitas: string,

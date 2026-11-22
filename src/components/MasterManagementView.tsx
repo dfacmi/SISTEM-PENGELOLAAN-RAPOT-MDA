@@ -1436,7 +1436,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     TTD Digital Kepala Unit MDA (Tampil di Ekspor PDF)
                   </label>
-                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
                     <div className="w-24 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                       {editingPeriod.ttdKepalaUnitUrl ? (
                         <img
@@ -1449,7 +1449,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         <span className="text-[10px] text-slate-400">Kosong</span>
                       )}
                     </div>
-                    <div className="flex-1 space-y-1.5">
+                    <div className="flex-1 min-w-0 space-y-1.5">
                       <input
                         type="text"
                         value={editingPeriod.ttdKepalaUnitUrl || ''}
@@ -1494,7 +1494,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     TTD Digital Mudir Pesantren (Tampil di Ekspor PDF)
                   </label>
-                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
                     <div className="w-24 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                       {editingPeriod.ttdMudirUrl ? (
                         <img
@@ -1507,7 +1507,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         <span className="text-[10px] text-slate-400">Kosong</span>
                       )}
                     </div>
-                    <div className="flex-1 space-y-1.5">
+                    <div className="flex-1 min-w-0 space-y-1.5">
                       <input
                         type="text"
                         value={editingPeriod.ttdMudirUrl || ''}

@@ -342,6 +342,9 @@ export async function bulkImportStudentsInAppsScript(
             waliKelasId: incoming.waliKelasId || existing.waliKelasId,
             waliKelasNama: incoming.waliKelasNama || existing.waliKelasNama,
             emailSantriOrtu: incoming.emailSantriOrtu || existing.emailSantriOrtu,
+            behanceUrl: incoming.behanceUrl || existing.behanceUrl || '',
+            portfolioPdfUrl: incoming.portfolioPdfUrl || existing.portfolioPdfUrl || '',
+            portfolioPdfSubject: incoming.portfolioPdfSubject || existing.portfolioPdfSubject || '',
           };
           updatedCount += 1;
         } else {
@@ -510,6 +513,33 @@ export async function upsertPortfolioInAppsScript(
     const nextPortfolios = exists
       ? currentDb.portfolios.map((p) => (p.id === incomingProject.id ? incomingProject : p))
       : [...currentDb.portfolios, incomingProject];
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      portfolios: nextPortfolios,
+      lastSyncedAt: new Date().toISOString(),
+    };
+    const saved = await saveAllToAppsScript(apiUrl, secret, nextDb);
+    nextDb.lastSyncedAt = saved.updatedAt;
+    return nextDb;
+  });
+}
+
+export async function upsertPortfoliosBatchInAppsScript(
+  apiUrl: string,
+  secret: string,
+  incomingProjects: PortfolioProject[]
+): Promise<MdaDatabase> {
+  return enqueueSheetOperation(`apps_script:${apiUrl}`, async () => {
+    const currentDb = await readDatabaseFromAppsScript(apiUrl);
+    const incomingMap = new Map(incomingProjects.map((p) => [p.id, p]));
+    const nextPortfolios = currentDb.portfolios.map((p) => incomingMap.get(p.id) || p);
+    const existingIds = new Set(currentDb.portfolios.map((p) => p.id));
+    incomingProjects.forEach((p) => {
+      if (!existingIds.has(p.id)) {
+        nextPortfolios.push(p);
+      }
+    });
 
     const nextDb: MdaDatabase = {
       ...currentDb,

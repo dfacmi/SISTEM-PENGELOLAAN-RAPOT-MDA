@@ -443,6 +443,19 @@ export async function deletePortfolioOnServer(params: {
   });
 }
 
+export async function upsertPortfoliosBatchOnServer(params: {
+  projects: PortfolioProject[];
+  googleAccessToken?: string | null;
+  spreadsheetId?: string | null;
+}): Promise<{ data: MdaDatabase }> {
+  return apiFetch('/api/portfolios/batch-upsert', {
+    method: 'POST',
+    body: { projects: params.projects, spreadsheetId: params.spreadsheetId },
+    googleAccessToken: params.googleAccessToken,
+    spreadsheetId: params.spreadsheetId,
+  });
+}
+
 export async function saveTemplateOnServer(params: {
   templateConfig: BrandingTemplateConfig;
   googleAccessToken?: string | null;

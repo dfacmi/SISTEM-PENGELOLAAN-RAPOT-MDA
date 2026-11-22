@@ -417,6 +417,9 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
       'Slug_Portofolio',
       'Status_Aktif',
       'PIN_Akses',
+      'Link_Behance',
+      'Link_PDF_Karya',
+      'Pelajaran_PDF_Karya',
     ],
     ...db.students.map((s) => [
       s.id,
@@ -431,6 +434,9 @@ function serializeDbToTabs(db: MdaDatabase): Record<MdaTabName, (string | number
       s.portfolioSlug,
       s.statusAktif,
       s.accessPin || '',
+      s.behanceUrl || '',
+      s.portfolioPdfUrl || '',
+      s.portfolioPdfSubject || '',
     ]),
   ];
 
@@ -849,6 +855,9 @@ export async function readDatabaseFromSheet(
         portfolioSlug: String(r[9] || r[0]),
         statusAktif: (r[10] === 'Alumni' || r[10] === 'Cuti' ? r[10] : 'Aktif') as Student['statusAktif'],
         accessPin: String(r[11] || generateSmartAccessPin(nama, nisnMda)),
+        behanceUrl: String(r[12] || ''),
+        portfolioPdfUrl: String(r[13] || ''),
+        portfolioPdfSubject: String(r[14] || ''),
       };
     });
 
@@ -1273,6 +1282,9 @@ export async function bulkImportStudentsInSheet(
             waliKelasId: incoming.waliKelasId || existing.waliKelasId,
             waliKelasNama: incoming.waliKelasNama || existing.waliKelasNama,
             emailSantriOrtu: incoming.emailSantriOrtu || existing.emailSantriOrtu,
+            behanceUrl: incoming.behanceUrl || existing.behanceUrl || '',
+            portfolioPdfUrl: incoming.portfolioPdfUrl || existing.portfolioPdfUrl || '',
+            portfolioPdfSubject: incoming.portfolioPdfSubject || existing.portfolioPdfSubject || '',
           };
           updatedCount += 1;
         } else {
@@ -1472,6 +1484,47 @@ export async function upsertPortfolioInSheet(
     const nextPortfolios = exists
       ? currentDb.portfolios.map((p) => (p.id === cleanedProject.id ? cleanedProject : p))
       : [...currentDb.portfolios, cleanedProject];
+
+    const nextDb: MdaDatabase = {
+      ...currentDb,
+      portfolios: nextPortfolios,
+      lastSyncedAt: new Date().toISOString(),
+    };
+    await writeSpecificTabs(accessToken, spreadsheetId, nextDb, ['Portofolio']);
+    return nextDb;
+  });
+}
+
+export async function upsertPortfoliosBatchInSheet(
+  accessToken: string,
+  spreadsheetId: string,
+  incomingProjects: PortfolioProject[]
+): Promise<MdaDatabase> {
+  return enqueueSheetOperation(spreadsheetId, async () => {
+    const currentDb = await readDatabaseFromSheet(accessToken, spreadsheetId);
+    const cleanedMap = new Map<string, PortfolioProject>();
+    for (const incomingProject of incomingProjects) {
+      const mediaItems = await Promise.all(
+        (incomingProject.mediaItems || []).map(async (m, idx) => ({
+          ...m,
+          url: await resolveAssetForSheet(
+            accessToken,
+            m.url,
+            `karya_${incomingProject.id}_${idx + 1}`
+          ),
+        }))
+      );
+      cleanedMap.set(incomingProject.id, { ...incomingProject, mediaItems });
+    }
+
+    const nextPortfolios = currentDb.portfolios.map((p) => cleanedMap.get(p.id) || p);
+    const existingIds = new Set(currentDb.portfolios.map((p) => p.id));
+    incomingProjects.forEach((p) => {
+      if (!existingIds.has(p.id)) {
+        const cleaned = cleanedMap.get(p.id);
+        if (cleaned) nextPortfolios.push(cleaned);
+      }
+    });
 
     const nextDb: MdaDatabase = {
       ...currentDb,

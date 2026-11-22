@@ -46,6 +46,9 @@ export interface Student {
   fotoUrl: string;
   emailSantriOrtu: string;
   portfolioSlug: string;
+  behanceUrl?: string;
+  portfolioPdfUrl?: string;
+  portfolioPdfSubject?: string;
   accessPin: string;
   statusAktif: 'Aktif' | 'Alumni' | 'Cuti';
 }

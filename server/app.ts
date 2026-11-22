@@ -22,6 +22,7 @@ import {
   uploadBufferToDrive,
   upsertPeriodInSheet,
   upsertPortfolioInSheet,
+  upsertPortfoliosBatchInSheet,
   upsertReportInSheet,
   upsertReportsBatchInSheet,
   upsertStudentInSheet,
@@ -51,6 +52,7 @@ import {
   upsertCbtAttemptInAppsScript,
   upsertPeriodInAppsScript,
   upsertPortfolioInAppsScript,
+  upsertPortfoliosBatchInAppsScript,
   upsertReportInAppsScript,
   upsertReportsBatchInAppsScript,
   upsertStudentInAppsScript,
@@ -1136,6 +1138,14 @@ export function createApiApp(): express.Express {
       const currentDb = await loadDbFromStorage(storage);
       const existing = currentDb.students.find((s) => s.id === student.id);
 
+      const sanitizeExternalUrl = (raw?: string) => {
+        const clean = String(raw || '').replace(/[\r\n\t]+/g, '').trim();
+        if (!clean || /^(javascript|data|vbscript):/i.test(clean)) return '';
+        if (/^https?:\/\//i.test(clean)) return clean;
+        if (clean.startsWith('//')) return `https:${clean}`;
+        return `https://${clean}`;
+      };
+
       if (session.role === 'guru') {
         const teacher = currentDb.teachers.find((t) => t.id === session.teacherId);
         if (!existing || !isTeacherAuthorizedForStudent(teacher, existing)) {
@@ -1149,6 +1159,18 @@ export function createApiApp(): express.Express {
           ...existing,
           fotoUrl: student.fotoUrl ?? existing.fotoUrl,
           portfolioSlug: student.portfolioSlug ?? existing.portfolioSlug,
+          behanceUrl:
+            student.behanceUrl !== undefined
+              ? sanitizeExternalUrl(student.behanceUrl)
+              : existing.behanceUrl || '',
+          portfolioPdfUrl:
+            student.portfolioPdfUrl !== undefined
+              ? sanitizeExternalUrl(student.portfolioPdfUrl)
+              : existing.portfolioPdfUrl || '',
+          portfolioPdfSubject:
+            student.portfolioPdfSubject !== undefined
+              ? String(student.portfolioPdfSubject || '').trim()
+              : existing.portfolioPdfSubject || '',
         };
         const result =
           storage.mode === 'apps_script'
@@ -1158,10 +1180,17 @@ export function createApiApp(): express.Express {
         return;
       }
 
+      const sanitizedAdminStudent: Student = {
+        ...student,
+        behanceUrl: sanitizeExternalUrl(student.behanceUrl),
+        portfolioPdfUrl: sanitizeExternalUrl(student.portfolioPdfUrl),
+        portfolioPdfSubject: String(student.portfolioPdfSubject || '').trim(),
+      };
+
       const result =
         storage.mode === 'apps_script'
-          ? await upsertStudentInAppsScript(storage.apiUrl, storage.secret, student)
-          : await upsertStudentInSheet(storage.token, storage.spreadsheetId, student);
+          ? await upsertStudentInAppsScript(storage.apiUrl, storage.secret, sanitizedAdminStudent)
+          : await upsertStudentInSheet(storage.token, storage.spreadsheetId, sanitizedAdminStudent);
       res.json({ data: scopeDatabaseForSession(result.db, session) });
     } catch (err: any) {
       res.status(502).json({ error: err.message || 'Gagal menyimpan data santri ke Google Sheets.' });
@@ -1226,6 +1255,9 @@ export function createApiApp(): express.Express {
                 .toLowerCase()
                 .replace(/[^a-z0-9\s-]/g, '')
                 .replace(/\s+/g, '-'),
+            behanceUrl: String(s.behanceUrl || '').trim(),
+            portfolioPdfUrl: String(s.portfolioPdfUrl || '').trim(),
+            portfolioPdfSubject: String(s.portfolioPdfSubject || '').trim(),
             accessPin,
             statusAktif:
               s.statusAktif === 'Alumni' || s.statusAktif === 'Cuti'
@@ -1412,6 +1444,53 @@ export function createApiApp(): express.Express {
     }
   });
 
+  app.post('/api/portfolios/batch-upsert', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = req.session!;
+      if (session.role === 'santri_ortu') {
+        res.status(403).json({ error: 'Wali santri tidak dapat mengubah portofolio.' });
+        return;
+      }
+      const storage = await resolveBackendStorage(req);
+      if (storage.mode === 'none') {
+        res.status(503).json({ error: 'Google Sheets belum terhubung.' });
+        return;
+      }
+      const { projects } = req.body as { projects?: PortfolioProject[] };
+      if (!Array.isArray(projects) || projects.length === 0) {
+        res.status(400).json({ error: 'Daftar karya portofolio kosong.' });
+        return;
+      }
+      const validProjects = projects.filter((p) => p && p.id && p.studentId);
+      if (validProjects.length === 0) {
+        res.status(400).json({ error: 'Data karya portofolio tidak lengkap.' });
+        return;
+      }
+
+      if (session.role === 'guru') {
+        const snapshot = await loadDbFromStorage(storage);
+        const teacher = snapshot.teachers.find((t) => t.id === session.teacherId);
+        for (const proj of validProjects) {
+          const targetStudent = snapshot.students.find((s) => s.id === proj.studentId);
+          if (!isTeacherAuthorizedForStudent(teacher, targetStudent)) {
+            res.status(403).json({
+              error: 'Anda tidak memiliki akses mengubah portofolio santri di luar kelas binaan Anda.',
+            });
+            return;
+          }
+        }
+      }
+
+      const nextDb =
+        storage.mode === 'apps_script'
+          ? await upsertPortfoliosBatchInAppsScript(storage.apiUrl, storage.secret, validProjects)
+          : await upsertPortfoliosBatchInSheet(storage.token, storage.spreadsheetId, validProjects);
+      res.json({ data: scopeDatabaseForSession(nextDb, session) });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message || 'Gagal menyimpan beberapa karya portofolio.' });
+    }
+  });
+
   app.delete('/api/portfolios/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const session = req.session!;
@@ -1571,6 +1650,9 @@ export function createApiApp(): express.Express {
           fotoUrl: student.fotoUrl,
           emailSantriOrtu: '',
           portfolioSlug: student.portfolioSlug,
+          behanceUrl: student.behanceUrl || '',
+          portfolioPdfUrl: student.portfolioPdfUrl || '',
+          portfolioPdfSubject: student.portfolioPdfSubject || '',
           accessPin: '',
           statusAktif: student.statusAktif,
         },

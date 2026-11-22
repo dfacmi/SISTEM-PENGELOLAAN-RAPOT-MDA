@@ -1145,22 +1145,22 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
-            <div>
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+            <div className="min-w-0">
               <div className="text-slate-500">Nama Peserta</div>
-              <div className="font-bold text-slate-900 mt-0.5">{studentTitle}</div>
+              <div className="font-bold text-slate-900 mt-0.5 break-words">{studentTitle}</div>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-slate-500">ID / NISN MDA</div>
-              <div className="font-mono font-bold text-slate-900 mt-0.5">{studentNisn}</div>
+              <div className="font-mono font-bold text-slate-900 mt-0.5 break-all">{studentNisn}</div>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-slate-500">Jumlah Soal</div>
-              <div className="font-bold text-slate-900 mt-0.5">
+              <div className="font-bold text-slate-900 mt-0.5 break-words">
                 {selectedExam.questionCount} Butir Pilihan Ganda
               </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-slate-500">Durasi Ujian</div>
               <div className="font-bold text-slate-900 mt-0.5">
                 {selectedExam.durationMinutes} Menit

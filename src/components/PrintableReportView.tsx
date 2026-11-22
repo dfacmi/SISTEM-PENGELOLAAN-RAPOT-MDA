@@ -14,7 +14,7 @@ import { BrandingTemplateConfig, MdaDatabase } from '../types/mda';
 import {
   formatRupiah,
   getKkmPredicateBounds,
-  getPortfolioUrl,
+  getStudentPortfolioLinks,
   hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
@@ -31,12 +31,13 @@ const TRANSPARENT_PIXEL =
 const ScaledA4Page: React.FC<{
   scale: number;
   pageNumber: number;
+  totalPages: number;
   children: React.ReactNode;
-}> = ({ scale, pageNumber, children }) => (
+}> = ({ scale, pageNumber, totalPages, children }) => (
   <div className="print:block">
     <div className="no-print text-center mb-1.5 sm:hidden">
       <span className="inline-block px-3 py-0.5 rounded-full bg-white/90 border border-slate-300 text-[11px] font-semibold text-slate-700 tabular-nums">
-        Halaman {pageNumber} / 5
+        Halaman {pageNumber} / {totalPages}
       </span>
     </div>
     <div
@@ -113,7 +114,9 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
   onBack,
 }) => {
   const [viewportWidth, setViewportWidth] = useState<number>(() =>
-    typeof window !== 'undefined' ? window.innerWidth : 1024
+    typeof window !== 'undefined'
+      ? Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth)
+      : 1024
   );
   const [zoomMode, setZoomMode] = useState<'fit' | 'actual'>('fit');
   const [exportProgress, setExportProgress] = useState<string | null>(null);
@@ -121,7 +124,10 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
   const pageRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth);
+    const handleResize = () =>
+      setViewportWidth(
+        Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth)
+      );
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -188,9 +194,12 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     );
   }
 
-  const portfolioUrl = normalizePdfLinkUrl(
-    getPortfolioUrl(student.portfolioSlug, db.spreadsheetId)
-  );
+  const portfolioLinks = getStudentPortfolioLinks(student, db.spreadsheetId);
+  const portfolioUrl = normalizePdfLinkUrl(portfolioLinks.sidangUrl);
+  const behancePdfLink = normalizePdfLinkUrl(portfolioLinks.behanceUrl);
+  const pdfKaryaLink = normalizePdfLinkUrl(portfolioLinks.pdfUrl);
+  const pdfKaryaSubject = portfolioLinks.pdfSubject;
+
   const kkmDiniyah = period?.kkmDiniyah || 60;
   const kkmTahfidz = period?.kkmTahfidz || 70;
   const kkmDigital = period?.kkmDigital || 70;
@@ -213,6 +222,21 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     ) ||
     projects.find((p) => p.featured) ||
     projects[0];
+
+  const otherShowcaseProjects = projects
+    .filter((p) => p.id !== sidangProject?.id)
+    .sort((a, b) => {
+      const aHasImg = a.mediaItems?.[0]?.url?.trim() ? 1 : 0;
+      const bHasImg = b.mediaItems?.[0]?.url?.trim() ? 1 : 0;
+      return bHasImg - aHasImg;
+    });
+  const page5PdfSlots = otherShowcaseProjects.slice(0, 2);
+  const overflowGalleryProjects = otherShowcaseProjects.slice(2, 6);
+  const hasPage6 = overflowGalleryProjects.length > 0;
+  const totalPages = hasPage6 ? 6 : 5;
+  const orderedTableProjects = sidangProject
+    ? [sidangProject, ...otherShowcaseProjects]
+    : projects;
 
   const handleDownloadPdf = async () => {
     setExportError(null);
@@ -388,6 +412,87 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
     </div>
   );
 
+  const PortfolioLinksBanner = () => (
+    <div
+      className="shrink-0 text-white rounded-2xl p-3.5 space-y-2 shadow-md"
+      style={{ backgroundColor: theme.darkPill }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-[#1DF27A]">
+          LIHAT KARYA SELENGKAPNYA
+        </div>
+        <a
+          href={portfolioUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-pdf-link="true"
+          className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[10px] px-3 py-1 rounded-lg no-underline"
+        >
+          Buka Portofolio Online ↗
+        </a>
+      </div>
+
+      <div>
+        <div className="font-bold text-[14px] text-[#1DF27A] leading-tight">
+          {tpl.qrBannerTitle}
+        </div>
+        <p className="text-[10px] text-slate-200 leading-snug mt-0.5">{tpl.qrBannerDescription}</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <a
+          href={portfolioUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-pdf-link="true"
+          className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3 py-1.5 no-underline"
+        >
+          <div className="text-[8.5px] uppercase tracking-wide text-slate-300 font-bold">
+            1. Link Resmi Portofolio &amp; Sidang Karya:
+          </div>
+          <div className="text-[9.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug">
+            {portfolioUrl}
+          </div>
+        </a>
+
+        {behancePdfLink && (
+          <a
+            href={behancePdfLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-pdf-link="true"
+            className="block bg-slate-950/60 border border-sky-400/35 rounded-lg px-3 py-1.5 no-underline"
+          >
+            <div className="text-[8.5px] uppercase tracking-wide text-sky-200 font-bold">
+              2. Link Portofolio Behance:
+            </div>
+            <div className="text-[9.5px] font-bold text-sky-300 break-all underline decoration-sky-400/50 leading-snug">
+              {behancePdfLink}
+            </div>
+          </a>
+        )}
+
+        {pdfKaryaLink && (
+          <a
+            href={pdfKaryaLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-pdf-link="true"
+            className="block bg-slate-950/60 border border-amber-400/35 rounded-lg px-3 py-1.5 no-underline"
+          >
+            <div className="text-[8.5px] uppercase tracking-wide text-amber-200 font-bold">
+              3. Link PDF Kumpulan Karya 1 Semester
+              {pdfKaryaSubject ? ` (${pdfKaryaSubject})` : ''}:
+            </div>
+            <div className="text-[9.5px] font-bold text-amber-300 break-all underline decoration-amber-400/50 leading-snug">
+              {pdfKaryaLink}
+            </div>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-200 py-4 sm:py-6 print-only-wrapper">
       {/* Screen-only Print & PDF Toolbar */}
@@ -458,7 +563,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
 
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 px-1">
           <span>
-            Format Resmi A4 · 5 Halaman (Font Arial Konsisten · Termasuk Sidang Karya &amp; Link Portofolio)
+            Format Resmi A4 · {totalPages} Halaman (Font Arial Konsisten · Termasuk Sidang Karya &amp; Link Portofolio)
           </span>
           {autoScale < 0.98 && (
             <span className="text-emerald-800 font-medium sm:hidden">
@@ -476,10 +581,14 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         )}
       </div>
 
-      {/* 5 A4 Pages Stack */}
-      <div className="w-full overflow-x-auto px-3 sm:px-0 space-y-5 sm:space-y-8 print:space-y-0 print:px-0 print:overflow-visible">
+      {/* A4 Pages Stack (5 default, max 6 if overflow PDF gallery works exist) */}
+      <div
+        className={`w-full px-3 sm:px-0 space-y-5 sm:space-y-8 print:space-y-0 print:px-0 print:overflow-visible ${
+          zoomMode === 'fit' ? 'overflow-x-hidden' : 'overflow-x-auto'
+        }`}
+      >
         {/* ================= PAGE 1: COVER ================= */}
-        <ScaledA4Page scale={activeScale} pageNumber={1}>
+        <ScaledA4Page scale={activeScale} pageNumber={1} totalPages={totalPages}>
           <section
             ref={(el) => {
               pageRefs.current[0] = el;
@@ -612,7 +721,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         </ScaledA4Page>
 
         {/* ================= PAGE 2: PROFIL & RINGKASAN CAPAIAN ================= */}
-        <ScaledA4Page scale={activeScale} pageNumber={2}>
+        <ScaledA4Page scale={activeScale} pageNumber={2} totalPages={totalPages}>
           <section
             ref={(el) => {
               pageRefs.current[1] = el;
@@ -760,7 +869,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         </ScaledA4Page>
 
         {/* ================= PAGE 3: SIKAP, CHARACTER BUILDING, TAHFIDZ ================= */}
-        <ScaledA4Page scale={activeScale} pageNumber={3}>
+        <ScaledA4Page scale={activeScale} pageNumber={3} totalPages={totalPages}>
           <section
             ref={(el) => {
               pageRefs.current[2] = el;
@@ -1056,7 +1165,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
         </ScaledA4Page>
 
         {/* ================= PAGE 4: DINIYAH, SKILL DIGITAL, KEHADIRAN, TTD ================= */}
-        <ScaledA4Page scale={activeScale} pageNumber={4}>
+        <ScaledA4Page scale={activeScale} pageNumber={4} totalPages={totalPages}>
           <section
             ref={(el) => {
               pageRefs.current[3] = el;
@@ -1394,8 +1503,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
           </section>
         </ScaledA4Page>
 
-        {/* ================= PAGE 5: SIDANG KARYA & LINK PORTOFOLIO ================= */}
-        <ScaledA4Page scale={activeScale} pageNumber={5}>
+        {/* ================= PAGE 5: SIDANG KARYA & CUPLIKAN KARYA PDF ================= */}
+        <ScaledA4Page scale={activeScale} pageNumber={5} totalPages={totalPages}>
           <section
             ref={(el) => {
               pageRefs.current[4] = el;
@@ -1488,44 +1597,53 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   </div>
 
                   <div className="col-span-5 h-full min-h-0 grid grid-rows-2 gap-3 overflow-hidden">
-                    {[1, 2].map((slotIdx) => {
-                      const item = sidangProject?.mediaItems[slotIdx];
+                    {[0, 1].map((idx) => {
+                      const pdfProj = page5PdfSlots[idx];
+                      const fallbackMedia = sidangProject?.mediaItems[idx + 1];
+                      const displayUrl = pdfProj?.mediaItems?.[0]?.url || fallbackMedia?.url || '';
+                      const displayType = pdfProj?.mediaItems?.[0]?.type || fallbackMedia?.type || 'image';
+                      const displayTitle =
+                        pdfProj?.judul || fallbackMedia?.caption || `Cuplikan Karya ${idx + 1}`;
+                      const displayBadge = pdfProj ? pdfProj.jenis : 'Cuplikan Karya';
+                      const displayPreset =
+                        pdfProj?.mediaItems?.[0]?.presetArt ||
+                        fallbackMedia?.presetArt ||
+                        (idx === 0 ? 'uiux' : 'poster');
+
                       return (
                         <div
-                          key={slotIdx}
-                          className="h-full min-h-0 flex flex-col border border-emerald-400/80 rounded-xl overflow-hidden bg-white shadow-xs"
+                          key={idx}
+                          className="h-full min-h-0 flex flex-col border border-emerald-400/80 rounded-xl overflow-hidden bg-white shadow-xs relative"
                         >
-                          <div className="flex-1 min-h-0 w-full overflow-hidden">
-                            {item?.url ? (
-                              item.type === 'video' ? (
+                          <div className="flex-1 min-h-0 w-full overflow-hidden relative">
+                            {displayUrl ? (
+                              displayType === 'video' ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white p-2 text-center">
                                   <span className="text-[9px] font-bold text-[#1DF27A]">
                                     Video Dokumentasi
                                   </span>
                                   <p className="text-[10px] font-semibold line-clamp-1 mt-0.5">
-                                    {item.caption || `Lampiran ${slotIdx + 1}`}
+                                    {displayTitle}
                                   </p>
                                 </div>
                               ) : (
                                 <img
-                                  src={item.url}
-                                  alt={item.caption || `Dokumentasi ${slotIdx + 1}`}
+                                  src={displayUrl}
+                                  alt={displayTitle}
                                   referrerPolicy="no-referrer"
                                   className="w-full h-full object-cover"
                                 />
                               )
                             ) : (
-                              <PortfolioArtwork
-                                preset={item?.presetArt || (slotIdx === 1 ? 'photo' : 'uiux')}
-                                title={item?.caption || `Dokumentasi ${slotIdx + 1}`}
-                              />
+                              <PortfolioArtwork preset={displayPreset} title={displayTitle} />
                             )}
+                            <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded bg-slate-950/80 text-[#1DF27A] text-[8px] font-bold max-w-[90%] truncate">
+                              {displayBadge}
+                            </span>
                           </div>
-                          {item?.url && item?.caption && (
-                            <div className="shrink-0 bg-slate-900 text-white text-[8px] px-2 py-0.5 truncate">
-                              {item.caption}
-                            </div>
-                          )}
+                          <div className="shrink-0 bg-slate-900 text-white text-[8.5px] px-2.5 py-1 truncate">
+                            {displayTitle}
+                          </div>
                         </div>
                       );
                     })}
@@ -1535,7 +1653,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 {/* Ringkasan Singkat Sidang Karya */}
                 <div className="grid grid-cols-12 gap-3 text-[10px]">
                   <div className="col-span-5 flex flex-col gap-2 min-w-0">
-                    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 flex-1">
+                    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 flex-1">
                       <div className="font-bold text-slate-900 text-[10px] mb-1">
                         Kompetensi Sidang Karya
                       </div>
@@ -1544,14 +1662,14 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                           'Presentasi & penguasaan proyek digital santri.'}
                       </div>
                     </div>
-                    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2">
+                    <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5">
                       <span className="font-bold text-slate-900">Tools / Media: </span>
                       <span className="text-emerald-800 font-semibold break-words">
                         {sidangProject?.technology || '—'}
                       </span>
                     </div>
                   </div>
-                  <div className="col-span-7 bg-white border border-slate-200 rounded-lg px-3.5 py-2.5 flex flex-col justify-between min-w-0">
+                  <div className="col-span-7 bg-white border border-slate-200 rounded-lg px-3.5 py-2 flex flex-col justify-between min-w-0">
                     <div>
                       <div className="font-bold text-slate-900 text-[10px] mb-1">
                         Ringkasan Karya &amp; Catatan Sidang
@@ -1564,7 +1682,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                     {sidangProject?.externalLink && (() => {
                       const sidangUrl = normalizePdfLinkUrl(sidangProject.externalLink);
                       return sidangUrl ? (
-                        <div className="pt-1.5 mt-1.5 border-t border-slate-100 text-[9.5px] font-semibold text-sky-700 break-all">
+                        <div className="pt-1 mt-1 border-t border-slate-100 text-[9.5px] font-semibold text-sky-700 break-all">
                           Tautan Karya:{' '}
                           <a
                             href={sidangUrl}
@@ -1583,33 +1701,33 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
               </div>
 
               {/* Bagian 2: Daftar Ringkas Portofolio Terhubung */}
-              <div className="shrink-0 space-y-2">
+              <div className="shrink-0 space-y-1.5">
                 <div className="text-[11px] font-bold text-slate-900 flex items-center justify-between">
                   <span>Daftar Karya &amp; Portofolio Semester Ini</span>
                   <span className="text-[10px] font-normal text-slate-600 tabular-nums">
                     Total {projects.length} karya tercatat
                   </span>
                 </div>
-                <table className="w-full border-collapse text-[10.5px] bg-white rounded-lg overflow-hidden">
+                <table className="w-full border-collapse text-[10px] bg-white rounded-lg overflow-hidden">
                   <thead>
                     <tr className="bg-slate-950 text-white">
-                      <th className="border border-slate-700 py-1.5 px-2 text-center w-[7%]">
+                      <th className="border border-slate-700 py-1 px-2 text-center w-[7%]">
                         No
                       </th>
-                      <th className="border border-slate-700 py-1.5 px-2.5 text-left w-[33%]">
+                      <th className="border border-slate-700 py-1 px-2 text-left w-[33%]">
                         Judul Karya / Sidang
                       </th>
-                      <th className="border border-slate-700 py-1.5 px-2.5 text-left w-[24%]">
-                        Jenis
+                      <th className="border border-slate-700 py-1 px-2 text-left w-[24%]">
+                        Jenis / Pelajaran
                       </th>
-                      <th className="border border-slate-700 py-1.5 px-2.5 text-left w-[36%]">
+                      <th className="border border-slate-700 py-1 px-2 text-left w-[36%]">
                         Keterangan Singkat
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(projects.length > 0
-                      ? projects.slice(0, 5)
+                    {(orderedTableProjects.length > 0
+                      ? orderedTableProjects.slice(0, 5)
                       : [
                           {
                             id: 'empty-1',
@@ -1624,16 +1742,16 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                       const projectUrl = normalizePdfLinkUrl(p.externalLink);
                       return (
                         <tr key={p.id}>
-                          <td className="border border-slate-300 py-1.5 px-2 text-center font-bold tabular-nums align-top">
+                          <td className="border border-slate-300 py-1 px-2 text-center font-bold tabular-nums align-top">
                             {idx + 1}
                           </td>
-                          <td className="border border-slate-300 py-1.5 px-2.5 font-semibold text-slate-900 align-top break-words">
+                          <td className="border border-slate-300 py-1 px-2 font-semibold text-slate-900 align-top break-words">
                             {p.judul}
                           </td>
-                          <td className="border border-slate-300 py-1.5 px-2.5 text-emerald-800 font-medium align-top break-words">
+                          <td className="border border-slate-300 py-1 px-2 text-emerald-800 font-medium align-top break-words">
                             {p.jenis}
                           </td>
-                          <td className="border border-slate-300 py-1.5 px-2.5 text-slate-700 align-top break-words">
+                          <td className="border border-slate-300 py-1 px-2 text-slate-700 align-top break-words">
                             <div>{p.keteranganSingkat || '—'}</div>
                             {projectUrl && (
                               <div className="mt-0.5">
@@ -1642,7 +1760,7 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   data-pdf-link="true"
-                                  className="text-[9px] font-semibold text-sky-700 underline break-all leading-tight"
+                                  className="text-[8.5px] font-semibold text-sky-700 underline break-all leading-tight"
                                 >
                                   {projectUrl}
                                 </a>
@@ -1656,53 +1774,134 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                 </table>
               </div>
 
-              {/* Bagian 3: Blok Utama Koneksi Link Portofolio Online (Rapat Proporsional Tanpa Gap Menganga) */}
-              <div
-                className="shrink-0 text-white rounded-2xl p-4 space-y-2 shadow-md"
-                style={{ backgroundColor: theme.darkPill }}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="inline-block text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/10 text-[#1DF27A]">
-                    Terhubung ke Portofolio Online Santri
-                  </div>
-                  <a
-                    href={portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-pdf-link="true"
-                    className="inline-block bg-[#1DF27A] text-slate-950 font-bold text-[10.5px] px-3.5 py-1.5 rounded-lg"
-                  >
-                    Buka Portofolio Online ↗
-                  </a>
-                </div>
-                <div>
-                  <div className="font-bold text-[16px] text-[#1DF27A] leading-tight">
-                    {tpl.qrBannerTitle}
-                  </div>
-                  <p className="text-[11px] text-slate-200 leading-snug mt-1">
-                    {tpl.qrBannerDescription}
-                  </p>
-                </div>
-                <a
-                  href={portfolioUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-pdf-link="true"
-                  className="block bg-slate-950/60 border border-emerald-400/40 rounded-lg px-3.5 py-2 no-underline"
-                >
-                  <div className="text-[9.5px] uppercase tracking-wide text-slate-300 font-bold">
-                    Link Resmi Portofolio &amp; Sidang Karya:
-                  </div>
-                  <div className="text-[10.5px] font-bold text-[#1DF27A] break-all underline decoration-emerald-400/50 leading-snug">
-                    {portfolioUrl}
-                  </div>
-                </a>
-              </div>
+              {/* Jika total halaman = 5, tampilkan blok 3 Link Portofolio di dasar Halaman 5 */}
+              {!hasPage6 && <PortfolioLinksBanner />}
             </div>
 
             <MdaFooter showMotto={false} />
           </section>
         </ScaledA4Page>
+
+        {/* ================= PAGE 6 (OPSIONAL, MAKS 6 HALAMAN): GALERI KARYA PILIHAN ================= */}
+        {hasPage6 && (
+          <ScaledA4Page scale={activeScale} pageNumber={6} totalPages={totalPages}>
+            <section
+              ref={(el) => {
+                pageRefs.current[5] = el;
+              }}
+              className="rapor-a4-page rapor-document-arial w-[210mm] h-[297mm] flex flex-col text-slate-900 overflow-hidden shrink-0"
+              style={{
+                backgroundColor: theme.pageTint,
+                fontFamily: 'Arial, Helvetica, sans-serif',
+              }}
+            >
+              <div className="px-8 pt-6 pb-4 flex-1 min-h-0 flex flex-col gap-3.5 overflow-hidden">
+                {/* Header Page 6 */}
+                <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-300/80 pb-3">
+                  <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
+                  <div className="text-right min-w-0 leading-snug">
+                    <div className="font-bold text-base text-slate-900 uppercase tracking-tight">
+                      GALERI KARYA PILIHAN SEMESTER INI
+                    </div>
+                    <div className="text-[11px] font-bold text-sky-600 tabular-nums">
+                      Semester {report.semester} · Tahun Akademik {report.tahunAkademik}
+                    </div>
+                    <div className="text-[11px] text-slate-700 truncate">
+                      Nama Santri: <span className="font-bold">{student.nama}</span> ({student.kelas})
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badge Section */}
+                <div className="shrink-0 flex items-center justify-between gap-2">
+                  <span
+                    className="inline-block text-slate-950 font-bold text-[10px] px-3 py-1 rounded-full tracking-wide uppercase"
+                    style={{ backgroundColor: theme.sectionSky }}
+                  >
+                    Lampiran Karya Pilihan &amp; Ekstraksi Portofolio Semester
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-600 tabular-nums">
+                    Menampilkan {overflowGalleryProjects.length} karya lanjutan
+                  </span>
+                </div>
+
+                {/* 2x2 Grid for up to 4 overflow gallery items */}
+                <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3.5">
+                  {overflowGalleryProjects.map((item, idx) => {
+                    const thumbUrl = item.mediaItems?.[0]?.url || '';
+                    const thumbType = item.mediaItems?.[0]?.type || 'image';
+                    const itemExternal = normalizePdfLinkUrl(item.externalLink);
+                    return (
+                      <div
+                        key={item.id}
+                        className="border border-emerald-400/75 rounded-xl bg-white overflow-hidden flex flex-col shadow-xs min-h-0"
+                      >
+                        <div className="flex-1 min-h-0 w-full bg-slate-100 relative overflow-hidden">
+                          {thumbUrl ? (
+                            thumbType === 'video' ? (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white p-3 text-center">
+                                <span className="text-[9px] font-bold text-[#1DF27A]">
+                                  Video Karya
+                                </span>
+                                <p className="text-xs font-bold line-clamp-2 mt-1">
+                                  {item.judul}
+                                </p>
+                              </div>
+                            ) : (
+                              <img
+                                src={thumbUrl}
+                                alt={item.judul}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            )
+                          ) : (
+                            <PortfolioArtwork
+                              preset={item.mediaItems?.[0]?.presetArt || 'poster'}
+                              title={item.judul}
+                            />
+                          )}
+                          <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/85 text-[#1DF27A] text-[8.5px] font-bold max-w-[85%] truncate">
+                            {item.jenis}
+                          </span>
+                          <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-white/90 text-slate-900 text-[8.5px] font-bold">
+                            #{idx + 3}
+                          </span>
+                        </div>
+                        <div className="shrink-0 p-2.5 space-y-0.5 border-t border-slate-200 bg-white">
+                          <div className="font-bold text-[11px] text-slate-950 truncate">
+                            {item.judul}
+                          </div>
+                          <div className="text-[9.5px] text-slate-600 line-clamp-1">
+                            {item.keteranganSingkat || item.description || item.technology}
+                          </div>
+                          {itemExternal && (
+                            <div className="pt-0.5">
+                              <a
+                                href={itemExternal}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-pdf-link="true"
+                                className="text-[8.5px] font-semibold text-sky-700 underline break-all line-clamp-1"
+                              >
+                                {itemExternal}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 3 Link Portofolio di dasar Halaman 6 */}
+                <PortfolioLinksBanner />
+              </div>
+
+              <MdaFooter showMotto={false} />
+            </section>
+          </ScaledA4Page>
+        )}
       </div>
     </div>
   );

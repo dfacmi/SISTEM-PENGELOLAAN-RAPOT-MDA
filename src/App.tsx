@@ -79,6 +79,7 @@ import {
   uploadAssetToDriveViaServer,
   upsertPeriodOnServer,
   upsertPortfolioOnServer,
+  upsertPortfoliosBatchOnServer,
   upsertStudentOnServer,
   upsertTeacherOnServer,
 } from './services/backendApi';
@@ -1059,10 +1060,28 @@ export default function App() {
     });
   };
 
-  const handleUpdateStudentPortfolioLink = (studentId: string, portfolioSlug: string) => {
+  const handleUpdateStudentPortfolioLinks = (
+    studentId: string,
+    patch: {
+      portfolioSlug?: string;
+      behanceUrl?: string;
+      portfolioPdfUrl?: string;
+      portfolioPdfSubject?: string;
+    }
+  ) => {
     const target = db.students.find((s) => s.id === studentId);
     if (!target) return;
-    const updatedStudent: Student = { ...target, portfolioSlug };
+    const updatedStudent: Student = {
+      ...target,
+      ...(patch.portfolioSlug !== undefined ? { portfolioSlug: patch.portfolioSlug } : {}),
+      ...(patch.behanceUrl !== undefined ? { behanceUrl: patch.behanceUrl } : {}),
+      ...(patch.portfolioPdfUrl !== undefined
+        ? { portfolioPdfUrl: patch.portfolioPdfUrl }
+        : {}),
+      ...(patch.portfolioPdfSubject !== undefined
+        ? { portfolioPdfSubject: patch.portfolioPdfSubject }
+        : {}),
+    };
 
     if (previewSampleMode) {
       setDb({
@@ -1075,8 +1094,8 @@ export default function App() {
 
     setConfirmDialog({
       open: true,
-      title: 'Simpan Link Portofolio Santri?',
-      message: `Link portofolio ${target.nama} akan diperbarui di Google Sheets.`,
+      title: 'Simpan 3 Link Portofolio Santri?',
+      message: `Link Sidang Karya, Behance, dan PDF Kumpulan Karya untuk ${target.nama} akan disimpan ke Google Sheets.`,
       confirmLabel: 'Simpan ke Google Sheets',
       onConfirm: async () => {
         if (!ensureOnlineForWrite()) return;
@@ -1223,11 +1242,18 @@ export default function App() {
 
     setConfirmDialog({
       open: true,
-      title: deleted.length > 0 ? 'Hapus Karya Portofolio?' : 'Simpan Karya Portofolio?',
+      title:
+        deleted.length > 0
+          ? 'Hapus Karya Portofolio?'
+          : upserted.length > 1
+            ? `Simpan ${upserted.length} Karya Portofolio?`
+            : 'Simpan Karya Portofolio?',
       message:
         deleted.length > 0
           ? `Karya "${deleted[0].judul}" akan dihapus dari tab Portofolio Google Sheets.`
-          : `Perubahan karya Student Portfolio akan disimpan ke Google Sheets.`,
+          : upserted.length > 1
+            ? `Sebanyak ${upserted.length} karya pilihan hasil ekstraksi PDF akan disimpan ke Google Sheets.`
+            : `Perubahan karya Student Portfolio akan disimpan ke Google Sheets.`,
       confirmLabel: deleted.length > 0 ? 'Hapus' : 'Simpan ke Google Sheets',
       variant: deleted.length > 0 ? 'danger' : 'primary',
       onConfirm: async () => {
@@ -1244,12 +1270,20 @@ export default function App() {
             });
             latestDb = res.data;
           }
-          for (const p of upserted) {
-            const res = await upsertPortfolioOnServer({
-              project: p,
+          if (upserted.length > 1) {
+            const res = await upsertPortfoliosBatchOnServer({
+              projects: upserted,
               spreadsheetId: sheetId,
             });
             latestDb = res.data;
+          } else {
+            for (const p of upserted) {
+              const res = await upsertPortfolioOnServer({
+                project: p,
+                spreadsheetId: sheetId,
+              });
+              latestDb = res.data;
+            }
           }
           applyServerDatabase(latestDb);
           setSyncState('saved');
@@ -2317,35 +2351,35 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col md:flex-row max-w-full overflow-x-hidden"
+      className="min-h-screen flex flex-col lg:flex-row max-w-full overflow-x-hidden"
       style={{ backgroundColor: theme.pageTint }}
     >
-      {/* Mobile Sidebar Backdrop */}
+      {/* Mobile & Tablet Sidebar Backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-950/45 md:hidden"
+          className="fixed inset-0 z-30 bg-slate-950/45 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Left Sidebar (Desktop + Mobile Drawer) */}
+      {/* Left Sidebar (Desktop + Mobile/Tablet Drawer) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div>
           <div
-            className="h-16 px-3.5 border-b border-emerald-200/80 flex items-center justify-between md:justify-center gap-2 text-white"
+            className="h-16 px-3.5 border-b border-emerald-200/80 flex items-center justify-between lg:justify-center gap-2 text-white"
             style={{ background: theme.bannerGradient }}
           >
-            <div className="flex-1 md:w-full inline-flex items-center justify-center bg-white/95 rounded-xl px-3 py-1.5 shadow-xs">
+            <div className="flex-1 lg:w-full inline-flex items-center justify-center bg-white/95 rounded-xl px-3 py-1.5 shadow-xs">
               <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
             </div>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
-              className="md:hidden p-1.5 rounded-lg text-white/90 hover:bg-white/15"
+              className="lg:hidden p-1.5 rounded-lg text-white/90 hover:bg-white/15"
             >
               <X className="w-4 h-4" />
             </button>
@@ -2480,7 +2514,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-slate-700 hover:bg-emerald-50 shrink-0"
+              className="lg:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-slate-700 hover:bg-emerald-50 shrink-0"
               aria-label="Menu"
             >
               <Menu className="w-5 h-5" />
@@ -2503,7 +2537,7 @@ export default function App() {
                 onClick={() => void refreshFromServer(false)}
                 disabled={isSyncing}
                 title="Klik untuk memuat ulang data terbaru dari Google Sheets"
-                className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-colors whitespace-nowrap ${
+                className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-colors whitespace-nowrap ${
                   !isOnline || syncState === 'offline'
                     ? 'bg-rose-50 border-rose-200 text-rose-700'
                     : syncState === 'loading' || syncState === 'saving' || isSyncing
@@ -2664,13 +2698,13 @@ export default function App() {
                   : 'bg-rose-50 border-rose-200 text-rose-800'
               }`}
             >
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-start gap-2 min-w-0 flex-1">
                 {toast.type === 'ok' ? (
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 )}
-                <span>{toast.text}</span>
+                <span className="min-w-0 break-words">{toast.text}</span>
               </span>
               <button
                 type="button"
@@ -3037,9 +3071,9 @@ export default function App() {
                 effectiveRole !== 'santri_ortu' ? setSelectedStudentId : undefined
               }
               onSavePortfolios={handleSavePortfolios}
-              onUpdatePortfolioLink={
+              onUpdatePortfolioLinks={
                 effectiveRole === 'admin' || effectiveRole === 'guru'
-                  ? handleUpdateStudentPortfolioLink
+                  ? handleUpdateStudentPortfolioLinks
                   : undefined
               }
               onUploadMediaToDrive={handleUploadToDrive}

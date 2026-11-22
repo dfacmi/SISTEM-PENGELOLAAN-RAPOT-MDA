@@ -5,10 +5,13 @@ import {
   Copy,
   ExternalLink,
   Eye,
+  FileText,
   Link2,
+  Loader2,
   PenSquare,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   Upload,
   X,
@@ -20,10 +23,26 @@ import {
   PortfolioMediaItem,
   PortfolioProject,
 } from '../types/mda';
-import { getPortfolioUrl, slugifyName } from '../utils/grading';
-import { compressImageToDataUrl } from '../utils/imageHelper';
+import {
+  getStudentPortfolioLinks,
+  normalizeExternalUrl,
+  slugifyName,
+} from '../utils/grading';
+import { compressImageToJpegUnderLimit } from '../utils/imageHelper';
+import {
+  buildPortfolioProjectsFromExtractedPages,
+  ExtractedPdfPageCandidate,
+  extractAndScorePdfPages,
+} from '../utils/pdfPortfolioExtractor';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { MdaLogo, PortfolioArtwork, StudentAvatar } from './MdaLogo';
+
+export interface PortfolioLinksPatch {
+  portfolioSlug?: string;
+  behanceUrl?: string;
+  portfolioPdfUrl?: string;
+  portfolioPdfSubject?: string;
+}
 
 interface PortfolioHubViewProps {
   db: MdaDatabase;
@@ -33,7 +52,7 @@ interface PortfolioHubViewProps {
   templateConfig?: BrandingTemplateConfig;
   onSelectStudent?: (id: string) => void;
   onSavePortfolios: (projects: PortfolioProject[]) => void;
-  onUpdatePortfolioLink?: (studentId: string, portfolioSlug: string) => void;
+  onUpdatePortfolioLinks?: (studentId: string, patch: PortfolioLinksPatch) => void;
   onUploadMediaToDrive: (file: File) => Promise<{ url: string; type: 'image' | 'video' } | null>;
   onExitPublicStandalone?: () => void;
 }
@@ -46,15 +65,34 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
   templateConfig,
   onSelectStudent,
   onSavePortfolios,
-  onUpdatePortfolioLink,
+  onUpdatePortfolioLinks,
   onUploadMediaToDrive,
   onExitPublicStandalone,
 }) => {
-  const [copied, setCopied] = useState(false);
-  const [editingLink, setEditingLink] = useState(false);
-  const [customLinkDraft, setCustomLinkDraft] = useState('');
+  const [copiedKey, setCopiedKey] = useState<'link1' | 'link2' | 'link3' | null>(null);
+  const [editingLinks, setEditingLinks] = useState(false);
+  const [link1Draft, setLink1Draft] = useState('');
+  const [link2Draft, setLink2Draft] = useState('');
+  const [link3Draft, setLink3Draft] = useState('');
+  const [link3SubjectDraft, setLink3SubjectDraft] = useState('UI/UX Design & Graphic Design');
+
+  // Client-side PDF Karya Extractor states
+  const [showPdfExtractor, setShowPdfExtractor] = useState(false);
+  const [pdfSubject, setPdfSubject] = useState('UI/UX Design & Graphic Design');
+  const [pdfDriveLink, setPdfDriveLink] = useState('');
+  const [pdfExtracting, setPdfExtracting] = useState(false);
+  const [pdfProgressText, setPdfProgressText] = useState('');
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [extractedPages, setExtractedPages] = useState<ExtractedPdfPageCandidate[]>([]);
+  const [pdfPageMeta, setPdfPageMeta] = useState<{
+    fileName: string;
+    totalPages: number;
+    processedPages: number;
+  } | null>(null);
+
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [slotByteSizes, setSlotByteSizes] = useState<Record<number, number>>({});
   const [typeFilter, setTypeFilter] = useState<string>('Semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [lightboxMedia, setLightboxMedia] = useState<{
@@ -110,33 +148,52 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
     );
   }
 
-  const portfolioUrl = getPortfolioUrl(student.portfolioSlug, db.spreadsheetId);
+  const links = getStudentPortfolioLinks(student, db.spreadsheetId);
 
-  const handleCopy = async () => {
+  const handleCopy = async (key: 'link1' | 'link2' | 'link3', urlText: string) => {
+    if (!urlText) return;
     try {
-      await navigator.clipboard.writeText(portfolioUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(urlText);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
     } catch {
       // ignore
     }
   };
 
-  const handleNewProject = () => {
+  const openEditLinksForm = () => {
+    setLink1Draft(student.portfolioSlug || '');
+    setLink2Draft(student.behanceUrl || '');
+    setLink3Draft(student.portfolioPdfUrl || '');
+    setLink3SubjectDraft(student.portfolioPdfSubject || 'UI/UX Design & Graphic Design');
+    setEditingLinks(true);
+  };
+
+  const handleNewProject = (preset: 'default' | 'sidang' = 'default') => {
+    setSlotByteSizes({});
     setEditingProject({
       id: `port-${Date.now()}`,
       studentId: student.id,
       tahunAkademik: latestReport?.tahunAkademik || '2026/2027',
       semester: latestReport?.semester || 'Gasal',
-      judul: '',
-      jenis: 'Graphic Design / UI/UX',
-      keteranganSingkat: '',
-      competence: '',
+      judul: preset === 'sidang' ? 'Sidang Karya Akhir Semester' : '',
+      jenis: preset === 'sidang' ? 'Sidang Karya' : 'Graphic Design / UI/UX',
+      keteranganSingkat:
+        preset === 'sidang' ? 'Presentasi & Sidang Karya Proyek Utama Santri' : '',
+      competence:
+        preset === 'sidang'
+          ? 'Mampu merancang, mempresentasikan, dan mempertanggungjawabkan hasil karya di hadapan penguji.'
+          : '',
       technology: 'Figma, Canva',
       description: '',
       externalLink: '',
       mediaItems: [
-        { url: '', type: 'image', caption: 'Karya Utama', presetArt: 'poster' },
+        {
+          url: '',
+          type: 'image',
+          caption: preset === 'sidang' ? 'Dokumentasi / Slide Sidang Karya' : 'Karya Utama',
+          presetArt: 'poster',
+        },
         { url: '', type: 'image', caption: 'Tampilan Detail', presetArt: 'uiux' },
         { url: '', type: 'image', caption: 'Dokumentasi / Variasi', presetArt: 'photo' },
       ],
@@ -152,11 +209,33 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
     if (!file || !editingProject) return;
     setUploadingSlot(slotIdx);
     try {
-      let res = await onUploadMediaToDrive(file);
-      if (!res && file.type.startsWith('image/')) {
-        const compressed = await compressImageToDataUrl(file, 900, 0.84);
-        res = { url: compressed, type: 'image' };
+      let res: { url: string; type: 'image' | 'video' } | null = null;
+      if (file.type.startsWith('image/')) {
+        // Compress strictly to max 640px, JPEG 0.68, < 22 KB for reliable Sheets/PDF speed
+        const compressed = await compressImageToJpegUnderLimit(file, {
+          maxWidth: 640,
+          quality: 0.68,
+          maxBytes: 22 * 1024,
+          maxChars: 30000,
+        });
+        const compressedFile = await fetch(compressed.dataUrl)
+          .then((r) => r.blob())
+          .then(
+            (blob) =>
+              new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                type: 'image/jpeg',
+              })
+          )
+          .catch(() => file);
+        const driveRes = await onUploadMediaToDrive(compressedFile);
+        res = driveRes || { url: compressed.dataUrl, type: 'image' };
+        if (!driveRes) {
+          setSlotByteSizes((prev) => ({ ...prev, [slotIdx]: compressed.byteLength }));
+        }
+      } else {
+        res = await onUploadMediaToDrive(file);
       }
+
       if (res) {
         const nextMedia = [...editingProject.mediaItems];
         nextMedia[slotIdx] = {
@@ -170,6 +249,59 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
       setUploadingSlot(null);
       e.target.value = '';
     }
+  };
+
+  const handlePdfUploadForExtraction = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfError(null);
+    setPdfExtracting(true);
+    setExtractedPages([]);
+    setPdfProgressText('Membaca file PDF di browser...');
+    try {
+      const summary = await extractAndScorePdfPages(file, {
+        defaultSubject: pdfSubject.trim() || 'UI/UX Design & Graphic Design',
+        maxPages: 20,
+        onProgress: (curr, total) => {
+          setPdfProgressText(`Menganalisis halaman ${curr}/${total}...`);
+        },
+      });
+      setExtractedPages(summary.pages);
+      setPdfPageMeta({
+        fileName: file.name,
+        totalPages: summary.totalPagesInPdf,
+        processedPages: summary.processedPages,
+      });
+    } catch (err: any) {
+      setPdfError(
+        err?.message ||
+          'Gagal membaca PDF di browser. Pastikan file PDF valid dan tidak terkunci password.'
+      );
+    } finally {
+      setPdfExtracting(false);
+      setPdfProgressText('');
+      e.target.value = '';
+    }
+  };
+
+  const handleSaveExtractedPages = () => {
+    const chosen = extractedPages.filter((p) => p.selected);
+    if (chosen.length === 0) return;
+
+    const cleanSubject = pdfSubject.trim() || 'UI/UX Design & Graphic Design';
+    const newProjects = buildPortfolioProjectsFromExtractedPages({
+      studentId: student.id,
+      tahunAkademik: latestReport?.tahunAkademik || '2026/2027',
+      semester: latestReport?.semester || 'Gasal',
+      subject: cleanSubject,
+      pdfExternalLink: pdfDriveLink.trim() || student.portfolioPdfUrl || '',
+      selectedPages: chosen,
+    });
+
+    onSavePortfolios([...db.portfolios, ...newProjects]);
+    setExtractedPages([]);
+    setPdfPageMeta(null);
+    setShowPdfExtractor(false);
   };
 
   const handleSubmitProject = (e: React.FormEvent) => {
@@ -308,124 +440,513 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             </div>
 
             <div
-              className="flex flex-col justify-between gap-3 text-white rounded-xl p-4 w-full lg:w-auto lg:min-w-[290px] min-w-0 max-w-full lg:max-w-[360px] shrink-0"
+              className="flex flex-col justify-between gap-3 text-white rounded-xl p-4 w-full lg:w-[400px] xl:w-[430px] min-w-0 max-w-full shrink-0"
               style={{ backgroundColor: theme.darkPill }}
             >
-              <div className="space-y-1.5">
+              <div className="space-y-2.5 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1DF27A]">
-                    <Link2 className="w-3.5 h-3.5" />
-                    <span>Link Portofolio Santri</span>
+                    <Link2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>3 Link Portofolio Santri</span>
                   </div>
-                  {canEdit && onUpdatePortfolioLink && !editingLink && (
+                  {canEdit && onUpdatePortfolioLinks && !editingLinks && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setCustomLinkDraft(student.portfolioSlug || '');
-                        setEditingLink(true);
-                      }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[11px] font-medium text-emerald-200 transition-colors"
+                      onClick={openEditLinksForm}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[11px] font-medium text-emerald-200 transition-colors"
                     >
                       <PenSquare className="w-3 h-3" />
-                      <span>Isi / Ubah Link</span>
+                      <span>Isi / Edit 3 Link</span>
                     </button>
                   )}
                 </div>
 
-                {editingLink && onUpdatePortfolioLink ? (
+                {editingLinks && onUpdatePortfolioLinks ? (
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      const raw = customLinkDraft.trim();
-                      const nextVal = /^https?:\/\//i.test(raw)
-                        ? raw
-                        : /^www\./i.test(raw)
-                          ? `https://${raw}`
-                          : slugifyName(raw) || slugifyName(student.nama);
-                      onUpdatePortfolioLink(student.id, nextVal);
-                      setEditingLink(false);
+                      const raw1 = link1Draft.trim();
+                      const nextSlug = /^https?:\/\//i.test(raw1)
+                        ? normalizeExternalUrl(raw1)
+                        : /^www\./i.test(raw1)
+                          ? `https://${raw1}`
+                          : slugifyName(raw1) || slugifyName(student.nama);
+                      onUpdatePortfolioLinks(student.id, {
+                        portfolioSlug: nextSlug,
+                        behanceUrl: normalizeExternalUrl(link2Draft),
+                        portfolioPdfUrl: normalizeExternalUrl(link3Draft),
+                        portfolioPdfSubject: link3SubjectDraft.trim(),
+                      });
+                      setEditingLinks(false);
                     }}
-                    className="space-y-2 pt-1"
+                    className="space-y-2.5 pt-1"
                   >
-                    <input
-                      type="text"
-                      value={customLinkDraft}
-                      onChange={(e) => setCustomLinkDraft(e.target.value)}
-                      placeholder="https://drive.google.com/... atau slug"
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-emerald-400/50 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
-                    />
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <label className="text-[10.5px] font-semibold text-emerald-200">
+                          Link 1: Sidang Karya (Slug / URL)
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setLink1Draft(slugifyName(student.nama))}
+                          className="text-[10px] text-slate-300 hover:text-white underline"
+                        >
+                          Reset Slug
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={link1Draft}
+                        onChange={(e) => setLink1Draft(e.target.value)}
+                        placeholder="alwan-hanif atau https://..."
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-emerald-400/40 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10.5px] font-semibold text-sky-200 mb-1">
+                        Link 2: Portofolio Behance
+                      </label>
+                      <input
+                        type="text"
+                        value={link2Draft}
+                        onChange={(e) => setLink2Draft(e.target.value)}
+                        placeholder="https://www.behance.net/username"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-sky-400/40 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10.5px] font-semibold text-amber-200 mb-1">
+                        Link 3: PDF Kumpulan Karya 1 Semester
+                      </label>
+                      <input
+                        type="text"
+                        value={link3Draft}
+                        onChange={(e) => setLink3Draft(e.target.value)}
+                        placeholder="https://drive.google.com/file/d/..."
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-amber-400/40 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10.5px] font-semibold text-amber-100 mb-1">
+                        Nama Pelajaran (untuk Link 3)
+                      </label>
+                      <input
+                        type="text"
+                        value={link3SubjectDraft}
+                        onChange={(e) => setLink3SubjectDraft(e.target.value)}
+                        placeholder="UI/UX Design & Graphic Design"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-amber-400/30 text-[11px] text-white placeholder:text-slate-400 focus:outline-none"
+                      />
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {['UI/UX Design & Graphic Design', 'UI/UX Design', 'Graphic Design'].map(
+                          (opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setLink3SubjectDraft(opt)}
+                              className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[9.5px] text-amber-200"
+                            >
+                              {opt}
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
                       <button
                         type="submit"
-                        className="px-2.5 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
+                        className="px-3 py-1.5 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
                       >
-                        Simpan Link
+                        Simpan 3 Link
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          setCustomLinkDraft(slugifyName(student.nama))
-                        }
-                        className="px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[11px] text-slate-200"
-                      >
-                        Reset Default
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingLink(false)}
-                        className="px-2 py-1 rounded-md text-[11px] text-slate-300 hover:text-white"
+                        onClick={() => setEditingLinks(false)}
+                        className="px-2.5 py-1.5 rounded-md text-[11px] text-slate-300 hover:text-white"
                       >
                         Batal
                       </button>
                     </div>
                   </form>
                 ) : (
-                  <a
-                    href={portfolioUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-emerald-100 break-all transition-colors"
-                  >
-                    {portfolioUrl}
-                  </a>
+                  <div className="space-y-2 min-w-0">
+                    {/* Link 1 */}
+                    <div className="rounded-lg bg-white/10 border border-white/10 p-2 space-y-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[#1DF27A]">
+                          1. Sidang Karya
+                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => void handleCopy('link1', links.sidangUrl)}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                          >
+                            {copiedKey === 'link1' ? (
+                              <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                            ) : (
+                              <Copy className="w-2.5 h-2.5" />
+                            )}
+                            <span>{copiedKey === 'link1' ? 'Disalin' : 'Salin'}</span>
+                          </button>
+                          <a
+                            href={links.sidangUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#1DF27A] text-slate-950 text-[10px] font-bold"
+                          >
+                            <span>Buka</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      </div>
+                      <a
+                        href={links.sidangUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-[10.5px] font-mono text-emerald-100 break-all hover:underline"
+                      >
+                        {links.sidangUrl}
+                      </a>
+                    </div>
+
+                    {/* Link 2 */}
+                    <div className="rounded-lg bg-white/10 border border-white/10 p-2 space-y-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-sky-300">
+                          2. Portofolio Behance
+                        </span>
+                        {links.behanceUrl && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy('link2', links.behanceUrl)}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                            >
+                              {copiedKey === 'link2' ? (
+                                <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                              ) : (
+                                <Copy className="w-2.5 h-2.5" />
+                              )}
+                              <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
+                            </button>
+                            <a
+                              href={links.behanceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-400 text-slate-950 text-[10px] font-bold"
+                            >
+                              <span>Buka</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      {links.behanceUrl ? (
+                        <a
+                          href={links.behanceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-[10.5px] font-mono text-sky-100 break-all hover:underline"
+                        >
+                          {links.behanceUrl}
+                        </a>
+                      ) : (
+                        <div className="text-[10.5px] text-slate-400 italic">Belum diisi</div>
+                      )}
+                    </div>
+
+                    {/* Link 3 */}
+                    <div className="rounded-lg bg-white/10 border border-white/10 p-2 space-y-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                        <div className="flex flex-wrap items-center gap-1 min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                            3. PDF Karya 1 Semester
+                          </span>
+                          {links.pdfSubject && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-[9.5px] font-semibold text-amber-200">
+                              {links.pdfSubject}
+                            </span>
+                          )}
+                        </div>
+                        {links.pdfUrl && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy('link3', links.pdfUrl)}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                            >
+                              {copiedKey === 'link3' ? (
+                                <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                              ) : (
+                                <Copy className="w-2.5 h-2.5" />
+                              )}
+                              <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
+                            </button>
+                            <a
+                              href={links.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-300 text-slate-950 text-[10px] font-bold"
+                            >
+                              <span>Buka</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      {links.pdfUrl ? (
+                        <a
+                          href={links.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-[10.5px] font-mono text-amber-100 break-all hover:underline"
+                        >
+                          {links.pdfUrl}
+                        </a>
+                      ) : (
+                        <div className="text-[10.5px] text-slate-400 italic">Belum diisi</div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold text-white transition-colors"
-                >
-                  {copied ? (
-                    <Check className="w-3.5 h-3.5 text-[#1DF27A]" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                  <span>{copied ? 'Link Disalin' : 'Salin Link'}</span>
-                </button>
-                <a
-                  href={portfolioUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-emerald-200 transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Buka Link</span>
-                </a>
-                {canEdit && (
+
+              {canEdit && (
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/10">
                   <button
                     type="button"
-                    onClick={handleNewProject}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
+                    onClick={() => handleNewProject('sidang')}
+                    className="flex-1 min-h-[36px] inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Karya Baru</span>
+                    <span>Karya / Sidang Baru</span>
                   </button>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPdfDriveLink(student.portfolioPdfUrl || '');
+                      setPdfSubject(student.portfolioPdfSubject || 'UI/UX Design & Graphic Design');
+                      setShowPdfExtractor((prev) => !prev);
+                    }}
+                    className="flex-1 min-h-[36px] inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold text-white transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Ekstrak PDF</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Dedicated Browser-Only PDF Kumpulan Karya Extractor */}
+        {canEdit && showPdfExtractor && (
+          <div className="bg-white border border-emerald-200 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="space-y-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>Upload &amp; Ekstrak Otomatis Karya Terbaik dari PDF</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  File PDF diproses 100% di browser Anda (tidak dikirim ke server/Sheets). Sistem menilai variasi warna, kepadatan visual, dan komposisi untuk otomatis memilih 2–4 karya terbaik (maks. 20 KB per thumbnail).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPdfExtractor(false)}
+                className="self-end sm:self-start text-xs text-slate-500 hover:text-slate-800 px-2 py-1"
+              >
+                Tutup
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Nama Pelajaran Karya PDF
+                </label>
+                <input
+                  type="text"
+                  value={pdfSubject}
+                  onChange={(e) => setPdfSubject(e.target.value)}
+                  placeholder="UI/UX Design & Graphic Design"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {[
+                    'UI/UX Design & Graphic Design',
+                    'UI/UX Design',
+                    'Graphic Design',
+                    'Desain Multimedia',
+                  ].map((subj) => (
+                    <button
+                      key={subj}
+                      type="button"
+                      onClick={() => setPdfSubject(subj)}
+                      className={`px-2 py-1 rounded-md text-[11px] font-semibold border transition-colors ${
+                        pdfSubject === subj
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50'
+                      }`}
+                    >
+                      {subj}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Link PDF Asli (Google Drive, opsional untuk tautan tiap karya)
+                </label>
+                <input
+                  type="url"
+                  value={pdfDriveLink}
+                  onChange={(e) => setPdfDriveLink(e.target.value)}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                />
+                <div className="pt-1">
+                  <label className="w-full sm:w-auto min-h-[40px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors">
+                    {pdfExtracting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-[#1DF27A]" />
+                        <span>{pdfProgressText || 'Menganalisis PDF...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 text-[#1DF27A]" />
+                        <span>Pilih File PDF Kumpulan Karya (.pdf)</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      disabled={pdfExtracting}
+                      onChange={(e) => void handlePdfUploadForExtraction(e)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {pdfError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                {pdfError}
+              </div>
+            )}
+
+            {extractedPages.length > 0 && (
+              <div className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="text-xs text-slate-700">
+                    <strong>{pdfPageMeta?.fileName}</strong> · Teranalisis{' '}
+                    {pdfPageMeta?.processedPages} dari {pdfPageMeta?.totalPages} halaman.{' '}
+                    <span className="text-emerald-700 font-semibold">
+                      ({extractedPages.filter((p) => p.selected).length} karya dipilih untuk disimpan)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExtractedPages((prev) =>
+                          prev.map((p) => ({ ...p, selected: p.recommended }))
+                        )
+                      }
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Pilih Rekomendasi Terbaik
+                    </button>
+                    <button
+                      type="button"
+                      disabled={extractedPages.filter((p) => p.selected).length === 0}
+                      onClick={handleSaveExtractedPages}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-bold"
+                    >
+                      Simpan {extractedPages.filter((p) => p.selected).length} Karya Terpilih
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {extractedPages.map((page) => (
+                    <div
+                      key={page.pageNumber}
+                      className={`rounded-xl border p-3 space-y-2.5 transition-colors ${
+                        page.selected
+                          ? 'border-emerald-500 bg-emerald-50/40'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="relative h-44 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                        <img
+                          src={page.thumbnailDataUrl}
+                          alt={`Halaman ${page.pageNumber}`}
+                          className="w-full h-full object-contain"
+                        />
+                        {page.recommended && (
+                          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#0E2228]/90 text-[#1DF27A] text-[10px] font-bold shadow-xs">
+                            Terpilih Otomatis (Terbaik)
+                          </span>
+                        )}
+                        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-white/90 border border-slate-200 text-[10px] font-mono font-bold text-slate-800">
+                          Skor {page.score}
+                        </span>
+                      </div>
+
+                      <label className="flex items-center justify-between gap-2 text-xs cursor-pointer">
+                        <span className="inline-flex items-center gap-2 font-semibold text-slate-800">
+                          <input
+                            type="checkbox"
+                            checked={page.selected}
+                            onChange={(e) =>
+                              setExtractedPages((prev) =>
+                                prev.map((p) =>
+                                  p.pageNumber === page.pageNumber
+                                    ? { ...p, selected: e.target.checked }
+                                    : p
+                                )
+                              )
+                            }
+                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span>Hal. {page.pageNumber}</span>
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-500">
+                          {(page.byteLength / 1024).toFixed(1)} KB
+                        </span>
+                      </label>
+
+                      <input
+                        type="text"
+                        value={page.title}
+                        onChange={(e) =>
+                          setExtractedPages((prev) =>
+                            prev.map((p) =>
+                              p.pageNumber === page.pageNumber
+                                ? { ...p, title: e.target.value }
+                                : p
+                            )
+                          )
+                        }
+                        placeholder={`Judul karya halaman ${page.pageNumber}`}
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Filter by Materi / Jenis Karya + Search Bar */}
         {projects.length > 0 && (
@@ -483,6 +1004,56 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               </button>
             </div>
 
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <span className="text-[11px] font-semibold text-slate-600 mr-1">
+                Pilih Cepat Jenis Karya:
+              </span>
+              {[
+                {
+                  label: 'Sidang Karya (Utama Rapor Hal. 5)',
+                  jenis: 'Sidang Karya',
+                  highlight: true,
+                },
+                { label: 'UI/UX Design', jenis: 'UI/UX Design', highlight: false },
+                { label: 'Graphic Design', jenis: 'Graphic Design', highlight: false },
+                {
+                  label: 'UI/UX Design & Graphic Design',
+                  jenis: 'UI/UX Design & Graphic Design',
+                  highlight: false,
+                },
+                {
+                  label: 'Fotografi & Videografi',
+                  jenis: 'Fotografi & Videografi',
+                  highlight: false,
+                },
+              ].map((preset) => (
+                <button
+                  key={preset.jenis}
+                  type="button"
+                  onClick={() =>
+                    setEditingProject({
+                      ...editingProject,
+                      jenis: preset.jenis,
+                      judul:
+                        preset.jenis === 'Sidang Karya' && !editingProject.judul.trim()
+                          ? 'Sidang Karya Akhir Semester'
+                          : editingProject.judul,
+                      featured: preset.jenis === 'Sidang Karya' ? true : editingProject.featured,
+                    })
+                  }
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
+                    editingProject.jenis.toLowerCase() === preset.jenis.toLowerCase()
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : preset.highlight
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -495,7 +1066,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   onChange={(e) =>
                     setEditingProject({ ...editingProject, judul: e.target.value })
                   }
-                  placeholder="Contoh: UI/UX Design – Aplikasi Mutabaah Tahfidz"
+                  placeholder="Contoh: Sidang Karya – Desain Aplikasi Mutabaah Tahfidz"
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
                 />
               </div>
@@ -510,7 +1081,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   onChange={(e) =>
                     setEditingProject({ ...editingProject, jenis: e.target.value })
                   }
-                  placeholder="Poster / UI/UX / Video / Web"
+                  placeholder="Sidang Karya / UI/UX / Graphic Design"
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
                 />
               </div>
@@ -593,10 +1164,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               </div>
             </div>
 
-            {/* 3 Media Slots with Google Drive / Local Image Upload */}
+            {/* 3 Media Slots with <22KB JPEG Compression / Google Drive Upload */}
             <div className="pt-2 border-t border-slate-100">
               <div className="text-xs font-semibold text-slate-800 mb-3">
-                Galeri Media Karya (3 Slot Foto/Video — Upload Langsung / Google Drive / URL)
+                Galeri Media Karya (3 Slot Foto/Video — Kompres Otomatis &lt; 22 KB untuk Rapor &amp; Sheets)
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {editingProject.mediaItems.map((m, idx) => (
@@ -604,8 +1175,15 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     key={idx}
                     className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
                   >
-                    <div className="text-xs font-semibold text-slate-700">
-                      Slot Karya {idx + 1}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-700">
+                        Slot Karya {idx + 1}
+                      </span>
+                      {slotByteSizes[idx] ? (
+                        <span className="text-[10px] font-mono text-emerald-700 font-semibold">
+                          {(slotByteSizes[idx] / 1024).toFixed(1)} KB
+                        </span>
+                      ) : null}
                     </div>
                     <input
                       type="text"
@@ -651,7 +1229,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100 text-[11px] font-semibold text-slate-700 cursor-pointer">
                         <Upload className="w-3 h-3" />
                         <span>
-                          {uploadingSlot === idx ? 'Mengunggah...' : 'Upload Karya'}
+                          {uploadingSlot === idx ? 'Mengompres...' : 'Upload Karya'}
                         </span>
                         <input
                           type="file"
@@ -696,14 +1274,28 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               Tambahkan proyek desain, UI/UX, fotografi, atau video santri agar muncul di halaman portofolio &amp; lampiran PDF.
             </p>
             {canEdit && (
-              <button
-                type="button"
-                onClick={handleNewProject}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambah Karya Pertama</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleNewProject('sidang')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Sidang Karya / Karya Baru</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPdfDriveLink(student.portfolioPdfUrl || '');
+                    setPdfSubject(student.portfolioPdfSubject || 'UI/UX Design & Graphic Design');
+                    setShowPdfExtractor(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800"
+                >
+                  <FileText className="w-4 h-4 text-[#1DF27A]" />
+                  <span>Ekstrak Karya dari PDF</span>
+                </button>
+              </div>
             )}
           </div>
         ) : (
