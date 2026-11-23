@@ -49,7 +49,11 @@ import {
   parseWordOrTextFileQuestions,
   validateQuestionDraft,
 } from '../utils/cbtImportParser';
-import { extractUniqueClasses, matchesClassFilter } from '../utils/grading';
+import {
+  extractUniqueClasses,
+  isRemovedDigitalSubject,
+  matchesClassFilter,
+} from '../utils/grading';
 
 interface CbtAdminViewProps {
   db: MdaDatabase;
@@ -187,8 +191,16 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
   const digitalSubjects = useMemo(() => {
     const base = DEFAULT_DIGITAL_SKILLS.map((d) => d.materiSkill);
-    const custom = db.reports.flatMap((r) => r.skillDigital.map((d) => d.materiSkill));
-    return Array.from(new Set([...base, ...custom].filter((s) => s.trim() !== '')));
+    const custom = db.reports.flatMap((r) =>
+      r.skillDigital.map((d) => d.materiSkill)
+    );
+    return Array.from(
+      new Set(
+        [...base, ...custom].filter(
+          (s) => s.trim() !== '' && !isRemovedDigitalSubject(s)
+        )
+      )
+    );
   }, [db.reports]);
 
   const handleCreateBlankExam = async () => {
@@ -821,50 +833,70 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         </select>
                       </div>
 
-                      {examDraft.targetRaporMapping.category !== 'none' && (
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Target Mata Pelajaran / Materi
-                          </label>
-                          <select
-                            value={examDraft.targetRaporMapping.subjectName}
-                            onChange={(e) =>
-                              setExamDraft({
-                                ...examDraft,
-                                targetRaporMapping: {
-                                  ...examDraft.targetRaporMapping,
-                                  subjectName: e.target.value,
-                                },
-                              })
-                            }
-                            className="w-full px-3 py-2 text-xs border border-emerald-200 rounded-xl bg-white"
-                          >
-                            {examDraft.targetRaporMapping.category === 'diniyah' &&
-                              diniyahSubjects.map((s) => (
-                                <option key={s} value={s}>
-                                  Diniyah: {s}
+                      {examDraft.targetRaporMapping.category !== 'none' && (() => {
+                        const isLegacyRemovedDigital =
+                          examDraft.targetRaporMapping.category === 'skillDigital' &&
+                          isRemovedDigitalSubject(examDraft.targetRaporMapping.subjectName);
+                        return (
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Target Mata Pelajaran / Materi
+                            </label>
+                            <select
+                              value={
+                                isLegacyRemovedDigital
+                                  ? ''
+                                  : examDraft.targetRaporMapping.subjectName
+                              }
+                              onChange={(e) =>
+                                setExamDraft({
+                                  ...examDraft,
+                                  targetRaporMapping: {
+                                    ...examDraft.targetRaporMapping,
+                                    subjectName: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-3 py-2 text-xs border border-emerald-200 rounded-xl bg-white"
+                            >
+                              {isLegacyRemovedDigital && (
+                                <option value="" disabled>
+                                  -- Pilih Mapel Skill Digital Aktif --
                                 </option>
-                              ))}
-                            {examDraft.targetRaporMapping.category === 'skillDigital' &&
-                              digitalSubjects.map((s) => (
-                                <option key={s} value={s}>
-                                  Skill Digital: {s}
-                                </option>
-                              ))}
-                            {examDraft.targetRaporMapping.category === 'tahfidz' && (
-                              <>
-                                <option value="Tahfidz Nilai Akhir">
-                                  Tahfidz Nilai Akhir (Semua Aspek)
-                                </option>
-                                <option value="Kelancaran">Tahfidz: Kelancaran</option>
-                                <option value="Tajwid">Tahfidz: Tajwid</option>
-                                <option value="Makhraj">Tahfidz: Makhraj &amp; Fashahah</option>
-                                <option value="Ketepatan Ayat">Tahfidz: Ketepatan Ayat</option>
-                              </>
+                              )}
+                              {examDraft.targetRaporMapping.category === 'diniyah' &&
+                                diniyahSubjects.map((s) => (
+                                  <option key={s} value={s}>
+                                    Diniyah: {s}
+                                  </option>
+                                ))}
+                              {examDraft.targetRaporMapping.category === 'skillDigital' &&
+                                digitalSubjects.map((s) => (
+                                  <option key={s} value={s}>
+                                    Skill Digital: {s}
+                                  </option>
+                                ))}
+                              {examDraft.targetRaporMapping.category === 'tahfidz' && (
+                                <>
+                                  <option value="Tahfidz Nilai Akhir">
+                                    Tahfidz Nilai Akhir (Semua Aspek)
+                                  </option>
+                                  <option value="Kelancaran">Tahfidz: Kelancaran</option>
+                                  <option value="Tajwid">Tahfidz: Tajwid</option>
+                                  <option value="Makhraj">Tahfidz: Makhraj &amp; Fashahah</option>
+                                  <option value="Ketepatan Ayat">Tahfidz: Ketepatan Ayat</option>
+                                </>
+                              )}
+                            </select>
+                            {isLegacyRemovedDigital && (
+                              <p className="mt-1 text-[10px] text-amber-700">
+                                Paket CBT lama ini terhubung ke mapel nonaktif (
+                                {examDraft.targetRaporMapping.subjectName}). Pilih mapel aktif di atas jika ingin memetakan ulang.
+                              </p>
                             )}
-                          </select>
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })()}
 
                       {examDraft.targetRaporMapping.category === 'skillDigital' && (
                         <div>

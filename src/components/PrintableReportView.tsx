@@ -21,6 +21,7 @@ import {
   hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
+  mergeActiveDigitalSkills,
   resolveTanggalRapor,
 } from '../utils/grading';
 import { normalizeDisplayImageUrl } from '../utils/imageHelper';
@@ -328,7 +329,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
 
   const diniyahAvg = hitungRataRataDiniyah(report.diniyah);
   const diniyahPredikat = hitungPredikatByKkm(diniyahAvg, kkmDiniyah);
-  const digitalAvg = hitungRataRataDigital(report.skillDigital);
+  const activeDigitalSkills = mergeActiveDigitalSkills(report.skillDigital, kkmDigital);
+  const digitalAvg = hitungRataRataDigital(activeDigitalSkills);
   const digitalPredikat = hitungPredikatByKkm(digitalAvg, kkmDigital);
   const effectiveTanggalRapor = resolveTanggalRapor(
     report.tanggalRapor || period?.tanggalRapor,
@@ -1439,8 +1441,8 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {report.skillDigital.map((s) => (
-                      <tr key={s.no}>
+                    {activeDigitalSkills.map((s) => (
+                      <tr key={`${s.no}-${s.materiSkill}`}>
                         <td className="border border-slate-300 py-1.5 px-2 text-center tabular-nums">
                           {s.no}
                         </td>

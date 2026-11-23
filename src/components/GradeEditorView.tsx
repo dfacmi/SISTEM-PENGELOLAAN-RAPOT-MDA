@@ -27,6 +27,7 @@ import {
   Student,
 } from '../types/mda';
 import {
+  ACTIVE_DIGITAL_SKILL_NAMES,
   DEFAULT_GRADE_WEIGHTS,
   extractUniqueClasses,
   formatRupiah,
@@ -38,6 +39,7 @@ import {
   hitungPredikatByKkm,
   hitungRataRataDigital,
   hitungRataRataDiniyah,
+  isRemovedDigitalSubject,
   matchesClassFilter,
   parseScoreInput,
   recalculateReport,
@@ -273,7 +275,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
     db.reports.forEach((r) => {
       r.skillDigital.forEach((s) => {
         const name = s.materiSkill.trim();
-        if (!name || name === '...............') return;
+        if (!name || name === '...............' || isRemovedDigitalSubject(name)) return;
         const k = name.toLowerCase();
         if (!digitalMap.has(k)) {
           digitalMap.set(k, {
@@ -598,9 +600,38 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
     [db.reports, student, selectedYear, selectedSemester]
   );
 
+  const prepareReportDraft = (base: SemesterReport): SemesterReport => {
+    const kkmDigital = periodKkmOverrides.kkmDigital || 70;
+    const existingSkills = (base.skillDigital || []).map((s) => ({ ...s }));
+    const existingKeys = new Set(
+      existingSkills.map((s) => s.materiSkill.trim().toLowerCase())
+    );
+    for (const name of ACTIVE_DIGITAL_SKILL_NAMES) {
+      if (!existingKeys.has(name.toLowerCase())) {
+        existingSkills.push({
+          no: existingSkills.length + 1,
+          materiSkill: name,
+          kkm: kkmDigital,
+          pengetahuan: 0,
+          keterampilan: 0,
+          nilaiAkhir: 0,
+          predikat: 'D',
+        });
+      }
+    }
+    return recalculateReport(
+      {
+        ...base,
+        skillDigital: existingSkills,
+      },
+      weights,
+      periodKkmOverrides
+    );
+  };
+
   const [draft, setDraft] = useState<SemesterReport>(() =>
     existingReport
-      ? recalculateReport(existingReport, weights, periodKkmOverrides)
+      ? prepareReportDraft(existingReport)
       : student
         ? buildBaselineReportForStudent(student, selectedYear, selectedSemester, db)
         : ({} as SemesterReport)
@@ -610,7 +641,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
     if (!student) return;
     setDraft(
       existingReport
-        ? recalculateReport(existingReport, weights, periodKkmOverrides)
+        ? prepareReportDraft(existingReport)
         : buildBaselineReportForStudent(student, selectedYear, selectedSemester, db)
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1747,97 +1778,125 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {draft.skillDigital.map((s, idx) => {
-                        const tuntas = s.nilaiAkhir >= s.kkm;
-                        return (
-                          <tr key={s.no}>
-                            <td className="py-2.5 px-3 font-mono text-slate-500">{s.no}</td>
-                            <td className="py-2.5 px-3">
-                              <input
-                                type="text"
-                                value={s.materiSkill}
-                                onChange={(e) => {
-                                  const next = [...draft.skillDigital];
-                                  next[idx] = { ...next[idx], materiSkill: e.target.value };
-                                  updateDraft((p) => ({ ...p, skillDigital: next }));
-                                }}
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md font-medium"
-                              />
-                              {hasSubjectComponents(s) && (
-                                <div className="text-[10px] font-mono text-slate-500 mt-0.5">
-                                  SK:{s.sk ?? '—'} TG:{s.tg ?? '—'} UL:{s.ul ?? '—'} UAS:
-                                  {s.uas ?? '—'}
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
-                              {s.kkm}
-                            </td>
-                            <td className="py-2.5 px-3">
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={s.pengetahuan}
-                                onChange={(e) => {
-                                  const next = [...draft.skillDigital];
-                                  next[idx] = {
-                                    ...next[idx],
-                                    pengetahuan: Number(e.target.value),
-                                    sk: undefined,
-                                    tg: undefined,
-                                    ul: undefined,
-                                    uas: undefined,
-                                    uasFromCbt: false,
-                                  };
-                                  updateDraft((p) => ({ ...p, skillDigital: next }));
-                                }}
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
-                              />
-                            </td>
-                            <td className="py-2.5 px-3">
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={s.keterampilan}
-                                onChange={(e) => {
-                                  const next = [...draft.skillDigital];
-                                  next[idx] = {
-                                    ...next[idx],
-                                    keterampilan: Number(e.target.value),
-                                    sk: undefined,
-                                    tg: undefined,
-                                    ul: undefined,
-                                    uas: undefined,
-                                    uasFromCbt: false,
-                                  };
-                                  updateDraft((p) => ({ ...p, skillDigital: next }));
-                                }}
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
-                              />
-                            </td>
-                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
-                              {s.nilaiAkhir}
-                            </td>
-                            <td className="py-2.5 px-3 font-semibold">
-                              <span
-                                className={
-                                  s.nilaiAkhir === 0
-                                    ? 'text-slate-400'
-                                    : tuntas
-                                    ? 'text-emerald-700'
-                                    : 'text-rose-600'
-                                }
-                              >
-                                {s.nilaiAkhir === 0
-                                  ? '—'
-                                  : `${s.predikat} (${tuntas ? 'Tuntas' : 'Belum'})`}
-                              </span>
-                            </td>
-                          </tr>
+                      {(() => {
+                        const canonicalOrder = new Map<string, number>(
+                          ACTIVE_DIGITAL_SKILL_NAMES.map((name, orderIdx) => [
+                            name.toLowerCase(),
+                            orderIdx,
+                          ])
                         );
-                      })}
+                        return draft.skillDigital
+                          .map((s, rawIdx) => ({ s, rawIdx }))
+                          .filter(({ s }) => !isRemovedDigitalSubject(s.materiSkill))
+                          .sort((a, b) => {
+                            const ordA =
+                              canonicalOrder.get(a.s.materiSkill.trim().toLowerCase()) ?? 999;
+                            const ordB =
+                              canonicalOrder.get(b.s.materiSkill.trim().toLowerCase()) ?? 999;
+                            if (ordA !== ordB) return ordA - ordB;
+                            return a.rawIdx - b.rawIdx;
+                          })
+                          .map(({ s, rawIdx }, displayIdx) => {
+                            const displayNo = displayIdx + 1;
+                            const tuntas = s.nilaiAkhir >= s.kkm;
+                            return (
+                              <tr key={`${rawIdx}-${s.materiSkill}`}>
+                                <td className="py-2.5 px-3 font-mono text-slate-500">
+                                  {displayNo}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <input
+                                    type="text"
+                                    value={s.materiSkill}
+                                    onChange={(e) => {
+                                      const next = [...draft.skillDigital];
+                                      next[rawIdx] = {
+                                        ...next[rawIdx],
+                                        no: displayNo,
+                                        materiSkill: e.target.value,
+                                      };
+                                      updateDraft((p) => ({ ...p, skillDigital: next }));
+                                    }}
+                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-medium"
+                                  />
+                                  {hasSubjectComponents(s) && (
+                                    <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                                      SK:{s.sk ?? '—'} TG:{s.tg ?? '—'} UL:{s.ul ?? '—'} UAS:
+                                      {s.uas ?? '—'}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                  {s.kkm}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={s.pengetahuan}
+                                    onChange={(e) => {
+                                      const next = [...draft.skillDigital];
+                                      next[rawIdx] = {
+                                        ...next[rawIdx],
+                                        no: displayNo,
+                                        pengetahuan: Number(e.target.value),
+                                        sk: undefined,
+                                        tg: undefined,
+                                        ul: undefined,
+                                        uas: undefined,
+                                        uasFromCbt: false,
+                                      };
+                                      updateDraft((p) => ({ ...p, skillDigital: next }));
+                                    }}
+                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
+                                  />
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={s.keterampilan}
+                                    onChange={(e) => {
+                                      const next = [...draft.skillDigital];
+                                      next[rawIdx] = {
+                                        ...next[rawIdx],
+                                        no: displayNo,
+                                        keterampilan: Number(e.target.value),
+                                        sk: undefined,
+                                        tg: undefined,
+                                        ul: undefined,
+                                        uas: undefined,
+                                        uasFromCbt: false,
+                                      };
+                                      updateDraft((p) => ({ ...p, skillDigital: next }));
+                                    }}
+                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
+                                  />
+                                </td>
+                                <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                                  {s.nilaiAkhir}
+                                </td>
+                                <td className="py-2.5 px-3 font-semibold">
+                                  <span
+                                    className={
+                                      s.nilaiAkhir === 0
+                                        ? 'text-slate-400'
+                                        : tuntas
+                                        ? 'text-emerald-700'
+                                        : 'text-rose-600'
+                                    }
+                                  >
+                                    {s.nilaiAkhir === 0
+                                      ? '—'
+                                      : `${s.predikat} (${tuntas ? 'Tuntas' : 'Belum'})`}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          });
+                      })()}
                     </tbody>
                   </table>
                 </div>

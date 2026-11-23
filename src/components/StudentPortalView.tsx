@@ -21,6 +21,7 @@ import {
   PortfolioMediaItem,
 } from '../types/mda';
 import {
+  filterActiveDigitalSkills,
   formatRupiah,
   generateParentPortfolioNarrative,
   getKategoriPredikat,
@@ -189,7 +190,8 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
   }
 
   const diniyahAvg = hitungRataRataDiniyah(currentReport.diniyah);
-  const digitalAvg = hitungRataRataDigital(currentReport.skillDigital);
+  const activeDigitalSkills = filterActiveDigitalSkills(currentReport.skillDigital);
+  const digitalAvg = hitungRataRataDigital(activeDigitalSkills);
 
   const handleCopySpecificLink = async (
     key: 'link1' | 'link2' | 'link3',
@@ -726,7 +728,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-slate-100">
-            {currentReport.skillDigital
+            {activeDigitalSkills
               .filter((s) => s.nilaiAkhir > 0)
               .map((s) => (
                 <div key={s.no} className="p-4 space-y-2 text-xs">
@@ -762,7 +764,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {currentReport.skillDigital
+              {activeDigitalSkills
                 .filter((s) => s.nilaiAkhir > 0)
                 .map((s) => (
                   <tr key={s.no}>

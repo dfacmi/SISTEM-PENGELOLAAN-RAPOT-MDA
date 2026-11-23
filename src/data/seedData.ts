@@ -161,7 +161,7 @@ export function createDefaultCbtExams(
     },
     {
       id: 'cbt-mapel-7-multimedia',
-      title: 'Ujian Videography & Motion',
+      title: 'Ujian Videography',
       mapelCode: 'DIG-VID',
       durationMinutes: 75,
       targetRaporMapping: {
@@ -223,10 +223,9 @@ export const DEFAULT_DINIYAH_MAPEL = [
 export const DEFAULT_DIGITAL_SKILLS = [
   { no: 1, materiSkill: 'UI/UX Design', kkm: 70 },
   { no: 2, materiSkill: 'Graphic Design', kkm: 70 },
-  { no: 3, materiSkill: 'Prototype', kkm: 70 },
-  { no: 4, materiSkill: 'Photography', kkm: 70 },
-  { no: 5, materiSkill: 'Videography', kkm: 70 },
-  { no: 6, materiSkill: 'Motion Graphics', kkm: 70 },
+  { no: 3, materiSkill: 'Photography', kkm: 70 },
+  { no: 4, materiSkill: 'Videography', kkm: 70 },
+  { no: 5, materiSkill: 'Canva & Affinity', kkm: 70 },
 ];
 
 export const INITIAL_MDA_DATABASE: MdaDatabase = {
@@ -413,10 +412,9 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       skillDigital: [
         { no: 1, materiSkill: 'UI/UX Design', kkm: 70, pengetahuan: 76, keterampilan: 80, nilaiAkhir: 78, predikat: 'C' },
         { no: 2, materiSkill: 'Graphic Design', kkm: 70, pengetahuan: 78, keterampilan: 82, nilaiAkhir: 80, predikat: 'B' },
-        { no: 3, materiSkill: 'Prototype', kkm: 70, pengetahuan: 72, keterampilan: 76, nilaiAkhir: 74, predikat: 'C' },
-        { no: 4, materiSkill: 'Photography', kkm: 70, pengetahuan: 75, keterampilan: 77, nilaiAkhir: 76, predikat: 'C' },
-        { no: 5, materiSkill: 'Videography', kkm: 70, pengetahuan: 70, keterampilan: 74, nilaiAkhir: 72, predikat: 'C' },
-        { no: 6, materiSkill: 'Motion Graphics', kkm: 70, pengetahuan: 0, keterampilan: 0, nilaiAkhir: 0, predikat: 'D' },
+        { no: 3, materiSkill: 'Photography', kkm: 70, pengetahuan: 75, keterampilan: 77, nilaiAkhir: 76, predikat: 'C' },
+        { no: 4, materiSkill: 'Videography', kkm: 70, pengetahuan: 70, keterampilan: 74, nilaiAkhir: 72, predikat: 'C' },
+        { no: 5, materiSkill: 'Canva & Affinity', kkm: 70, pengetahuan: 74, keterampilan: 78, nilaiAkhir: 76, predikat: 'C' },
       ],
       kehadiran: { sakit: 2, izin: 1, alpa: 0 },
       catatanWali: {
@@ -495,10 +493,9 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       skillDigital: [
         { no: 1, materiSkill: 'UI/UX Design', kkm: 70, pengetahuan: 84, keterampilan: 88, nilaiAkhir: 86, predikat: 'B' },
         { no: 2, materiSkill: 'Graphic Design', kkm: 70, pengetahuan: 82, keterampilan: 86, nilaiAkhir: 84, predikat: 'B' },
-        { no: 3, materiSkill: 'Prototype', kkm: 70, pengetahuan: 80, keterampilan: 84, nilaiAkhir: 82, predikat: 'B' },
-        { no: 4, materiSkill: 'Photography', kkm: 70, pengetahuan: 78, keterampilan: 82, nilaiAkhir: 80, predikat: 'B' },
-        { no: 5, materiSkill: 'Videography', kkm: 70, pengetahuan: 76, keterampilan: 80, nilaiAkhir: 78, predikat: 'C' },
-        { no: 6, materiSkill: 'Motion Graphics', kkm: 70, pengetahuan: 78, keterampilan: 82, nilaiAkhir: 80, predikat: 'B' },
+        { no: 3, materiSkill: 'Photography', kkm: 70, pengetahuan: 78, keterampilan: 82, nilaiAkhir: 80, predikat: 'B' },
+        { no: 4, materiSkill: 'Videography', kkm: 70, pengetahuan: 76, keterampilan: 80, nilaiAkhir: 78, predikat: 'C' },
+        { no: 5, materiSkill: 'Canva & Affinity', kkm: 70, pengetahuan: 80, keterampilan: 84, nilaiAkhir: 82, predikat: 'B' },
       ],
       kehadiran: { sakit: 1, izin: 2, alpa: 0 },
       catatanWali: {
@@ -577,10 +574,9 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       skillDigital: [
         { no: 1, materiSkill: 'UI/UX Design', kkm: 70, pengetahuan: 88, keterampilan: 92, nilaiAkhir: 90, predikat: 'A' },
         { no: 2, materiSkill: 'Graphic Design', kkm: 70, pengetahuan: 86, keterampilan: 90, nilaiAkhir: 88, predikat: 'B' },
-        { no: 3, materiSkill: 'Prototype', kkm: 70, pengetahuan: 85, keterampilan: 89, nilaiAkhir: 87, predikat: 'B' },
-        { no: 4, materiSkill: 'Photography', kkm: 70, pengetahuan: 90, keterampilan: 92, nilaiAkhir: 91, predikat: 'A' },
-        { no: 5, materiSkill: 'Videography', kkm: 70, pengetahuan: 88, keterampilan: 90, nilaiAkhir: 89, predikat: 'B' },
-        { no: 6, materiSkill: 'Motion Graphics', kkm: 70, pengetahuan: 86, keterampilan: 88, nilaiAkhir: 87, predikat: 'B' },
+        { no: 3, materiSkill: 'Photography', kkm: 70, pengetahuan: 90, keterampilan: 92, nilaiAkhir: 91, predikat: 'A' },
+        { no: 4, materiSkill: 'Videography', kkm: 70, pengetahuan: 88, keterampilan: 90, nilaiAkhir: 89, predikat: 'B' },
+        { no: 5, materiSkill: 'Canva & Affinity', kkm: 70, pengetahuan: 87, keterampilan: 89, nilaiAkhir: 88, predikat: 'B' },
       ],
       kehadiran: { sakit: 0, izin: 1, alpa: 0 },
       catatanWali: {
@@ -659,17 +655,16 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       skillDigital: [
         { no: 1, materiSkill: 'UI/UX Design', kkm: 70, pengetahuan: 78, keterampilan: 80, nilaiAkhir: 79, predikat: 'C' },
         { no: 2, materiSkill: 'Graphic Design', kkm: 70, pengetahuan: 82, keterampilan: 84, nilaiAkhir: 83, predikat: 'B' },
-        { no: 3, materiSkill: 'Prototype', kkm: 70, pengetahuan: 75, keterampilan: 77, nilaiAkhir: 76, predikat: 'C' },
-        { no: 4, materiSkill: 'Photography', kkm: 70, pengetahuan: 79, keterampilan: 81, nilaiAkhir: 80, predikat: 'B' },
-        { no: 5, materiSkill: 'Videography', kkm: 70, pengetahuan: 76, keterampilan: 78, nilaiAkhir: 77, predikat: 'C' },
-        { no: 6, materiSkill: 'Motion Graphics', kkm: 70, pengetahuan: 78, keterampilan: 80, nilaiAkhir: 79, predikat: 'C' },
+        { no: 3, materiSkill: 'Photography', kkm: 70, pengetahuan: 79, keterampilan: 81, nilaiAkhir: 80, predikat: 'B' },
+        { no: 4, materiSkill: 'Videography', kkm: 70, pengetahuan: 76, keterampilan: 78, nilaiAkhir: 77, predikat: 'C' },
+        { no: 5, materiSkill: 'Canva & Affinity', kkm: 70, pengetahuan: 78, keterampilan: 82, nilaiAkhir: 80, predikat: 'B' },
       ],
       kehadiran: { sakit: 1, izin: 1, alpa: 0 },
       catatanWali: {
         pesanSingkat: 'Terus tingkatkan percaya diri saat mempresentasikan karya digital.',
         perkembangan: 'Menunjukkan perkembangan stabil di desain grafis dan fotografi produk.',
         kekuatan: 'Teliti dalam komposisi warna dan layout poster.',
-        saranSemesterDepan: 'Perdalam prototyping interaktif di Figma dan jaga ritme murojaah.',
+        saranSemesterDepan: 'Perdalam eksplorasi desain di Canva & Affinity dan jaga ritme murojaah.',
       },
       keputusanSemester: 'Lanjut ke semester genap',
       published: true,
@@ -741,10 +736,9 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       skillDigital: [
         { no: 1, materiSkill: 'UI/UX Design', kkm: 70, pengetahuan: 72, keterampilan: 76, nilaiAkhir: 74, predikat: 'C' },
         { no: 2, materiSkill: 'Graphic Design', kkm: 70, pengetahuan: 76, keterampilan: 78, nilaiAkhir: 77, predikat: 'C' },
-        { no: 3, materiSkill: 'Prototype', kkm: 70, pengetahuan: 70, keterampilan: 74, nilaiAkhir: 72, predikat: 'C' },
-        { no: 4, materiSkill: 'Photography', kkm: 70, pengetahuan: 74, keterampilan: 76, nilaiAkhir: 75, predikat: 'C' },
-        { no: 5, materiSkill: 'Videography', kkm: 70, pengetahuan: 71, keterampilan: 73, nilaiAkhir: 72, predikat: 'C' },
-        { no: 6, materiSkill: 'Motion Graphics', kkm: 70, pengetahuan: 0, keterampilan: 0, nilaiAkhir: 0, predikat: 'D' },
+        { no: 3, materiSkill: 'Photography', kkm: 70, pengetahuan: 74, keterampilan: 76, nilaiAkhir: 75, predikat: 'C' },
+        { no: 4, materiSkill: 'Videography', kkm: 70, pengetahuan: 71, keterampilan: 73, nilaiAkhir: 72, predikat: 'C' },
+        { no: 5, materiSkill: 'Canva & Affinity', kkm: 70, pengetahuan: 74, keterampilan: 76, nilaiAkhir: 75, predikat: 'C' },
       ],
       kehadiran: { sakit: 2, izin: 2, alpa: 0 },
       catatanWali: {
@@ -801,7 +795,7 @@ export const INITIAL_MDA_DATABASE: MdaDatabase = {
       tahunAkademik: '2026/2027',
       semester: 'Gasal',
       judul: 'UI/UX Design – Aplikasi Mutabaah & Setoran Tahfidz',
-      jenis: 'UI/UX & Prototype',
+      jenis: 'UI/UX Design',
       keteranganSingkat: 'Desain antarmuka & prototipe interaktif pelacak hafalan santri',
       competence:
         'Merancang user flow santri dan musyrif, membuat wireframe low-fidelity hingga high-fidelity design system, serta prototyping interaksi mikro di Figma.',

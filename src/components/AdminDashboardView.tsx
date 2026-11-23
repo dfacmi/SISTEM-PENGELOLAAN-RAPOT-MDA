@@ -285,7 +285,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             {cohortStats.avgDigital || '—'}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            UI/UX · Desain · Foto · Video
+            5 Mapel · UI/UX · Foto · Video · Canva
           </div>
         </div>
 

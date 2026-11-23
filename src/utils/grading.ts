@@ -341,9 +341,91 @@ export function hitungRataRataDiniyah(items: DiniyahSubject[]): number {
   return Math.round((total / active.length) * 100) / 100;
 }
 
+export const ACTIVE_DIGITAL_SKILL_NAMES = [
+  'UI/UX Design',
+  'Graphic Design',
+  'Photography',
+  'Videography',
+  'Canva & Affinity',
+] as const;
+
+const REMOVED_DIGITAL_SUBJECT_REGEX = /^(prototype|motion\s*graphics?)$/i;
+
+export function isRemovedDigitalSubject(materiSkill?: string): boolean {
+  const clean = String(materiSkill || '').trim();
+  if (!clean) return false;
+  return REMOVED_DIGITAL_SUBJECT_REGEX.test(clean);
+}
+
+export function filterActiveDigitalSkills(
+  items: DigitalSkillSubject[] = []
+): DigitalSkillSubject[] {
+  return items
+    .filter((s) => !isRemovedDigitalSubject(s.materiSkill))
+    .map((s, idx) => ({
+      ...s,
+      no: idx + 1,
+    }));
+}
+
+export function mergeActiveDigitalSkills(
+  items: DigitalSkillSubject[] = [],
+  fallbackKkm = 70
+): DigitalSkillSubject[] {
+  const activeExisting = items.filter(
+    (s) =>
+      !isRemovedDigitalSubject(s.materiSkill) &&
+      s.materiSkill.trim() !== '' &&
+      s.materiSkill.trim() !== '...............'
+  );
+  const byNorm = new Map<string, DigitalSkillSubject>();
+  activeExisting.forEach((item) => {
+    const key = item.materiSkill.trim().toLowerCase();
+    if (!byNorm.has(key)) {
+      byNorm.set(key, item);
+    }
+  });
+
+  const merged: DigitalSkillSubject[] = [];
+  const consumed = new Set<string>();
+
+  ACTIVE_DIGITAL_SKILL_NAMES.forEach((name) => {
+    const key = name.toLowerCase();
+    const existing = byNorm.get(key);
+    consumed.add(key);
+    if (existing) {
+      merged.push({ ...existing, kkm: existing.kkm || fallbackKkm });
+    } else {
+      merged.push({
+        no: merged.length + 1,
+        materiSkill: name,
+        kkm: fallbackKkm,
+        pengetahuan: 0,
+        keterampilan: 0,
+        nilaiAkhir: 0,
+        predikat: 'D',
+      });
+    }
+  });
+
+  activeExisting.forEach((item) => {
+    const key = item.materiSkill.trim().toLowerCase();
+    if (!consumed.has(key)) {
+      consumed.add(key);
+      merged.push(item);
+    }
+  });
+
+  return merged.map((s, idx) => ({
+    ...s,
+    no: idx + 1,
+  }));
+}
+
 export function hitungRataRataDigital(items: DigitalSkillSubject[]): number {
   const active = items.filter(
     (d) =>
+      !isRemovedDigitalSubject(d.materiSkill) &&
       d.materiSkill.trim() !== '' &&
       d.materiSkill.trim() !== '...............' &&
       (d.pengetahuan > 0 || d.keterampilan > 0 || d.nilaiAkhir > 0)
@@ -642,6 +724,7 @@ export function generateParentPortfolioNarrative(params: {
 
   const skillItems = (report?.skillDigital || []).filter(
     (s) =>
+      !isRemovedDigitalSubject(s.materiSkill) &&
       s.materiSkill.trim() !== '' &&
       s.materiSkill.trim() !== '...............' &&
       Number(s.nilaiAkhir || 0) >= 70
