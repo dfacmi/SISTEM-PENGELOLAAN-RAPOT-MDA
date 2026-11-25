@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -157,6 +157,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
   const [parsedPreview, setParsedPreview] = useState<ParsedQuestionDraft[] | null>(null);
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [editingQuestion, setEditingQuestion] = useState<CbtQuestion | null>(null);
+  const spreadsheetInputRef = useRef<HTMLInputElement | null>(null);
+  const wordInputRef = useRef<HTMLInputElement | null>(null);
 
   // Live Monitor auto-refresh & dynamic class filter
   const [autoRefreshMonitor, setAutoRefreshMonitor] = useState(false);
@@ -240,8 +242,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
         onShowToast('err', 'Tidak ditemukan soal valid di file Excel/CSV tersebut.');
         return;
       }
-      setParsedPreview(parsed);
-      onShowToast('ok', `Berhasil membaca ${parsed.length} soal dari ${file.name}. Periksa pratinjau di bawah.`);
+      const withKeys = bulkKeysText.trim() ? applyBulkAnswerKey(parsed, bulkKeysText) : parsed;
+      const keyCount = withKeys.filter((q) => q.keyExplicit).length;
+      setParsedPreview(withKeys);
+      onShowToast('ok', `${withKeys.length} soal & ${keyCount} kunci terdeteksi dari ${file.name}. Periksa pratinjau di bawah.`);
     } catch (err: any) {
       onShowToast('err', err.message || 'Gagal membaca file Excel/CSV.');
     }
@@ -257,8 +261,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
         onShowToast('err', 'Tidak ada format soal bernomor (1. ... A. ... B. ...) yang terdeteksi.');
         return;
       }
-      setParsedPreview(parsed);
-      onShowToast('ok', `Berhasil mengekstrak ${parsed.length} soal dari ${file.name}. Periksa pratinjau di bawah.`);
+      const withKeys = bulkKeysText.trim() ? applyBulkAnswerKey(parsed, bulkKeysText) : parsed;
+      const keyCount = withKeys.filter((q) => q.keyExplicit).length;
+      setParsedPreview(withKeys);
+      onShowToast('ok', `${withKeys.length} soal & ${keyCount} kunci terdeteksi dari ${file.name}. Periksa pratinjau di bawah.`);
     } catch (err: any) {
       onShowToast('err', err.message || 'Gagal membaca file Word/Teks.');
     }
@@ -275,8 +281,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
       return;
     }
     const withKeys = bulkKeysText.trim() ? applyBulkAnswerKey(parsed, bulkKeysText) : parsed;
+    const keyCount = withKeys.filter((q) => q.keyExplicit).length;
     setParsedPreview(withKeys);
-    onShowToast('ok', `${withKeys.length} soal terdeteksi! Periksa pratinjau sebelum disimpan.`);
+    onShowToast('ok', `${withKeys.length} soal & ${keyCount} kunci terdeteksi! Periksa pratinjau sebelum disimpan.`);
   };
 
   const handleApplyBulkKeysToPreviewOrBank = () => {
@@ -964,26 +971,36 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         Untuk Excel/CSV gunakan kolom: <strong>Pertanyaan, Opsi A, Opsi B, Opsi C, Opsi D, Opsi E (opsional), Kunci Jawaban, URL Gambar (opsional)</strong>. Mendukung teks Arab RTL.
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+                        <input
+                          ref={spreadsheetInputRef}
+                          type="file"
+                          accept=".xlsx,.xls,.csv,.tsv"
+                          onChange={(e) => void handleFileSpreadsheetImport(e)}
+                          className="sr-only"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => spreadsheetInputRef.current?.click()}
+                          className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                        >
                           <FileSpreadsheet className="w-3.5 h-3.5" />
                           <span>Pilih Excel / CSV</span>
-                          <input
-                            type="file"
-                            accept=".xlsx,.xls,.csv,.tsv"
-                            onChange={(e) => void handleFileSpreadsheetImport(e)}
-                            className="hidden"
-                          />
-                        </label>
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold">
+                        </button>
+                        <input
+                          ref={wordInputRef}
+                          type="file"
+                          accept=".docx,.doc,.txt,.rtf"
+                          onChange={(e) => void handleFileWordOrTxtImport(e)}
+                          className="sr-only"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => wordInputRef.current?.click()}
+                          className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold"
+                        >
                           <FileText className="w-3.5 h-3.5 text-[#1DF27A]" />
                           <span>Pilih Word (.docx) / TXT</span>
-                          <input
-                            type="file"
-                            accept=".docx,.txt"
-                            onChange={(e) => void handleFileWordOrTxtImport(e)}
-                            className="hidden"
-                          />
-                        </label>
+                        </button>
                         <button
                           type="button"
                           onClick={() => downloadQuestionTemplateXlsx(selectedExam.title)}
@@ -1035,15 +1052,35 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   </div>
 
                   {/* Preview Table Before Adding to Bank */}
-                  {parsedPreview && parsedPreview.length > 0 && (
+                  {parsedPreview && parsedPreview.length > 0 && (() => {
+                    const detectedKeyCount = parsedPreview.filter((q) => q.keyExplicit).length;
+                    const incompleteItems = parsedPreview
+                      .map((q, idx) => ({ num: idx + 1, warnings: q.warnings }))
+                      .filter((item) => item.warnings.length > 0);
+                    return (
                     <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 space-y-3 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-emerald-900">
-                            Pratinjau Import: {parsedPreview.length} Soal Terdeteksi
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-emerald-900">
+                              Pratinjau Import: {parsedPreview.length} Soal Terdeteksi · {detectedKeyCount} Kunci Terdeteksi
+                            </span>
+                            {incompleteItems.length === 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                Semua Soal &amp; Kunci Lengkap
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                Perhatian: {incompleteItems.length} soal belum lengkap (No.{' '}
+                                {incompleteItems.slice(0, 8).map((i) => i.num).join(', ')}
+                                {incompleteItems.length > 8 ? `, +${incompleteItems.length - 8} lainnya` : ''})
+                              </span>
+                            )}
                           </div>
                           <div className="text-[11px] text-slate-600 break-words">
-                            Periksa kelengkapan opsi, kunci jawaban, dan tampilan Arab RTL sebelum dimasukkan ke Bank Soal.
+                            Periksa kelengkapan opsi, kunci jawaban, dan tampilan Arab RTL sebelum menekan Terapkan &amp; Simpan Bank Soal.
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -1078,7 +1115,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         {parsedPreview.map((q, idx) => (
                           <div
                             key={q.id}
-                            className="p-3 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5 min-w-0"
+                            className={`p-3 rounded-xl border text-xs space-y-1.5 min-w-0 ${
+                              q.warnings.length > 0
+                                ? 'bg-amber-50/50 border-amber-300'
+                                : 'bg-white border-slate-200'
+                            }`}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div
@@ -1136,7 +1177,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         ))}
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Question Bank Header & Save Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">

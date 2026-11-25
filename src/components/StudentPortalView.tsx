@@ -5,6 +5,7 @@ import {
   Camera,
   Check,
   Copy,
+  Download,
   ExternalLink,
   Eye,
   FolderGit2,
@@ -24,6 +25,7 @@ import {
   filterActiveDigitalSkills,
   formatRupiah,
   generateParentPortfolioNarrative,
+  getGoogleDriveDownloadUrl,
   getKategoriPredikat,
   getStudentPortfolioLinks,
   groupPortfolioProjects,
@@ -879,112 +881,148 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               </div>
 
               <div className="space-y-2.5">
-                {/* Link 1: Portofolio Behance */}
-                <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
-                      1. Link Portofolio (Behance)
-                    </span>
-                    {portfolioLinks.behanceUrl && (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void handleCopySpecificLink('link2', portfolioLinks.behanceUrl)
-                          }
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
-                        >
-                          {copiedKey === 'link2' ? (
-                            <Check className="w-3 h-3 text-[#1DF27A]" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                          <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
-                        </button>
+                {/* Link 1: Portofolio Behance / Google Drive */}
+                {(() => {
+                  const portfolioDownloadUrl = getGoogleDriveDownloadUrl(
+                    portfolioLinks.behanceUrl
+                  );
+                  return (
+                    <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
+                          1. Link Portofolio (Behance)
+                        </span>
+                        {portfolioLinks.behanceUrl && (
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleCopySpecificLink('link2', portfolioLinks.behanceUrl)
+                              }
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                            >
+                              {copiedKey === 'link2' ? (
+                                <Check className="w-3 h-3 text-[#1DF27A]" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                              <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
+                            </button>
+                            <a
+                              href={portfolioLinks.behanceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] hover:bg-emerald-300 text-slate-950 text-[11px] font-bold transition-colors"
+                            >
+                              <span>Buka</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            {portfolioDownloadUrl && (
+                              <a
+                                href={portfolioDownloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-emerald-50 text-slate-950 text-[11px] font-bold transition-colors"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Unduh</span>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {portfolioLinks.behanceUrl ? (
                         <a
                           href={portfolioLinks.behanceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
+                          className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
                         >
-                          <span>Buka</span>
-                          <ExternalLink className="w-3 h-3" />
+                          {portfolioLinks.behanceUrl}
                         </a>
-                      </div>
-                    )}
-                  </div>
-                  {portfolioLinks.behanceUrl ? (
-                    <a
-                      href={portfolioLinks.behanceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
-                    >
-                      {portfolioLinks.behanceUrl}
-                    </a>
-                  ) : (
-                    <div className="text-[11px] text-slate-400 italic">
-                      Belum ada link Behance ditambahkan.
-                    </div>
-                  )}
-                </div>
-
-                {/* Link 2: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
-                <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                      <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
-                        2. Link Kumpulan Karya (PDF)
-                      </span>
-                      {portfolioLinks.pdfSubject && (
-                        <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">
-                          {portfolioLinks.pdfSubject}
-                        </span>
+                      ) : (
+                        <div className="text-[11px] text-slate-400 italic">
+                          Belum ada link Behance ditambahkan.
+                        </div>
                       )}
                     </div>
-                    {portfolioLinks.pdfUrl && (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void handleCopySpecificLink('link3', portfolioLinks.pdfUrl)
-                          }
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
-                        >
-                          {copiedKey === 'link3' ? (
-                            <Check className="w-3 h-3 text-[#1DF27A]" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
+                  );
+                })()}
+
+                {/* Link 2: PDF Kumpulan Karya 1 Semester + Nama Pelajaran */}
+                {(() => {
+                  const pdfDownloadUrl = getGoogleDriveDownloadUrl(
+                    portfolioLinks.pdfUrl
+                  );
+                  return (
+                    <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                          <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
+                            2. Link Kumpulan Karya (PDF)
+                          </span>
+                          {portfolioLinks.pdfSubject && (
+                            <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">
+                              {portfolioLinks.pdfSubject}
+                            </span>
                           )}
-                          <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
-                        </button>
+                        </div>
+                        {portfolioLinks.pdfUrl && (
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleCopySpecificLink('link3', portfolioLinks.pdfUrl)
+                              }
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                            >
+                              {copiedKey === 'link3' ? (
+                                <Check className="w-3 h-3 text-[#1DF27A]" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                              <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
+                            </button>
+                            <a
+                              href={portfolioLinks.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 hover:bg-amber-200 text-slate-950 text-[11px] font-bold transition-colors"
+                            >
+                              <span>Buka</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                            {pdfDownloadUrl && (
+                              <a
+                                href={pdfDownloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-amber-50 text-slate-950 text-[11px] font-bold transition-colors"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Unduh</span>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {portfolioLinks.pdfUrl ? (
                         <a
                           href={portfolioLinks.pdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 text-slate-950 text-[11px] font-bold"
+                          className="block text-[11px] font-mono text-amber-100 break-all hover:underline"
                         >
-                          <span>Buka</span>
-                          <ExternalLink className="w-3 h-3" />
+                          {portfolioLinks.pdfUrl}
                         </a>
-                      </div>
-                    )}
-                  </div>
-                  {portfolioLinks.pdfUrl ? (
-                    <a
-                      href={portfolioLinks.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-[11px] font-mono text-amber-100 break-all hover:underline"
-                    >
-                      {portfolioLinks.pdfUrl}
-                    </a>
-                  ) : (
-                    <div className="text-[11px] text-slate-400 italic">
-                      Belum ada link PDF kumpulan karya semester.
+                      ) : (
+                        <div className="text-[11px] text-slate-400 italic">
+                          Belum ada link PDF kumpulan karya semester.
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             </div>
 

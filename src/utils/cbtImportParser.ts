@@ -155,35 +155,68 @@ export async function parseSpreadsheetQuestions(
 
   if (matrix.length === 0) return [];
 
-  // Detect header row cleanly
-  const firstRow = matrix[0].map((c) => String(c || '').trim().toLowerCase());
-  const hasHeader = firstRow.some(
-    (h) =>
-      h.includes('pertanyaan') ||
-      h.includes('soal') ||
-      h.includes('question') ||
-      h.includes('opsi a') ||
-      h.includes('kunci')
-  );
+  // Detect header row across first 15 rows (handles Excel files with leading title/instruction rows)
+  const normalizeCell = (v: unknown) =>
+    String(v ?? '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+
+  let headerRowIdx = -1;
+  const scanLimit = Math.min(matrix.length, 15);
+  for (let r = 0; r < scanLimit; r++) {
+    const rowCells = (matrix[r] || []).map(normalizeCell);
+    const hasQuestionCol = rowCells.some(
+      (h) =>
+        h === 'pertanyaan' ||
+        h === 'soal' ||
+        h === 'question' ||
+        h.includes('pertanyaan') ||
+        h.includes('butir soal') ||
+        h.includes('uraian soal') ||
+        h.includes('question')
+    );
+    const hasOptionOrKeyCol = rowCells.some(
+      (h) =>
+        h.includes('opsi a') ||
+        h.includes('pilihan a') ||
+        h.includes('jawaban a') ||
+        h === 'a' ||
+        h.includes('kunci') ||
+        h === 'answer' ||
+        h === 'key'
+    );
+    if (hasQuestionCol && hasOptionOrKeyCol) {
+      headerRowIdx = r;
+      break;
+    }
+  }
+
+  const hasHeader = headerRowIdx >= 0;
+  const headerRow = hasHeader ? (matrix[headerRowIdx] || []).map(normalizeCell) : [];
 
   const findCol = (keywords: string[], fallbackIndex: number): number => {
     if (!hasHeader) return fallbackIndex;
-    const exact = firstRow.findIndex((h) => keywords.some((k) => h === k));
+    const exact = headerRow.findIndex((h) => keywords.some((k) => h === k));
     if (exact >= 0) return exact;
-    const partial = firstRow.findIndex((h) => keywords.some((k) => h.includes(k)));
+    const partial = headerRow.findIndex((h) => keywords.some((k) => h.includes(k)));
     return partial >= 0 ? partial : fallbackIndex;
   };
 
-  const colQuestion = findCol(['pertanyaan', 'soal', 'question'], 0);
-  const colA = findCol(['opsi a', 'pilihan a', 'jawaban a', 'a'], 1);
-  const colB = findCol(['opsi b', 'pilihan b', 'jawaban b', 'b'], 2);
-  const colC = findCol(['opsi c', 'pilihan c', 'jawaban c', 'c'], 3);
-  const colD = findCol(['opsi d', 'pilihan d', 'jawaban d', 'd'], 4);
-  const colE = findCol(['opsi e', 'pilihan e', 'jawaban e', 'e'], 5);
-  const colKey = findCol(['kunci jawaban', 'kunci', 'jawaban benar', 'answer', 'key'], 6);
-  const colImg = findCol(['url gambar', 'gambar', 'image', 'img'], 7);
+  const colNo = hasHeader
+    ? headerRow.findIndex((h) => h === 'no' || h === 'no.' || h === 'nomor')
+    : -1;
+  const qOffset = colNo === 0 ? 1 : 0;
+  const colQuestion = findCol(['pertanyaan', 'butir soal', 'uraian soal', 'soal', 'question'], 0 + qOffset);
+  const colA = findCol(['opsi a', 'pilihan a', 'jawaban a', 'a'], colQuestion + 1);
+  const colB = findCol(['opsi b', 'pilihan b', 'jawaban b', 'b'], colA + 1);
+  const colC = findCol(['opsi c', 'pilihan c', 'jawaban c', 'c'], colB + 1);
+  const colD = findCol(['opsi d', 'pilihan d', 'jawaban d', 'd'], colC + 1);
+  const colE = findCol(['opsi e', 'pilihan e', 'jawaban e', 'e'], colD + 1);
+  const colKey = findCol(['kunci jawaban', 'kunci', 'jawaban benar', 'answer', 'key'], colD + 2);
+  const colImg = findCol(['url gambar', 'gambar', 'image', 'img'], colD + 3);
 
-  const startIdx = hasHeader ? 1 : 0;
+  const startIdx = hasHeader ? headerRowIdx + 1 : 0;
   const out: ParsedQuestionDraft[] = [];
 
   for (let i = startIdx; i < matrix.length; i++) {
@@ -206,6 +239,8 @@ export async function parseSpreadsheetQuestions(
     const imageUrl = colImg < row.length ? String(row[colImg] ?? '').trim() : '';
 
     if (!pertanyaan && !opsiA && !opsiB && !opsiC && !opsiD) continue;
+    // If no header row existed, skip leading document title/banner rows without any options
+    if (!hasHeader && out.length === 0 && !opsiA && !opsiB && !opsiC && !opsiD) continue;
 
     const draft: ParsedQuestionDraft = {
       id: makeQuestionId(examId, out.length),
@@ -245,16 +280,55 @@ function collapseInlineSpaces(text: string): string {
     .join('\n');
 }
 
-const Q_START_RE = /^\s*(?:soal\s*(?:no\.?)?\s*)?(\d{1,3})\s*[.)\-:](?!\d)\s*(.*)$/i;
-const OPT_RE = /^\s*(\*?)\s*([A-E])\s*[.)](?:\s+(.*)|$)/i;
-const KEY_LINE_RE = /^\s*(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|answer|key)\s*[:=\-]\s*([A-E])\b/i;
+const Q_START_RE =
+  /^\s*(?:(?:soal\s*(?:no\.?)?|no\.?)\s*(\d{1,3})(?:\s*[.)\-:]|\s+)|(\d{1,3})\s*[.)\-:](?!\d))\s*(.*)$/i;
+const OPT_RE =
+  /^\s*(\*?)\s*(?:([A-E])\s*[.)](?!\w\.)(?:\s+(.*)|(?=[A-Z0-9\u0600-\u06FF"'(])(.*)|$)|([a-e])\s*[.)](?!\w\.)(?:\s+(.*)|(?=[A-Za-z0-9\u0600-\u06FF"'(])(.*)|$))/;
+const KEY_LINE_RE =
+  /^\s*[\[(]?\s*(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|answer|key)\s*(?:[:=\-]\s*[\[(]?([A-E])[\])]?(?:\s*[.)]|\s*[\])]|\s*$)|\s+[\[(]?([A-E])[\])]?\s*[\])]?\s*$)/i;
 const IMG_LINE_RE = /^\s*(?:gambar|image|img|url\s*gambar)\s*[:=]\s*(https?:\/\/\S+)/i;
 
-const KUNCI_SECTION_RE = /(?:^|\n|\t)\s*(?:[-_=*#\s]*)?KUNCI\s+JAWABAN\b(?=[\s\S]*?(?:\b\d{1,3}\s*[.:\-)]?\s*[A-Ea-e]\b|Pedoman\s+penilaian|$))/i;
-const KUNCI_INLINE_RE = /\bKUNCI\s+JAWABAN\b(?=[\s\S]*\b\d{1,3}\s*[.:\-)]?\s*[A-Ea-e]\b)/i;
+function matchQuestionStart(line: string): { num: number; rest: string } | null {
+  const m = (line || '').match(Q_START_RE);
+  if (!m) return null;
+  const num = Number(m[1] || m[2]);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return { num, rest: (m[3] || '').trim() };
+}
+
+function matchOptionLine(line: string): {
+  hasStarPrefix: boolean;
+  letter: CbtOptionKey;
+  rawBody: string;
+} | null {
+  const m = (line || '').match(OPT_RE);
+  if (!m) return null;
+  const letter = (m[2] || m[5] || '').toUpperCase() as CbtOptionKey;
+  if (!letter) return null;
+  const rawBody = m[3] ?? m[4] ?? m[6] ?? m[7] ?? '';
+  return {
+    hasStarPrefix: m[1] === '*',
+    letter,
+    rawBody,
+  };
+}
 
 const LETTERHEAD_LINE_RE =
   /^(?:telp(?:hone|on)?|telepon|whatsapp|wa|hp|email|ig|instagram|alamat|jl\.|jalan|sukoharjo|jawa\s+tengah|muslim\s+digital\s+academy|pondok\s+pesantren|darul\s+fithrah|@[a-z0-9_.-]+|petunjuk\s+pengerjaan\b|pilih\s+satu\s+jawaban\s+yang\s+paling\s+tepat\b|bacalah\s+setiap\s+soal\b|tanda\s+silang\s*\(x\)|[-_=*]{4,})/i;
+
+function extractSingleKeyFromLine(line: string): CbtOptionKey | null {
+  const cleaned = cleanUnicodeText(line).trim();
+  if (!cleaned) return null;
+  const m = cleaned.match(KEY_LINE_RE);
+  if (!m) return null;
+  const numberedPairs = cleaned.match(/\b\d{1,3}\s*[.:\-)]?\s*[A-Ea-e]\b/g) || [];
+  if (numberedPairs.length >= 2) return null;
+  const letter = (m[1] || m[2] || '').toUpperCase();
+  if (letter === 'A' || letter === 'B' || letter === 'C' || letter === 'D' || letter === 'E') {
+    return letter;
+  }
+  return null;
+}
 
 export function extractAnswerKeysFromSection(kunciRaw: string): Map<number, CbtOptionKey> {
   const byNumber = new Map<number, CbtOptionKey>();
@@ -278,23 +352,63 @@ export function extractAnswerKeysFromSection(kunciRaw: string): Map<number, CbtO
   return byNumber;
 }
 
+function hasUpcomingQuestionOptionBlock(lines: string[]): boolean {
+  let hasA = false;
+  let hasB = false;
+  for (const raw of lines) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (/(?:^|\s)\*?\s*A\s*[.)]\s+\S/i.test(t)) hasA = true;
+    if (/(?:^|\s)\*?\s*B\s*[.)]\s+\S/i.test(t)) hasB = true;
+    if (hasA && hasB) return true;
+  }
+  return false;
+}
+
 function splitQuestionBodyAndKunci(rawText: string): {
   body: string;
   kunciSection: string;
   keyMap: Map<number, CbtOptionKey>;
 } {
   const cleaned = cleanUnicodeText(rawText);
-  const lineMatch = cleaned.match(KUNCI_SECTION_RE);
-  const inlineMatch = !lineMatch ? cleaned.match(KUNCI_INLINE_RE) : null;
-  const match = lineMatch || inlineMatch;
+  const lines = cleaned.split('\n');
 
-  if (!match || match.index === undefined) {
+  let splitLineIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue;
+
+    // Jangan pernah memotong pada baris kunci per-soal seperti "Kunci Jawaban: B"
+    if (extractSingleKeyFromLine(trimmed)) continue;
+
+    const isKunciHeader =
+      /(?:^|\s)(?:[-_=*#\s]*)?KUNCI\s+JAWABAN\b/i.test(trimmed) ||
+      (/^\s*pedoman\s+penilaian\b/i.test(trimmed) && i > 0);
+    if (!isKunciHeader) continue;
+
+    const remainingLines = lines.slice(i + 1);
+    if (hasUpcomingQuestionOptionBlock(remainingLines)) {
+      continue;
+    }
+
+    const tailText = lines.slice(i).join('\n');
+    const tailPairs = Array.from(
+      tailText
+        .replace(/\bpedoman\s+penilaian\b[\s\S]*/i, '')
+        .matchAll(/\b(\d{1,3})\s*[.:\-)]?\s*([A-Ea-e])\b/g)
+    );
+    if (tailPairs.length >= 1 || /^\s*(?:[-_=*#\s]*)?(?:KUNCI\s+JAWABAN|PEDOMAN\s+PENILAIAN)\b/i.test(trimmed)) {
+      splitLineIdx = i;
+      break;
+    }
+  }
+
+  if (splitLineIdx < 0) {
     return { body: cleaned, kunciSection: '', keyMap: new Map() };
   }
 
-  const splitIdx = match.index;
-  const body = cleaned.slice(0, splitIdx).trim();
-  const kunciSection = cleaned.slice(splitIdx).trim();
+  const body = lines.slice(0, splitLineIdx).join('\n').trim();
+  const kunciSection = lines.slice(splitLineIdx).join('\n').trim();
   const keyMap = extractAnswerKeysFromSection(kunciSection);
   return { body, kunciSection, keyMap };
 }
@@ -311,8 +425,8 @@ function stripLeadingLetterheadAndInstructions(rawBody: string): string {
       continue;
     }
 
-    // Jika sudah sampai nomor soal 1 (e.g. "1. ..." atau "Soal 1:"), berhenti membuang header
-    if (Q_START_RE.test(trimmed)) {
+    // Jika sudah sampai nomor soal 1 (e.g. "1. ...", "No. 1 ...", "Soal 1:"), berhenti membuang header
+    if (matchQuestionStart(trimmed)) {
       startIdx = i;
       break;
     }
@@ -357,7 +471,10 @@ function stripLeadingLetterheadAndInstructions(rawBody: string): string {
     // Jika masih awal dokumen dan belum masuk nomor 1, cek apakah ada nomor soal 1 dalam 20 baris ke depan
     const hasQ1Ahead = lines
       .slice(i + 1, i + 20)
-      .some((l) => /^\s*(?:soal\s*(?:no\.?)?\s*)?1\s*[.)\-:](?!\d)\s*\S/i.test(l.trim()));
+      .some((l) => {
+        const m = matchQuestionStart(l.trim());
+        return Boolean(m && m.num === 1 && m.rest.length > 0);
+      });
     if (hasQ1Ahead && i < 18) {
       startIdx = i + 1;
       continue;
@@ -391,18 +508,52 @@ function cleanOptionBodyAndMarkers(rawBody: string): {
 }
 
 function splitInlineOptionsInLine(line: string, hasOptionAAlready: boolean): string[] {
-  const startsWithA = /^\s*\*?\s*A\s*[.)]\s+/i.test(line);
-  const hasMultipleOptionMarkers =
-    /\s+B\s*[.)]\s+/i.test(line) && /\s+C\s*[.)]\s+/i.test(line);
-
-  if (startsWithA || hasMultipleOptionMarkers || (hasOptionAAlready && /\s+[B-E]\s*[.)]\s+/i.test(line))) {
-    return line
-      .replace(/\s+(\*?\s*[B-E]\s*[.)]\s+)/g, '\n$1')
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
+  let working = line;
+  if (
+    /\s+[\[(]?\s*(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|answer|key)\s*[:=\-]\s*[\[(]?[A-E][\])]?\s*[\])]?\s*$/i.test(
+      working
+    ) &&
+    !/^\s*[\[(]?\s*(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|answer|key)\s*[:=\-]/i.test(working)
+  ) {
+    working = working.replace(
+      /\s+([\[(]?\s*(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|answer|key)\s*[:=\-]\s*[\[(]?[A-E][\])]?\s*[\])]?\s*)$/i,
+      '\n$1'
+    );
   }
-  return [line];
+
+  const chunks = working.split('\n').map((s) => s.trim()).filter(Boolean);
+  const out: string[] = [];
+
+  for (const chunk of chunks) {
+    const startsWithA = /^\s*\*?\s*A\s*[.)](?!\w\.)\s*/i.test(chunk);
+    const hasMultipleOptionMarkers =
+      /(?:\t+|\s+)\*?\s*B\s*[.)](?!\w\.)\s*/i.test(chunk) &&
+      /(?:\t+|\s+)\*?\s*C\s*[.)](?!\w\.)\s*/i.test(chunk);
+
+    if (hasMultipleOptionMarkers) {
+      out.push(
+        ...chunk
+          .replace(/(?:\t+|\s+)(\*?\s*[A-Ea-e]\s*[.)](?!\w\.)\s*)/g, '\n$1')
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
+    } else if (
+      startsWithA ||
+      (hasOptionAAlready && /(?:\t+|\s+)\*?\s*[B-E]\s*[.)](?!\w\.)\s*/i.test(chunk))
+    ) {
+      out.push(
+        ...chunk
+          .replace(/(?:\t+|\s+)(\*?\s*[B-Eb-e]\s*[.)](?!\w\.)\s*)/g, '\n$1')
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
+    } else {
+      out.push(chunk);
+    }
+  }
+  return out;
 }
 
 function parseRawBlocks(
@@ -445,10 +596,14 @@ function parseRawBlocks(
     );
 
     for (const line of subLines) {
-      const kMatch = line.match(KEY_LINE_RE);
-      if (kMatch && current) {
-        current.kunci = kMatch[1].toUpperCase() as CbtOptionKey;
-        current.currentOpt = null;
+      const singleKey = extractSingleKeyFromLine(line);
+      if (singleKey) {
+        if (current) {
+          current.kunci = singleKey;
+          current.currentOpt = null;
+        } else if (blocks.length > 0) {
+          blocks[blocks.length - 1].kunci = singleKey;
+        }
         continue;
       }
 
@@ -458,13 +613,10 @@ function parseRawBlocks(
         continue;
       }
 
-      const optMatch = line.match(OPT_RE);
+      const optMatch = matchOptionLine(line);
       if (optMatch && current) {
-        const hasStarPrefix = optMatch[1] === '*';
-        const letter = optMatch[2].toUpperCase() as CbtOptionKey;
-        const { text: optBody, isMarkedCorrect } = cleanOptionBodyAndMarkers(
-          optMatch[3] || ''
-        );
+        const { hasStarPrefix, letter, rawBody: rawOpt } = optMatch;
+        const { text: optBody, isMarkedCorrect } = cleanOptionBodyAndMarkers(rawOpt);
         if (hasStarPrefix || isMarkedCorrect) {
           current.kunci = letter;
         }
@@ -473,17 +625,28 @@ function parseRawBlocks(
         continue;
       }
 
-      const qMatch = line.match(Q_START_RE);
+      const qMatch = matchQuestionStart(line);
+      const isSequentialNextQuestion = Boolean(
+        qMatch &&
+          current &&
+          current.questionNumber !== null &&
+          qMatch.num === current.questionNumber + 1 &&
+          current.pertanyaanLines.length > 0 &&
+          !/(?:berikut(?:\s+ini)?|pernyataan|langkah)\s*:?\s*$/i.test(
+            current.pertanyaanLines[current.pertanyaanLines.length - 1] || ''
+          )
+      );
       if (
         qMatch &&
         (!current ||
           Object.keys(current.options).length >= 2 ||
-          current.kunci !== null)
+          current.kunci !== null ||
+          isSequentialNextQuestion)
       ) {
         pushCurrent();
         current = {
-          questionNumber: Number(qMatch[1]) || null,
-          pertanyaanLines: qMatch[2].trim() ? [qMatch[2].trim()] : [],
+          questionNumber: qMatch.num || null,
+          pertanyaanLines: qMatch.rest ? [qMatch.rest] : [],
           options: {},
           currentOpt: null,
           kunci: null,
@@ -654,11 +817,13 @@ function stripLeadingQuestionPrefix(text: string): {
   cleanText: string;
 } {
   const trimmed = text.trim();
-  const m = trimmed.match(Q_START_RE);
-  if (m) {
+  const lines = trimmed.split('\n');
+  const firstMatch = matchQuestionStart(lines[0] || '');
+  if (firstMatch) {
+    const restLines = [firstMatch.rest, ...lines.slice(1)].filter(Boolean);
     return {
-      explicitNum: Number(m[1]) || null,
-      cleanText: m[2].trim(),
+      explicitNum: firstMatch.num,
+      cleanText: restLines.join('\n').trim(),
     };
   }
   return { explicitNum: null, cleanText: trimmed };
@@ -717,6 +882,130 @@ function extractLiStemWithoutOptionLists(
   return collapseInlineSpaces(parts.join(''));
 }
 
+function isElementFullyStyledCorrect(el: Element): boolean {
+  if (el.querySelector('mark, u')) {
+    const markedText = Array.from(el.querySelectorAll('mark, u'))
+      .map((n) => (n.textContent || '').trim())
+      .join(' ')
+      .trim();
+    if (markedText.length >= 1) return true;
+  }
+  const strongNodes = Array.from(el.querySelectorAll('strong, b'));
+  if (strongNodes.length === 0) return false;
+  const fullText = collapseInlineSpaces(el.textContent || '').replace(/\s+/g, '');
+  const boldText = strongNodes
+    .map((n) => collapseInlineSpaces(n.textContent || ''))
+    .join('')
+    .replace(/\s+/g, '');
+  return fullText.length >= 2 && boldText.length >= Math.max(2, fullText.length - 3);
+}
+
+function tryExtractQuestionTableLines(tableEl: Element): {
+  mode: 'structured' | 'lines';
+  structured?: Array<{
+    questionNumber: number | null;
+    stem: string;
+    options: Partial<Record<CbtOptionKey, string>>;
+    explicitKey: CbtOptionKey | null;
+  }>;
+  lines?: string[];
+} {
+  const rows = Array.from(tableEl.querySelectorAll('tr'));
+  if (rows.length === 0) return { mode: 'lines', lines: [] };
+
+  const matrix = rows
+    .map((tr) =>
+      Array.from(tr.children)
+        .filter((c) => c.tagName.toUpperCase() === 'TD' || c.tagName.toUpperCase() === 'TH')
+        .map((cell) => collapseInlineSpaces(extractElementPlainLines(cell, true)))
+    )
+    .filter((cells) => cells.some((c) => c.length > 0));
+
+  if (matrix.length === 0) return { mode: 'lines', lines: [] };
+
+  // Cek apakah tabel memakai kolom terstruktur: Pertanyaan | Opsi A | Opsi B | Opsi C | Opsi D | Kunci
+  const firstRowLower = matrix[0].map((c) => c.toLowerCase().trim());
+  const hasStructuredHeader =
+    firstRowLower.some((h) => h.includes('pertanyaan') || h === 'soal' || h.includes('question')) &&
+    firstRowLower.some((h) => h.includes('opsi a') || h === 'a' || h.includes('pilihan a')) &&
+    firstRowLower.some((h) => h.includes('opsi b') || h === 'b' || h.includes('pilihan b'));
+
+  if (hasStructuredHeader) {
+    const findIdx = (keys: string[], fallback: number) => {
+      const exact = firstRowLower.findIndex((h) => keys.some((k) => h === k));
+      if (exact >= 0) return exact;
+      const part = firstRowLower.findIndex((h) => keys.some((k) => h.includes(k)));
+      return part >= 0 ? part : fallback;
+    };
+    const colNo = firstRowLower.findIndex((h) => h === 'no' || h === 'no.' || h === 'nomor');
+    const colQ = findIdx(['pertanyaan', 'soal', 'question'], colNo === 0 ? 1 : 0);
+    const colA = findIdx(['opsi a', 'pilihan a', 'jawaban a', 'a'], colQ + 1);
+    const colB = findIdx(['opsi b', 'pilihan b', 'jawaban b', 'b'], colA + 1);
+    const colC = findIdx(['opsi c', 'pilihan c', 'jawaban c', 'c'], colB + 1);
+    const colD = findIdx(['opsi d', 'pilihan d', 'jawaban d', 'd'], colC + 1);
+    const colE = firstRowLower.findIndex((h) =>
+      ['opsi e', 'pilihan e', 'jawaban e', 'e'].some((k) => h === k || h.includes(k))
+    );
+    const colKey = firstRowLower.findIndex((h) =>
+      ['kunci jawaban', 'kunci', 'jawaban benar', 'answer', 'key'].some((k) => h.includes(k))
+    );
+
+    const structured: Array<{
+      questionNumber: number | null;
+      stem: string;
+      options: Partial<Record<CbtOptionKey, string>>;
+      explicitKey: CbtOptionKey | null;
+    }> = [];
+
+    for (let r = 1; r < matrix.length; r++) {
+      const row = matrix[r];
+      const stem = (row[colQ] || '').trim();
+      if (!stem) continue;
+      const numRaw = colNo >= 0 ? Number((row[colNo] || '').replace(/\D/g, '')) : 0;
+      const options: Partial<Record<CbtOptionKey, string>> = {
+        A: (row[colA] || '').trim(),
+        B: (row[colB] || '').trim(),
+        C: (row[colC] || '').trim(),
+        D: (row[colD] || '').trim(),
+      };
+      if (colE >= 0 && (row[colE] || '').trim()) {
+        options.E = row[colE].trim();
+      }
+      const keyRaw = colKey >= 0 ? normalizeAnswerKey(row[colKey]) : null;
+      structured.push({
+        questionNumber: numRaw >= 1 ? numRaw : null,
+        stem,
+        options,
+        explicitKey: keyRaw,
+      });
+    }
+    if (structured.length > 0) {
+      return { mode: 'structured', structured };
+    }
+  }
+
+  // Tabel 2 kolom "1 | Soal + Opsi": normalisasi angka polos di kolom pertama menjadi "1."
+  const lines: string[] = [];
+  for (const row of matrix) {
+    const nonEmpty = row.filter(Boolean);
+    if (nonEmpty.length === 0) continue;
+    if (nonEmpty.length >= 2 && /^\d{1,3}\.?$/.test(nonEmpty[0])) {
+      const qNum = nonEmpty[0].replace(/\.$/, '');
+      const rest = nonEmpty.slice(1).join(' ').trim();
+      const restLines = rest.split('\n').filter(Boolean);
+      if (restLines.length > 0) {
+        lines.push(`${qNum}. ${restLines[0]}`);
+        lines.push(...restLines.slice(1));
+      } else {
+        lines.push(`${qNum}.`);
+      }
+    } else {
+      lines.push(...nonEmpty.join(' ').split('\n').filter(Boolean));
+    }
+  }
+  return { mode: 'lines', lines };
+}
+
 export function parseDocxHtmlQuestions(
   html: string,
   examId: string,
@@ -737,8 +1026,11 @@ export function parseDocxHtmlQuestions(
 
   const doc = parser.parseFromString(html, 'text/html');
   let topChildren = Array.from(doc.body.children);
-  // Jika seluruh dokumen dibungkus satu <div> tunggal, buka wrapper-nya
-  while (topChildren.length === 1 && topChildren[0].tagName.toUpperCase() === 'DIV') {
+  // Jika seluruh dokumen dibungkus satu container tunggal (DIV/SECTION/ARTICLE/MAIN), buka wrapper-nya
+  while (
+    topChildren.length === 1 &&
+    /^(DIV|SECTION|ARTICLE|MAIN)$/i.test(topChildren[0].tagName)
+  ) {
     topChildren = Array.from(topChildren[0].children);
   }
 
@@ -748,6 +1040,7 @@ export function parseDocxHtmlQuestions(
     options: Partial<Record<CbtOptionKey, string>>;
     currentOpt: CbtOptionKey | null;
     explicitKey: CbtOptionKey | null;
+    styledKeyCandidates: CbtOptionKey[];
   }
 
   const items: HtmlQuestionItem[] = [];
@@ -759,6 +1052,13 @@ export function parseDocxHtmlQuestions(
 
   const pushCurrent = () => {
     if (!current) return;
+    if (
+      !current.explicitKey &&
+      current.styledKeyCandidates.length === 1 &&
+      Object.keys(current.options).length >= 4
+    ) {
+      current.explicitKey = current.styledKeyCandidates[0];
+    }
     const stem = current.stemLines.join('\n').trim();
     if (stem || Object.keys(current.options).length > 0) {
       items.push(current);
@@ -766,51 +1066,79 @@ export function parseDocxHtmlQuestions(
     current = null;
   };
 
-  const parseInlineLinesIntoQuestion = (lines: string[], forceNewNumber?: number | null) => {
+  const applySingleKeyToActiveOrLast = (key: CbtOptionKey) => {
+    if (current) {
+      current.explicitKey = key;
+      current.currentOpt = null;
+    } else if (items.length > 0) {
+      items[items.length - 1].explicitKey = key;
+    }
+  };
+
+  const parseInlineLinesIntoQuestion = (
+    lines: string[],
+    forceNewNumber?: number | null,
+    styledCandidateKey?: CbtOptionKey | null
+  ) => {
     for (const rawLine of lines) {
       const subLines = splitInlineOptionsInLine(
         rawLine,
         Boolean(current && current.options.A)
       );
       for (const line of subLines) {
-        const kMatch = line.match(KEY_LINE_RE);
-        if (kMatch && current) {
-          current.explicitKey = kMatch[1].toUpperCase() as CbtOptionKey;
-          current.currentOpt = null;
+        const singleKey = extractSingleKeyFromLine(line);
+        if (singleKey) {
+          applySingleKeyToActiveOrLast(singleKey);
           continue;
         }
 
-        const optMatch = line.match(OPT_RE);
+        const optMatch = matchOptionLine(line);
         if (optMatch && current) {
-          const hasStarPrefix = optMatch[1] === '*';
-          const letter = optMatch[2].toUpperCase() as CbtOptionKey;
-          const { text: optBody, isMarkedCorrect } = cleanOptionBodyAndMarkers(
-            optMatch[3] || ''
-          );
+          const { hasStarPrefix, letter, rawBody: rawOpt } = optMatch;
+          const { text: optBody, isMarkedCorrect } = cleanOptionBodyAndMarkers(rawOpt);
           if (hasStarPrefix || isMarkedCorrect) {
             current.explicitKey = letter;
+          }
+          if (
+            styledCandidateKey &&
+            subLines.length === 1 &&
+            !current.styledKeyCandidates.includes(letter)
+          ) {
+            current.styledKeyCandidates.push(letter);
           }
           current.options[letter] = optBody;
           current.currentOpt = letter;
           continue;
         }
 
-        const qMatch = line.match(Q_START_RE);
+        const qMatch = matchQuestionStart(line);
+        const isSequentialNextQuestion = Boolean(
+          qMatch &&
+            current &&
+            current.questionNumber !== null &&
+            qMatch.num === current.questionNumber + 1 &&
+            current.stemLines.length > 0 &&
+            !/(?:berikut(?:\s+ini)?|pernyataan|langkah)\s*:?\s*$/i.test(
+              current.stemLines[current.stemLines.length - 1] || ''
+            )
+        );
         if (
           qMatch &&
           (!current ||
             Object.keys(current.options).length >= 2 ||
-            current.explicitKey !== null)
+            current.explicitKey !== null ||
+            isSequentialNextQuestion)
         ) {
           pushCurrent();
-          const num = Number(qMatch[1]) || ++autoQuestionNum;
+          const num = qMatch.num || ++autoQuestionNum;
           autoQuestionNum = num;
           current = {
             questionNumber: num,
-            stemLines: qMatch[2].trim() ? [qMatch[2].trim()] : [],
+            stemLines: qMatch.rest ? [qMatch.rest] : [],
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
           startedQuestions = true;
           continue;
@@ -825,6 +1153,7 @@ export function parseDocxHtmlQuestions(
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
           startedQuestions = true;
         } else if (Object.keys(current.options).length >= 2 && !current.currentOpt) {
@@ -838,6 +1167,7 @@ export function parseDocxHtmlQuestions(
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
           startedQuestions = true;
         } else if (current.currentOpt && Object.keys(current.options).length < 4) {
@@ -854,6 +1184,7 @@ export function parseDocxHtmlQuestions(
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
           startedQuestions = true;
         } else {
@@ -869,28 +1200,76 @@ export function parseDocxHtmlQuestions(
     const plain = collapseInlineSpaces(extractElementPlainLines(el, true));
 
     if (foundKunci) {
-      if (plain) kunciParts.push(plain);
+      if (tag === 'OL') {
+        const startAttr = Number(el.getAttribute('start') || 1);
+        const liNodes = Array.from(el.children).filter(
+          (c) => c.tagName.toUpperCase() === 'LI'
+        );
+        liNodes.forEach((li, idx) => {
+          const t = collapseInlineSpaces(extractElementPlainLines(li, true));
+          if (!t) return;
+          if (/^\d{1,3}\s*[.:\-)]?\s*[A-E]\b/i.test(t)) {
+            kunciParts.push(t);
+          } else {
+            kunciParts.push(`${startAttr + idx}. ${t}`);
+          }
+        });
+      } else if (plain) {
+        kunciParts.push(plain);
+      }
       continue;
     }
 
     if (!plain && tag !== 'OL' && tag !== 'UL') continue;
 
     // Deteksi blok KUNCI JAWABAN atau Pedoman penilaian di akhir dokumen
-    if (
-      /\bKUNCI\s+JAWABAN\b/i.test(plain) ||
-      (tag === 'TABLE' && startedQuestions && isLikelyKunciTable(plain))
-    ) {
+    // PENTING: baris per-soal seperti "Kunci Jawaban: B" TIDAK boleh memicu foundKunci!
+    const singleKeyOnBlock = extractSingleKeyFromLine(plain);
+    const hasKunciHeader = /\bKUNCI\s+JAWABAN\b/i.test(plain);
+    const hasPedomanHeader = /^\s*pedoman\s+penilaian\b/i.test(plain) && startedQuestions;
+    const isKunciTable = tag === 'TABLE' && startedQuestions && isLikelyKunciTable(plain);
+
+    if (isKunciTable) {
       foundKunci = true;
       pushCurrent();
       kunciParts.push(plain);
       continue;
     }
 
-    if (/^\s*pedoman\s+penilaian\b/i.test(plain) && startedQuestions) {
-      foundKunci = true;
-      pushCurrent();
-      kunciParts.push(plain);
-      continue;
+    if ((hasKunciHeader || hasPedomanHeader) && !singleKeyOnBlock) {
+      const remainingSiblings = topChildren.slice(childIdx + 1);
+      const remainingCombined = remainingSiblings
+        .map((nextEl) => collapseInlineSpaces(extractElementPlainLines(nextEl, true)))
+        .filter(Boolean)
+        .join('\n');
+
+      const hasUpcomingQuestionOptions =
+        /(?:^|\n|\s)\*?\s*A\s*[.)]\s*\S+[\s\S]*(?:^|\n|\s)\*?\s*B\s*[.)]\s*\S+/i.test(
+          remainingCombined
+        ) ||
+        remainingSiblings.some((nextEl) => {
+          const nextTag = nextEl.tagName.toUpperCase();
+          if (nextTag === 'OL' && nextEl.querySelector('ol, ul')) {
+            return true;
+          }
+          if (nextTag === 'OL') {
+            const lis = Array.from(nextEl.children).filter(
+              (c) => c.tagName.toUpperCase() === 'LI'
+            );
+            const avgLen =
+              lis.reduce((sum, li) => sum + (li.textContent || '').trim().length, 0) /
+              Math.max(1, lis.length);
+            return avgLen > 18;
+          }
+          return false;
+        });
+
+      if (!hasUpcomingQuestionOptions) {
+        foundKunci = true;
+        pushCurrent();
+        kunciParts.push(plain);
+        continue;
+      }
     }
 
     // Lewati Kop Surat, Logo, Alamat, dan Petunjuk pengerjaan di bagian atas sebelum soal
@@ -915,16 +1294,24 @@ export function parseDocxHtmlQuestions(
 
         for (const li of liNodes) {
           pushCurrent();
-          const nestedOls = Array.from(li.querySelectorAll('ol, ul'));
-          // Pilih nested <ol> terakhir yang berisi 2–5 item sebagai opsi jawaban A–E
-          let optionOl: Element | null = null;
-          for (let j = nestedOls.length - 1; j >= 0; j--) {
-            const candidateLis = Array.from(nestedOls[j].children).filter(
-              (c) => c.tagName.toUpperCase() === 'LI'
+          const liFullText = collapseInlineSpaces(extractElementPlainLines(li, true));
+          const hasManualTextOptions =
+            /(?:^|\n|\s)\*?\s*A\s*[.)]\s*\S+[\s\S]*(?:^|\n|\s)\*?\s*B\s*[.)]\s*\S+/i.test(
+              liFullText
             );
-            if (candidateLis.length >= 2 && candidateLis.length <= 5) {
-              optionOl = nestedOls[j];
-              break;
+          const nestedOls = Array.from(li.querySelectorAll('ol, ul'));
+          // Pilih nested <ol> terakhir yang berisi 2–5 item sebagai opsi jawaban A–E,
+          // KECUALI jika <li> sudah punya opsi manual A. B. C. D. di paragrafnya (maka nested list adalah pernyataan!)
+          let optionOl: Element | null = null;
+          if (!hasManualTextOptions) {
+            for (let j = nestedOls.length - 1; j >= 0; j--) {
+              const candidateLis = Array.from(nestedOls[j].children).filter(
+                (c) => c.tagName.toUpperCase() === 'LI'
+              );
+              if (candidateLis.length >= 2 && candidateLis.length <= 5) {
+                optionOl = nestedOls[j];
+                break;
+              }
             }
           }
 
@@ -936,11 +1323,21 @@ export function parseDocxHtmlQuestions(
 
           const qItem: HtmlQuestionItem = {
             questionNumber: qNum,
-            stemLines: cleanText ? cleanText.split('\n').filter(Boolean) : [],
+            stemLines: [],
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
+
+          for (const stemLine of cleanText.split('\n').filter(Boolean)) {
+            const inlineKey = extractSingleKeyFromLine(stemLine);
+            if (inlineKey) {
+              qItem.explicitKey = inlineKey;
+            } else {
+              qItem.stemLines.push(stemLine);
+            }
+          }
 
           if (optionOl) {
             const optLis = Array.from(optionOl.children).filter(
@@ -956,6 +1353,9 @@ export function parseDocxHtmlQuestions(
               const letter = OPTION_KEYS[optIdx];
               qItem.options[letter] = optText;
               if (isMarkedCorrect) qItem.explicitKey = letter;
+              if (isElementFullyStyledCorrect(optLi)) {
+                qItem.styledKeyCandidates.push(letter);
+              }
             });
           } else {
             // <li> tanpa nested <ol>: cek apakah opsi ditulis manual A. B. C. D. di dalam <li>
@@ -974,9 +1374,9 @@ export function parseDocxHtmlQuestions(
       }
 
       // Struktur 2: Sibling / Sequential <ol> (tidak ada nested <ol> di dalam <li>)
-      const looksLikeInlineCompleteQuestions = liNodes.every((li) => {
+      const looksLikeInlineCompleteQuestions = liNodes.some((li) => {
         const t = extractElementPlainLines(li, true);
-        return /\bA\s*[.)]\s+[\s\S]+\bB\s*[.)]\s+/i.test(t);
+        return /(?:^|[\s\n])\*?\s*A\s*[.)]\s*[\s\S]+(?:^|[\s\n])\*?\s*B\s*[.)]/i.test(t);
       });
 
       const nextSibling = topChildren[childIdx + 1];
@@ -1012,14 +1412,25 @@ export function parseDocxHtmlQuestions(
 
       const olType = (el.getAttribute('type') || '').trim().toLowerCase();
       const isLetteredOl = olType === 'a' || olType === 'i';
+      const ulItemsLookLikeOptions =
+        tag === 'UL' &&
+        liNodes.every((li) =>
+          /^\s*\*?\s*[A-Ea-e]\s*[.)]\s+/.test(extractElementPlainLines(li, true))
+        );
+      const hasExplicitQuestionNumbers =
+        !isLetteredOl &&
+        liNodes.some((li) =>
+          Boolean(matchQuestionStart(collapseInlineSpaces(extractElementPlainLines(li, true))))
+        );
       const canAttachAsOptionsToCurrent =
         Boolean(current) &&
         current !== null &&
         Object.keys(current.options).length === 0 &&
         !looksLikeInlineCompleteQuestions &&
+        !hasExplicitQuestionNumbers &&
         liNodes.length >= 2 &&
         liNodes.length <= 5 &&
-        (isLetteredOl || tag === 'OL');
+        (isLetteredOl || tag === 'OL' || ulItemsLookLikeOptions);
 
       if (canAttachAsOptionsToCurrent && current) {
         liNodes.slice(0, 5).forEach((optLi, optIdx) => {
@@ -1030,6 +1441,9 @@ export function parseDocxHtmlQuestions(
           const letter = OPTION_KEYS[optIdx];
           current!.options[letter] = optText;
           if (isMarkedCorrect) current!.explicitKey = letter;
+          if (isElementFullyStyledCorrect(optLi)) {
+            current!.styledKeyCandidates.push(letter);
+          }
         });
         current.currentOpt = null;
         startedQuestions = true;
@@ -1045,7 +1459,8 @@ export function parseDocxHtmlQuestions(
         const liText = collapseInlineSpaces(extractElementPlainLines(li, true));
         if (!liText) continue;
         const lines = liText.split('\n').filter(Boolean);
-        const hasInlineOpts = /\bA\s*[.)]\s+[\s\S]+\bB\s*[.)]\s+/i.test(liText);
+        const hasInlineOpts =
+          /(?:^|[\s\n])\*?\s*A\s*[.)]\s*[\s\S]+(?:^|[\s\n])\*?\s*B\s*[.)]/i.test(liText);
 
         if (hasInlineOpts) {
           const { explicitNum } = stripLeadingQuestionPrefix(lines[0] || '');
@@ -1057,10 +1472,13 @@ export function parseDocxHtmlQuestions(
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
           const first = stripLeadingQuestionPrefix(lines[0]);
-          if (first.cleanText) current.stemLines.push(first.cleanText);
-          parseInlineLinesIntoQuestion(lines.slice(1), qNum);
+          const firstSegments = first.cleanText
+            ? splitInlineOptionsInLine(first.cleanText, false)
+            : [];
+          parseInlineLinesIntoQuestion([...firstSegments, ...lines.slice(1)], qNum);
           startedQuestions = true;
         } else {
           const { explicitNum, cleanText } = stripLeadingQuestionPrefix(liText);
@@ -1068,18 +1486,53 @@ export function parseDocxHtmlQuestions(
           autoQuestionNum = qNum;
           current = {
             questionNumber: qNum,
-            stemLines: cleanText ? cleanText.split('\n').filter(Boolean) : [],
+            stemLines: [],
             options: {},
             currentOpt: null,
             explicitKey: null,
+            styledKeyCandidates: [],
           };
+          for (const sLine of cleanText.split('\n').filter(Boolean)) {
+            const inlineKey = extractSingleKeyFromLine(sLine);
+            if (inlineKey) {
+              current.explicitKey = inlineKey;
+            } else {
+              current.stemLines.push(sLine);
+            }
+          }
           startedQuestions = true;
         }
       }
       continue;
     }
 
-    // Node <p>, <h*>, <div>, <table> di dalam area soal
+    // Tabel soal di dalam Word (.docx)
+    if (tag === 'TABLE') {
+      const parsedTable = tryExtractQuestionTableLines(el);
+      if (parsedTable.mode === 'structured' && parsedTable.structured) {
+        pushCurrent();
+        for (const rowQ of parsedTable.structured) {
+          const qNum = rowQ.questionNumber ?? ++autoQuestionNum;
+          autoQuestionNum = qNum;
+          items.push({
+            questionNumber: qNum,
+            stemLines: rowQ.stem.split('\n').filter(Boolean),
+            options: rowQ.options,
+            currentOpt: null,
+            explicitKey: rowQ.explicitKey,
+            styledKeyCandidates: [],
+          });
+        }
+        startedQuestions = true;
+        continue;
+      }
+      if (parsedTable.lines && parsedTable.lines.length > 0) {
+        parseInlineLinesIntoQuestion(parsedTable.lines);
+        continue;
+      }
+    }
+
+    // Node <p>, <h*>, <div> di dalam area soal
     const lines = plain.split('\n').filter(Boolean);
     if (lines.length === 0) continue;
 
@@ -1091,7 +1544,8 @@ export function parseDocxHtmlQuestions(
           const nextTag = nextEl.tagName.toUpperCase();
           if (nextTag === 'OL') return true;
           const nextPlain = collapseInlineSpaces(extractElementPlainLines(nextEl, true));
-          return /^\s*(?:soal\s*(?:no\.?)?\s*)?1\s*[.)\-:](?!\d)\s*\S/i.test(nextPlain);
+          const m = matchQuestionStart(nextPlain);
+          return Boolean(m && m.num === 1 && m.rest.length > 0);
         });
       if (
         hasListOrQ1Soon &&
@@ -1104,7 +1558,11 @@ export function parseDocxHtmlQuestions(
       }
     }
 
-    parseInlineLinesIntoQuestion(lines);
+    const styledHint =
+      lines.length === 1 && OPT_RE.test(lines[0]) && isElementFullyStyledCorrect(el)
+        ? ('A' as CbtOptionKey)
+        : null;
+    parseInlineLinesIntoQuestion(lines, undefined, styledHint);
   }
   pushCurrent();
 
@@ -1147,20 +1605,71 @@ export function parseDocxHtmlQuestions(
   });
 }
 
+function stripBasicRtf(rtf: string): string {
+  return rtf
+    .replace(/\\par[d]?/gi, '\n')
+    .replace(/\\line\b/gi, '\n')
+    .replace(/\\tab\b/gi, ' ')
+    .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\{\\\*\\[^}]*\}/g, '')
+    .replace(/\\[a-zA-Z]+-?\d* ?/g, '')
+    .replace(/[{}]/g, '')
+    .trim();
+}
+
 export async function parseWordOrTextFileQuestions(
   file: File,
   examId: string
 ): Promise<ParsedQuestionDraft[]> {
   const lower = file.name.toLowerCase();
+  if (lower.endsWith('.doc')) {
+    throw new Error(
+      'Format Word lama (.doc) tidak dapat dibaca langsung. Buka file di Microsoft Word lalu simpan ulang sebagai "Word Document (.docx)" atau copy-paste isinya ke kotak Copy-Paste Soal.'
+    );
+  }
+  if (lower.endsWith('.pdf')) {
+    throw new Error(
+      'File PDF belum didukung untuk upload langsung. Salin teks soal dari PDF lalu tempelkan ke kotak "Copy-Paste Soal", atau konversi ke .docx terlebih dahulu.'
+    );
+  }
   if (lower.endsWith('.docx')) {
     const buffer = await file.arrayBuffer();
-    const res = await mammoth.convertToHtml({ arrayBuffer: buffer });
-    const htmlParsed = parseDocxHtmlQuestions(res.value || '', examId);
-    if (htmlParsed.length > 0) return htmlParsed;
-    const fallbackRaw = await mammoth.extractRawText({ arrayBuffer: buffer });
-    return parseQuestionsFromRawText(fallbackRaw.value || '', examId);
+    let htmlParsed: ParsedQuestionDraft[] = [];
+    try {
+      const res = await mammoth.convertToHtml(
+        { arrayBuffer: buffer },
+        { styleMap: ['u => u', 'highlight => mark'] }
+      );
+      htmlParsed = parseDocxHtmlQuestions(res.value || '', examId);
+    } catch {
+      htmlParsed = [];
+    }
+    let rawParsed: ParsedQuestionDraft[] = [];
+    try {
+      const fallbackRaw = await mammoth.extractRawText({ arrayBuffer: buffer });
+      rawParsed = parseQuestionsFromRawText(fallbackRaw.value || '', examId);
+    } catch {
+      rawParsed = [];
+    }
+    if (htmlParsed.length === 0) return rawParsed;
+    if (rawParsed.length > htmlParsed.length) {
+      const scoreParsed = (list: ParsedQuestionDraft[]) =>
+        list.reduce((acc, q) => {
+          const filledOpts = [q.opsiA, q.opsiB, q.opsiC, q.opsiD].filter(
+            (o) => o.trim() !== ''
+          ).length;
+          return acc + (filledOpts >= 4 ? 10 : filledOpts >= 2 ? 5 : 1) + (q.keyExplicit ? 1 : 0);
+        }, 0);
+      if (scoreParsed(rawParsed) > scoreParsed(htmlParsed)) {
+        return rawParsed;
+      }
+    }
+    return htmlParsed;
   }
   const text = await file.text();
+  if (lower.endsWith('.rtf')) {
+    return parseQuestionsFromRawText(stripBasicRtf(text), examId);
+  }
   return parseQuestionsFromRawText(text, examId);
 }
 

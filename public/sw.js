@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siakad-mda-shell-v3';
+const CACHE_NAME = 'siakad-mda-shell-v5';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -18,7 +18,15 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(SHELL_ASSETS).catch(() => {}))
+      .then((cache) =>
+        Promise.allSettled(
+          SHELL_ASSETS.map((assetUrl) =>
+            fetch(assetUrl, { cache: 'reload' })
+              .then((res) => (res.ok ? cache.put(assetUrl, res) : undefined))
+              .catch(() => {})
+          )
+        )
+      )
       .then(() => self.skipWaiting())
   );
 });
@@ -38,15 +46,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Strictly bypass API routes and external Google/Apps Script endpoints (network-only)
+  // Strictly bypass /sw.js, API routes, and external Google/Apps Script endpoints (network-only)
   if (
     url.origin !== self.location.origin ||
+    url.pathname === '/sw.js' ||
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('script.google.com') ||
     url.hostname.includes('googleapis.com')
@@ -54,10 +69,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests: network-first with cached shell fallback
+  // Navigation requests: network-first (no-store) with cached shell fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
+        .catch(() => fetch(req))
         .then((res) => {
           if (res && res.ok) {
             const copy = res.clone();

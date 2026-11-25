@@ -19,7 +19,14 @@ import type {
   UserRole,
 } from '../types/mda';
 
+import { safeSessionStorage } from '../utils/safeStorage';
+import {
+  executeDirectAppsScriptFallback,
+  storeDirectSessionUser,
+} from './appsScriptClientFallback';
+
 const SESSION_TOKEN_STORAGE_KEY = 'mda_backend_session_token';
+let memorySessionToken: string | null = null;
 
 export interface BackendSessionUser {
   role: UserRole;
@@ -56,22 +63,21 @@ export class ApiConflictError extends Error {
 }
 
 export function getStoredSessionToken(): string | null {
-  try {
-    return sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
+  if (memorySessionToken) return memorySessionToken;
+  const fromStore = safeSessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+  if (fromStore) {
+    memorySessionToken = fromStore;
   }
+  return fromStore;
 }
 
 export function setStoredSessionToken(token: string | null) {
-  try {
-    if (token) {
-      sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
-    } else {
-      sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
-    }
-  } catch {
-    // ignore sessionStorage restrictions
+  memorySessionToken = token;
+  if (token) {
+    safeSessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+  } else {
+    safeSessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+    storeDirectSessionUser(null);
   }
 }
 
@@ -84,10 +90,19 @@ async function apiFetch<T>(
     spreadsheetId?: string | null;
   } = {}
 ): Promise<T> {
+  const method = options.method || 'GET';
+  const sessionToken = getStoredSessionToken();
+
+  if (
+    sessionToken?.startsWith('direct-v1.') &&
+    !path.startsWith('/api/auth/login')
+  ) {
+    return executeDirectAppsScriptFallback<T>(path, method, options.body, sessionToken);
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  const sessionToken = getStoredSessionToken();
   if (sessionToken) {
     headers.Authorization = `Bearer ${sessionToken}`;
   }
@@ -101,19 +116,32 @@ async function apiFetch<T>(
   let res: Response;
   try {
     res = await fetch(path, {
-      method: options.method || 'GET',
+      method,
       credentials: 'include',
       headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     });
   } catch {
-    throw new Error(
-      'Koneksi internet atau server terputus. Perubahan belum tersimpan ke Google Sheets.'
-    );
+    // Static preview / offline / missing backend -> try direct Apps Script fallback
+    try {
+      return await executeDirectAppsScriptFallback<T>(path, method, options.body, sessionToken);
+    } catch (fallbackErr: any) {
+      throw new Error(
+        fallbackErr?.message ||
+          'Koneksi internet atau server terputus. Perubahan belum tersimpan ke Google Sheets.'
+      );
+    }
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  const data = contentType.includes('application/json') ? await res.json() : null;
+  const contentType = (res.headers.get('content-type') || '').toLowerCase();
+  const isJson = contentType.includes('application/json');
+
+  // Non-Vercel preview environment: /api/... returned 404/405 or SPA HTML instead of JSON
+  if (res.status === 404 || res.status === 405 || !isJson) {
+    return executeDirectAppsScriptFallback<T>(path, method, options.body, sessionToken);
+  }
+
+  const data = await res.json();
 
   if (!res.ok) {
     if (res.status === 409 && data?.code === 'VERSION_CONFLICT') {

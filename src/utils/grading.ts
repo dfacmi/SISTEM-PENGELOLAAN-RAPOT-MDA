@@ -562,6 +562,51 @@ export function normalizeExternalUrl(raw?: string | null): string {
   return `https://${clean}`;
 }
 
+export function extractGoogleDriveFileId(rawUrl?: string | null): string {
+  const normalized = normalizeExternalUrl(rawUrl);
+  if (!normalized) return '';
+  try {
+    const parsed = new URL(normalized);
+    const host = parsed.hostname.toLowerCase();
+    if (host !== 'drive.google.com') {
+      return '';
+    }
+    const pathname = parsed.pathname;
+    if (/\/folders\//i.test(pathname) || /^\/drive\/folders/i.test(pathname)) {
+      return '';
+    }
+
+    const filePathMatch = pathname.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/i);
+    if (filePathMatch?.[1]) {
+      return filePathMatch[1];
+    }
+
+    const shortPathMatch = pathname.match(/^\/d\/([a-zA-Z0-9_-]{10,})/i);
+    if (shortPathMatch?.[1]) {
+      return shortPathMatch[1];
+    }
+
+    const queryId = (parsed.searchParams.get('id') || '').trim();
+    if (
+      /^\/(open|uc|thumbnail)\b/i.test(pathname) &&
+      /^[a-zA-Z0-9_-]{10,}$/.test(queryId)
+    ) {
+      return queryId;
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+export function getGoogleDriveDownloadUrl(rawUrl?: string | null): string {
+  const fileId = extractGoogleDriveFileId(rawUrl);
+  return fileId
+    ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`
+    : '';
+}
+
 export interface ResolvedPortfolioLinks {
   sidangUrl: string;
   behanceUrl: string;

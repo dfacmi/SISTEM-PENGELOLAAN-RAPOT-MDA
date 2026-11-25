@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Check,
   Copy,
+  Download,
   ExternalLink,
   Eye,
   Image as ImageIcon,
@@ -27,6 +28,7 @@ import {
 import {
   GroupedPortfolioProject,
   generateParentPortfolioNarrative,
+  getGoogleDriveDownloadUrl,
   getStudentPortfolioLinks,
   groupPortfolioProjects,
   normalizeExternalUrl,
@@ -649,113 +651,147 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   </form>
                 ) : (
                   <div className="space-y-2 min-w-0">
-                    {/* Link 1: Behance */}
-                    <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                        <div className="min-w-0">
-                          <span className="text-[10px] font-bold uppercase tracking-wide text-sky-300 block">
-                            1. Link Portofolio (Behance)
-                          </span>
-                          <span className="text-[9.5px] text-slate-300">
-                            Tampil di Cover Hal. 1 &amp; Hal. 5
-                          </span>
-                        </div>
-                        {links.behanceUrl && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => void handleCopy('behance', links.behanceUrl)}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
-                            >
-                              {copiedKey === 'behance' ? (
-                                <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
-                              ) : (
-                                <Copy className="w-2.5 h-2.5" />
-                              )}
-                              <span>{copiedKey === 'behance' ? 'Disalin' : 'Salin'}</span>
-                            </button>
+                    {/* Link 1: Behance / Google Drive */}
+                    {(() => {
+                      const behanceDownloadUrl = getGoogleDriveDownloadUrl(
+                        links.behanceUrl
+                      );
+                      return (
+                        <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-sky-300 block">
+                                1. Link Portofolio (Behance)
+                              </span>
+                              <span className="text-[9.5px] text-slate-300">
+                                Tampil di Cover Hal. 1 &amp; Hal. 5
+                              </span>
+                            </div>
+                            {links.behanceUrl && (
+                              <div className="flex flex-wrap items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleCopy('behance', links.behanceUrl)}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                                >
+                                  {copiedKey === 'behance' ? (
+                                    <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                                  ) : (
+                                    <Copy className="w-2.5 h-2.5" />
+                                  )}
+                                  <span>{copiedKey === 'behance' ? 'Disalin' : 'Salin'}</span>
+                                </button>
+                                <a
+                                  href={links.behanceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-400 hover:bg-sky-300 text-slate-950 text-[10px] font-bold transition-colors"
+                                >
+                                  <span>Buka</span>
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                                {behanceDownloadUrl && (
+                                  <a
+                                    href={behanceDownloadUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white hover:bg-sky-50 text-slate-950 text-[10px] font-bold transition-colors"
+                                  >
+                                    <Download className="w-2.5 h-2.5" />
+                                    <span>Unduh</span>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {links.behanceUrl ? (
                             <a
                               href={links.behanceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-400 text-slate-950 text-[10px] font-bold"
+                              className="block text-[10.5px] font-mono text-sky-100 break-all hover:underline"
                             >
-                              <span>Buka</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
+                              {links.behanceUrl}
                             </a>
-                          </div>
-                        )}
-                      </div>
-                      {links.behanceUrl ? (
-                        <a
-                          href={links.behanceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-[10.5px] font-mono text-sky-100 break-all hover:underline"
-                        >
-                          {links.behanceUrl}
-                        </a>
-                      ) : (
-                        <div className="text-[10.5px] text-slate-400 italic">
-                          Portofolio Behance belum diisi
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Link 2: PDF Kumpulan Karya 1 Semester */}
-                    <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                        <div className="flex flex-wrap items-center gap-1 min-w-0">
-                          <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                            2. Link Kumpulan Karya (PDF)
-                          </span>
-                          {links.pdfSubject && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-[9.5px] font-semibold text-amber-200">
-                              {links.pdfSubject}
-                            </span>
+                          ) : (
+                            <div className="text-[10.5px] text-slate-400 italic">
+                              Portofolio Behance belum diisi
+                            </div>
                           )}
                         </div>
-                        {links.pdfUrl && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => void handleCopy('pdf', links.pdfUrl)}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
-                            >
-                              {copiedKey === 'pdf' ? (
-                                <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
-                              ) : (
-                                <Copy className="w-2.5 h-2.5" />
+                      );
+                    })()}
+
+                    {/* Link 2: PDF Kumpulan Karya 1 Semester */}
+                    {(() => {
+                      const pdfDownloadUrl = getGoogleDriveDownloadUrl(links.pdfUrl);
+                      return (
+                        <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-1 min-w-0">
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                                2. Link Kumpulan Karya (PDF)
+                              </span>
+                              {links.pdfSubject && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-[9.5px] font-semibold text-amber-200">
+                                  {links.pdfSubject}
+                                </span>
                               )}
-                              <span>{copiedKey === 'pdf' ? 'Disalin' : 'Salin'}</span>
-                            </button>
+                            </div>
+                            {links.pdfUrl && (
+                              <div className="flex flex-wrap items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleCopy('pdf', links.pdfUrl)}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                                >
+                                  {copiedKey === 'pdf' ? (
+                                    <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                                  ) : (
+                                    <Copy className="w-2.5 h-2.5" />
+                                  )}
+                                  <span>{copiedKey === 'pdf' ? 'Disalin' : 'Salin'}</span>
+                                </button>
+                                <a
+                                  href={links.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-300 hover:bg-amber-200 text-slate-950 text-[10px] font-bold transition-colors"
+                                >
+                                  <span>Buka</span>
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                                {pdfDownloadUrl && (
+                                  <a
+                                    href={pdfDownloadUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white hover:bg-amber-50 text-slate-950 text-[10px] font-bold transition-colors"
+                                  >
+                                    <Download className="w-2.5 h-2.5" />
+                                    <span>Unduh</span>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {links.pdfUrl ? (
                             <a
                               href={links.pdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-300 text-slate-950 text-[10px] font-bold"
+                              className="block text-[10.5px] font-mono text-amber-100 break-all hover:underline"
                             >
-                              <span>Buka</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
+                              {links.pdfUrl}
                             </a>
-                          </div>
-                        )}
-                      </div>
-                      {links.pdfUrl ? (
-                        <a
-                          href={links.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-[10.5px] font-mono text-amber-100 break-all hover:underline"
-                        >
-                          {links.pdfUrl}
-                        </a>
-                      ) : (
-                        <div className="text-[10.5px] text-slate-400 italic">
-                          Link PDF Kumpulan Karya belum diisi
+                          ) : (
+                            <div className="text-[10.5px] text-slate-400 italic">
+                              Link PDF Kumpulan Karya belum diisi
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

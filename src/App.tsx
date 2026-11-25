@@ -111,8 +111,10 @@ import {
   UserAccess,
   UserRole,
 } from './types/mda';
+import { safeLocalStorage, safeSessionStorage } from './utils/safeStorage';
 import { getThemeStyles, mergeTemplateConfig } from './utils/theme';
 import { usePwaInstall } from './utils/usePwaInstall';
+import { usePwaUpdate } from './utils/usePwaUpdate';
 
 type NavSection =
   | 'overview'
@@ -143,7 +145,7 @@ const EMPTY_DATABASE: MdaDatabase = {
 
 function readLegacyLocalSnapshot(): MdaDatabase | null {
   try {
-    const raw = localStorage.getItem(LEGACY_LOCAL_DB_KEY);
+    const raw = safeLocalStorage.getItem(LEGACY_LOCAL_DB_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as MdaDatabase;
     if (!Array.isArray(parsed.students) || !Array.isArray(parsed.reports)) return null;
@@ -165,7 +167,7 @@ interface SavedDeviceCredential {
 
 function readSavedDeviceCreds(): SavedDeviceCredential[] {
   try {
-    const raw = localStorage.getItem(SAVED_DEVICE_CREDS_KEY);
+    const raw = safeLocalStorage.getItem(SAVED_DEVICE_CREDS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -181,7 +183,7 @@ function upsertSavedDeviceCred(cred: SavedDeviceCredential) {
       (c) => !(c.roleGroup === cred.roleGroup && norm(c.identifier) === norm(cred.identifier))
     );
     const next = [cred, ...list].slice(0, 10);
-    localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
+    safeLocalStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
     return next;
   } catch {
     return [];
@@ -221,7 +223,7 @@ export default function App() {
   const initialPinParam = urlParams.get('pin');
 
   const [preferredSheetId, setPreferredSheetId] = useState<string | undefined>(() => {
-    return initialSheetParam || localStorage.getItem(STORAGE_SHEET_ID_KEY) || undefined;
+    return initialSheetParam || safeLocalStorage.getItem(STORAGE_SHEET_ID_KEY) || undefined;
   });
 
   const [db, setDb] = useState<MdaDatabase>(EMPTY_DATABASE);
@@ -281,6 +283,7 @@ export default function App() {
   });
 
   const pwa = usePwaInstall();
+  const pwaUpdate = usePwaUpdate();
   const [showPwaModal, setShowPwaModal] = useState(false);
 
   const showToast = useCallback((type: 'ok' | 'err', text: string) => {
@@ -318,24 +321,16 @@ export default function App() {
       setDbLoadError(null);
       if (incomingDb.spreadsheetId) {
         setPreferredSheetId(incomingDb.spreadsheetId);
-        try {
-          localStorage.setItem(STORAGE_SHEET_ID_KEY, incomingDb.spreadsheetId);
-        } catch {
-          // ignore
-        }
+        safeLocalStorage.setItem(STORAGE_SHEET_ID_KEY, incomingDb.spreadsheetId);
       }
-      try {
-        // Store strictly as read-only cache metadata; never overwrites legacy unmigrated snapshot
-        sessionStorage.setItem(
-          SERVER_CACHE_KEY,
-          JSON.stringify({
-            lastSyncedAt: incomingDb.lastSyncedAt || new Date().toISOString(),
-            spreadsheetId: incomingDb.spreadsheetId,
-          })
-        );
-      } catch {
-        // ignore
-      }
+      // Store strictly as read-only cache metadata; never overwrites legacy unmigrated snapshot
+      safeSessionStorage.setItem(
+        SERVER_CACHE_KEY,
+        JSON.stringify({
+          lastSyncedAt: incomingDb.lastSyncedAt || new Date().toISOString(),
+          spreadsheetId: incomingDb.spreadsheetId,
+        })
+      );
     },
     []
   );
@@ -345,7 +340,7 @@ export default function App() {
     setIsBootstrapping(true);
     setSyncState('loading');
     setDbLoadError(null);
-    const targetSheetId = initialSheetParam || localStorage.getItem(STORAGE_SHEET_ID_KEY) || undefined;
+    const targetSheetId = initialSheetParam || safeLocalStorage.getItem(STORAGE_SHEET_ID_KEY) || undefined;
 
     try {
       const [healthRes, publicCfgRes] = await Promise.allSettled([
@@ -1638,7 +1633,7 @@ export default function App() {
             spreadsheetId: db.spreadsheetId || preferredSheetId,
           });
           applyServerDatabase(res.db);
-          localStorage.removeItem(LEGACY_LOCAL_DB_KEY);
+          safeLocalStorage.removeItem(LEGACY_LOCAL_DB_KEY);
           setLegacySnapshot(null);
           setSyncState('saved');
           const totalAdded =
@@ -1870,6 +1865,31 @@ export default function App() {
         className="min-h-screen flex flex-col justify-between p-3 sm:p-8 max-w-full overflow-x-hidden"
         style={{ backgroundColor: theme.pageTint }}
       >
+        {pwaUpdate.updateAvailable && (
+          <div className="max-w-5xl w-full mx-auto mb-3 p-3 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-2 text-xs shadow-md">
+            <div className="flex items-center gap-2 font-semibold">
+              <RefreshCw className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+              <span>Versi baru SIAKAD MDA tersedia. Muat ulang agar pembaruan aktif.</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={pwaUpdate.applyUpdate}
+                className="px-3 py-1.5 rounded-lg bg-[#1DF27A] text-slate-950 font-bold hover:bg-emerald-300"
+              >
+                Muat Ulang
+              </button>
+              <button
+                type="button"
+                onClick={pwaUpdate.dismissUpdateBanner}
+                className="p-1 rounded-lg text-slate-300 hover:text-white"
+                aria-label="Tutup pemberitahuan pembaruan"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="max-w-5xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-stretch min-w-0">
           {/* Left MDA Branding Panel */}
           <div
@@ -2123,7 +2143,7 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'admin');
-                          localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
+                          safeLocalStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
                           setSavedDeviceCreds(next);
                           setLoginTeacherPin('');
                         }}
@@ -2268,7 +2288,7 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           const next = savedDeviceCreds.filter((c) => c.roleGroup !== 'parent');
-                          localStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
+                          safeLocalStorage.setItem(SAVED_DEVICE_CREDS_KEY, JSON.stringify(next));
                           setSavedDeviceCreds(next);
                           setLoginPin('');
                         }}
@@ -2969,6 +2989,33 @@ export default function App() {
 
         {/* Active Viewport */}
         <main className="flex-1 min-w-0 max-w-[1360px] w-full mx-auto p-3 sm:p-6 space-y-4">
+          {/* Non-intrusive PWA Auto-Update Banner */}
+          {pwaUpdate.updateAvailable && (
+            <div className="p-3 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-2 text-xs shadow-sm">
+              <div className="flex items-center gap-2 font-semibold">
+                <RefreshCw className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+                <span>Versi baru SIAKAD MDA tersedia. Muat ulang agar pembaruan aktif.</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={pwaUpdate.applyUpdate}
+                  className="px-3 py-1.5 rounded-lg bg-[#1DF27A] text-slate-950 font-bold hover:bg-emerald-300"
+                >
+                  Muat Ulang
+                </button>
+                <button
+                  type="button"
+                  onClick={pwaUpdate.dismissUpdateBanner}
+                  className="p-1 rounded-lg text-slate-300 hover:text-white"
+                  aria-label="Tutup pemberitahuan pembaruan"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Explicit Alwan Hanif Preview Sample Mode Banner */}
           {previewSampleMode && (
             <div className="p-3.5 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
@@ -3044,7 +3091,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      localStorage.removeItem(LEGACY_LOCAL_DB_KEY);
+                      safeLocalStorage.removeItem(LEGACY_LOCAL_DB_KEY);
                       setLegacySnapshot(null);
                     }}
                     className="px-2.5 py-1.5 rounded-lg border border-sky-200 bg-white text-sky-800 font-semibold"
@@ -3219,7 +3266,18 @@ export default function App() {
                 });
               }}
               onSaveQuestions={async (examId: string, questions: CbtQuestion[]) => {
-                if (previewSampleMode || !ensureOnlineForWrite()) return;
+                if (previewSampleMode) {
+                  setDb((prev) => ({
+                    ...prev,
+                    cbtQuestions: [
+                      ...(prev.cbtQuestions || []).filter((q) => q.examId !== examId),
+                      ...questions.map((q, idx) => ({ ...q, examId, orderNumber: idx + 1 })),
+                    ],
+                  }));
+                  showToast('ok', `${questions.length} butir soal disimpan di mode pratinjau.`);
+                  return;
+                }
+                if (!ensureOnlineForWrite()) return;
                 setIsSyncing(true);
                 setSyncState('saving');
                 try {
