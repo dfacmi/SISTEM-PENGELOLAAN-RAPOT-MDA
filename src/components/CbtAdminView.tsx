@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -157,8 +157,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
   const [parsedPreview, setParsedPreview] = useState<ParsedQuestionDraft[] | null>(null);
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
   const [editingQuestion, setEditingQuestion] = useState<CbtQuestion | null>(null);
-  const spreadsheetInputRef = useRef<HTMLInputElement | null>(null);
-  const wordInputRef = useRef<HTMLInputElement | null>(null);
+  const [isImportingFile, setIsImportingFile] = useState(false);
+  const [fileImportError, setFileImportError] = useState<string | null>(null);
 
   // Live Monitor auto-refresh & dynamic class filter
   const [autoRefreshMonitor, setAutoRefreshMonitor] = useState(false);
@@ -233,13 +233,20 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
   };
 
   const handleFileSpreadsheetImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || !selectedExam) return;
+    const inputEl = e.currentTarget;
+    const file = inputEl.files?.[0];
+    if (!file || !selectedExam) {
+      inputEl.value = '';
+      return;
+    }
+    setIsImportingFile(true);
+    setFileImportError(null);
     try {
       const parsed = await parseSpreadsheetQuestions(file, selectedExam.id);
       if (parsed.length === 0) {
-        onShowToast('err', 'Tidak ditemukan soal valid di file Excel/CSV tersebut.');
+        const msg = `Tidak ditemukan soal valid di "${file.name}". Pastikan kolom Excel/CSV berisi Pertanyaan, Opsi A-D, Kunci Jawaban (atau format soal bernomor 1. ... A. ...).`;
+        setFileImportError(msg);
+        onShowToast('err', msg);
         return;
       }
       const withKeys = bulkKeysText.trim() ? applyBulkAnswerKey(parsed, bulkKeysText) : parsed;
@@ -247,18 +254,30 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
       setParsedPreview(withKeys);
       onShowToast('ok', `${withKeys.length} soal & ${keyCount} kunci terdeteksi dari ${file.name}. Periksa pratinjau di bawah.`);
     } catch (err: any) {
-      onShowToast('err', err.message || 'Gagal membaca file Excel/CSV.');
+      const msg = err?.message || 'Gagal membaca file Excel/CSV.';
+      setFileImportError(msg);
+      onShowToast('err', msg);
+    } finally {
+      inputEl.value = '';
+      setIsImportingFile(false);
     }
   };
 
   const handleFileWordOrTxtImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || !selectedExam) return;
+    const inputEl = e.currentTarget;
+    const file = inputEl.files?.[0];
+    if (!file || !selectedExam) {
+      inputEl.value = '';
+      return;
+    }
+    setIsImportingFile(true);
+    setFileImportError(null);
     try {
       const parsed = await parseWordOrTextFileQuestions(file, selectedExam.id);
       if (parsed.length === 0) {
-        onShowToast('err', 'Tidak ada format soal bernomor (1. ... A. ... B. ...) yang terdeteksi.');
+        const msg = `Tidak ada format soal bernomor (1. ... A. ... B. ...) yang terdeteksi di "${file.name}".`;
+        setFileImportError(msg);
+        onShowToast('err', msg);
         return;
       }
       const withKeys = bulkKeysText.trim() ? applyBulkAnswerKey(parsed, bulkKeysText) : parsed;
@@ -266,7 +285,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
       setParsedPreview(withKeys);
       onShowToast('ok', `${withKeys.length} soal & ${keyCount} kunci terdeteksi dari ${file.name}. Periksa pratinjau di bawah.`);
     } catch (err: any) {
-      onShowToast('err', err.message || 'Gagal membaca file Word/Teks.');
+      const msg = err?.message || 'Gagal membaca file Word/Teks.';
+      setFileImportError(msg);
+      onShowToast('err', msg);
+    } finally {
+      inputEl.value = '';
+      setIsImportingFile(false);
     }
   };
 
@@ -971,45 +995,54 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         Untuk Excel/CSV gunakan kolom: <strong>Pertanyaan, Opsi A, Opsi B, Opsi C, Opsi D, Opsi E (opsional), Kunci Jawaban, URL Gambar (opsional)</strong>. Mendukung teks Arab RTL.
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <input
-                          ref={spreadsheetInputRef}
-                          type="file"
-                          accept=".xlsx,.xls,.csv,.tsv"
-                          onChange={(e) => void handleFileSpreadsheetImport(e)}
-                          className="sr-only"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => spreadsheetInputRef.current?.click()}
-                          className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                        <label
+                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold select-none ${
+                            isImportingFile ? 'opacity-60 pointer-events-none' : ''
+                          }`}
                         >
-                          <FileSpreadsheet className="w-3.5 h-3.5" />
-                          <span>Pilih Excel / CSV</span>
-                        </button>
-                        <input
-                          ref={wordInputRef}
-                          type="file"
-                          accept=".docx,.doc,.txt,.rtf"
-                          onChange={(e) => void handleFileWordOrTxtImport(e)}
-                          className="sr-only"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => wordInputRef.current?.click()}
-                          className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold"
+                          <input
+                            type="file"
+                            disabled={isImportingFile}
+                            onChange={(e) => void handleFileSpreadsheetImport(e)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            aria-label="Pilih file Excel atau CSV"
+                          />
+                          <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+                          <span>{isImportingFile ? 'Membaca File...' : 'Pilih Excel / CSV'}</span>
+                        </label>
+                        <label
+                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold select-none ${
+                            isImportingFile ? 'opacity-60 pointer-events-none' : ''
+                          }`}
                         >
-                          <FileText className="w-3.5 h-3.5 text-[#1DF27A]" />
-                          <span>Pilih Word (.docx) / TXT</span>
-                        </button>
+                          <input
+                            type="file"
+                            disabled={isImportingFile}
+                            onChange={(e) => void handleFileWordOrTxtImport(e)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            aria-label="Pilih file Word docx atau TXT"
+                          />
+                          <FileText className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+                          <span>{isImportingFile ? 'Membaca File...' : 'Pilih Word (.docx) / TXT'}</span>
+                        </label>
                         <button
                           type="button"
                           onClick={() => downloadQuestionTemplateXlsx(selectedExam.title)}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-semibold"
+                          className="inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-semibold"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          <Download className="w-3.5 h-3.5 shrink-0" />
                           <span>Download Template Excel</span>
                         </button>
                       </div>
+                      {fileImportError && (
+                        <div className="p-2.5 rounded-xl border border-amber-300 bg-amber-50 text-[11px] text-amber-900 flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <span className="leading-relaxed break-words">{fileImportError}</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-slate-500 leading-relaxed">
+                        Tips HP: pilih file <strong>.docx / .xlsx / .csv / .txt</strong> dari folder <em>Download / Dokumen</em> perangkat.
+                      </p>
                     </div>
 
                     {/* Paste & Bulk Keys Card */}

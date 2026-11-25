@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siakad-mda-shell-v5';
+const CACHE_NAME = 'siakad-mda-shell-v6';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

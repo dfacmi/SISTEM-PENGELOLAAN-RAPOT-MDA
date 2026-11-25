@@ -134,25 +134,137 @@ function parseCsvTextToMatrix(csvText: string): string[][] {
   return lines.map((l) => splitCsvLine(l, bestDelim));
 }
 
-export async function parseSpreadsheetQuestions(
-  file: File,
-  examId: string
-): Promise<ParsedQuestionDraft[]> {
-  const lowerName = file.name.toLowerCase();
-  let matrix: any[][] = [];
+async function readFileAsArrayBufferSafe(file: File): Promise<ArrayBuffer> {
+  if (typeof file.arrayBuffer === 'function') {
+    try {
+      const buf = await file.arrayBuffer();
+      if (buf && buf.byteLength > 0) return buf;
+    } catch {
+      // Fallback ke FileReader untuk Android WebView / content:// URI
+    }
+  }
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    if (typeof FileReader === 'undefined') {
+      reject(new Error('Browser tidak mendukung pembacaan file lokal.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result instanceof ArrayBuffer) {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Gagal membaca isi file dari penyimpanan perangkat.'));
+      }
+    };
+    reader.onerror = () => {
+      reject(
+        new Error(
+          'File tidak dapat diakses dari HP. Jika file masih di Google Drive/WhatsApp cloud, simpan dulu ke folder Download HP lalu pilih ulang.'
+        )
+      );
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
 
-  if (lowerName.endsWith('.csv') || lowerName.endsWith('.tsv')) {
-    const text = await file.text();
-    matrix = parseCsvTextToMatrix(text);
-  } else {
-    const buffer = await file.arrayBuffer();
-    const wb = XLSX.read(buffer, { type: 'array' });
-    const firstSheet = wb.SheetNames[0];
-    if (!firstSheet) return [];
-    const ws = wb.Sheets[firstSheet];
-    matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as any[][];
+function bytesContainsAscii(bytes: Uint8Array, needle: string): boolean {
+  if (!needle || bytes.length < needle.length) return false;
+  const codes = Array.from(needle, (ch) => ch.charCodeAt(0));
+  const limit = bytes.length - codes.length;
+  for (let i = 0; i <= limit; i++) {
+    let matched = true;
+    for (let j = 0; j < codes.length; j++) {
+      if (bytes[i + j] !== codes[j]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
+}
+
+function detectFileKindFromBytes(
+  file: File,
+  buffer: ArrayBuffer
+): 'docx' | 'xlsx' | 'xls' | 'doc' | 'pdf' | 'rtf' | 'csv' | 'text' {
+  const bytes = new Uint8Array(buffer);
+  const lower = (file.name || '').toLowerCase();
+  const mime = (file.type || '').toLowerCase();
+
+  // %PDF-
+  if (
+    (bytes.length >= 4 &&
+      bytes[0] === 0x25 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x44 &&
+      bytes[3] === 0x46) ||
+    lower.endsWith('.pdf') ||
+    mime === 'application/pdf'
+  ) {
+    return 'pdf';
   }
 
+  // PK\x03\x04 (ZIP-based Office: .docx or .xlsx/.xlsm)
+  const isZip =
+    bytes.length >= 4 &&
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    bytes[2] === 0x03 &&
+    bytes[3] === 0x04;
+  if (isZip) {
+    if (bytesContainsAscii(bytes, 'word/')) return 'docx';
+    if (bytesContainsAscii(bytes, 'xl/')) return 'xlsx';
+    if (lower.endsWith('.docx') || mime.includes('wordprocessingml')) return 'docx';
+    if (lower.endsWith('.xlsx') || lower.endsWith('.xlsm') || mime.includes('spreadsheetml')) {
+      return 'xlsx';
+    }
+    return 'docx';
+  }
+
+  // OLE2 legacy binary (.xls or .doc)
+  const isOle =
+    bytes.length >= 4 &&
+    bytes[0] === 0xd0 &&
+    bytes[1] === 0xcf &&
+    bytes[2] === 0x11 &&
+    bytes[3] === 0xe0;
+  if (isOle) {
+    if (lower.endsWith('.xls') || mime.includes('ms-excel')) return 'xls';
+    if (lower.endsWith('.doc') || mime.includes('msword')) return 'doc';
+    return 'xls';
+  }
+
+  // Cek RTF header ({\rtf)
+  const headText = new TextDecoder('utf-8', { fatal: false }).decode(
+    bytes.subarray(0, Math.min(bytes.length, 512))
+  );
+  if (lower.endsWith('.rtf') || /^\s*\{\\rtf/i.test(headText)) {
+    return 'rtf';
+  }
+
+  if (lower.endsWith('.csv') || lower.endsWith('.tsv') || mime === 'text/csv') {
+    return 'csv';
+  }
+
+  if (
+    lower.endsWith('.xlsx') ||
+    lower.endsWith('.xlsm') ||
+    mime.includes('spreadsheetml')
+  ) {
+    return 'xlsx';
+  }
+  if (lower.endsWith('.xls') || mime.includes('ms-excel')) {
+    return 'xls';
+  }
+  if (lower.endsWith('.docx') || mime.includes('wordprocessingml')) {
+    return 'docx';
+  }
+
+  return 'text';
+}
+
+function parseSpreadsheetMatrix(matrix: any[][], examId: string): ParsedQuestionDraft[] {
   if (matrix.length === 0) return [];
 
   // Detect header row across first 15 rows (handles Excel files with leading title/instruction rows)
@@ -264,10 +376,50 @@ export async function parseSpreadsheetQuestions(
   return out;
 }
 
+export async function parseSpreadsheetQuestions(
+  file: File,
+  examId: string
+): Promise<ParsedQuestionDraft[]> {
+  const buffer = await readFileAsArrayBufferSafe(file);
+  if (!buffer || buffer.byteLength === 0) {
+    throw new Error('File kosong atau belum selesai diunduh di perangkat.');
+  }
+  const kind = detectFileKindFromBytes(file, buffer);
+  if (kind === 'docx') {
+    return parseDocxBufferQuestions(buffer, examId);
+  }
+  if (kind === 'pdf') {
+    throw new Error(
+      'File PDF belum didukung untuk upload langsung. Salin teks soal dari PDF lalu tempelkan ke kotak "Copy-Paste Soal", atau konversi ke .docx/.xlsx.'
+    );
+  }
+  if (kind === 'doc') {
+    throw new Error(
+      'Format Word lama (.doc) tidak dapat dibaca langsung. Simpan ulang sebagai .docx atau copy-paste soal ke kotak Paste.'
+    );
+  }
+
+  let matrix: any[][] = [];
+  if (kind === 'csv' || kind === 'text') {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(buffer));
+    matrix = parseCsvTextToMatrix(text);
+    const parsedCsv = parseSpreadsheetMatrix(matrix, examId);
+    if (parsedCsv.length > 0) return parsedCsv;
+    return parseQuestionsFromRawText(text, examId);
+  }
+
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const firstSheet = wb.SheetNames[0];
+  if (!firstSheet) return [];
+  const ws = wb.Sheets[firstSheet];
+  matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as any[][];
+  return parseSpreadsheetMatrix(matrix, examId);
+}
+
 function cleanUnicodeText(text: string): string {
   return (text || '')
     .replace(/\u00A0/g, ' ')
-    .replace(/[\u200B\uFEFF]/g, '')
+    .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
 }
@@ -1617,58 +1769,99 @@ function stripBasicRtf(rtf: string): string {
     .trim();
 }
 
+async function parseDocxBufferQuestions(
+  buffer: ArrayBuffer,
+  examId: string
+): Promise<ParsedQuestionDraft[]> {
+  let htmlParsed: ParsedQuestionDraft[] = [];
+  try {
+    const res = await mammoth.convertToHtml(
+      { arrayBuffer: buffer },
+      { styleMap: ['u => u', 'highlight => mark'] }
+    );
+    htmlParsed = parseDocxHtmlQuestions(res.value || '', examId);
+  } catch {
+    htmlParsed = [];
+  }
+  let rawParsed: ParsedQuestionDraft[] = [];
+  try {
+    const fallbackRaw = await mammoth.extractRawText({ arrayBuffer: buffer });
+    rawParsed = parseQuestionsFromRawText(fallbackRaw.value || '', examId);
+  } catch {
+    rawParsed = [];
+  }
+  if (htmlParsed.length === 0) return rawParsed;
+  if (rawParsed.length > htmlParsed.length) {
+    const scoreParsed = (list: ParsedQuestionDraft[]) =>
+      list.reduce((acc, q) => {
+        const filledOpts = [q.opsiA, q.opsiB, q.opsiC, q.opsiD].filter(
+          (o) => o.trim() !== ''
+        ).length;
+        return acc + (filledOpts >= 4 ? 10 : filledOpts >= 2 ? 5 : 1) + (q.keyExplicit ? 1 : 0);
+      }, 0);
+    if (scoreParsed(rawParsed) > scoreParsed(htmlParsed)) {
+      return rawParsed;
+    }
+  }
+  return htmlParsed;
+}
+
 export async function parseWordOrTextFileQuestions(
   file: File,
   examId: string
 ): Promise<ParsedQuestionDraft[]> {
-  const lower = file.name.toLowerCase();
-  if (lower.endsWith('.doc')) {
+  const buffer = await readFileAsArrayBufferSafe(file);
+  if (!buffer || buffer.byteLength === 0) {
     throw new Error(
-      'Format Word lama (.doc) tidak dapat dibaca langsung. Buka file di Microsoft Word lalu simpan ulang sebagai "Word Document (.docx)" atau copy-paste isinya ke kotak Copy-Paste Soal.'
+      'File kosong atau belum terunduh ke penyimpanan HP. Pastikan file tersedia offline lalu coba pilih ulang.'
     );
   }
-  if (lower.endsWith('.pdf')) {
+
+  const kind = detectFileKindFromBytes(file, buffer);
+  if (kind === 'pdf') {
     throw new Error(
       'File PDF belum didukung untuk upload langsung. Salin teks soal dari PDF lalu tempelkan ke kotak "Copy-Paste Soal", atau konversi ke .docx terlebih dahulu.'
     );
   }
-  if (lower.endsWith('.docx')) {
-    const buffer = await file.arrayBuffer();
-    let htmlParsed: ParsedQuestionDraft[] = [];
-    try {
-      const res = await mammoth.convertToHtml(
-        { arrayBuffer: buffer },
-        { styleMap: ['u => u', 'highlight => mark'] }
-      );
-      htmlParsed = parseDocxHtmlQuestions(res.value || '', examId);
-    } catch {
-      htmlParsed = [];
-    }
-    let rawParsed: ParsedQuestionDraft[] = [];
-    try {
-      const fallbackRaw = await mammoth.extractRawText({ arrayBuffer: buffer });
-      rawParsed = parseQuestionsFromRawText(fallbackRaw.value || '', examId);
-    } catch {
-      rawParsed = [];
-    }
-    if (htmlParsed.length === 0) return rawParsed;
-    if (rawParsed.length > htmlParsed.length) {
-      const scoreParsed = (list: ParsedQuestionDraft[]) =>
-        list.reduce((acc, q) => {
-          const filledOpts = [q.opsiA, q.opsiB, q.opsiC, q.opsiD].filter(
-            (o) => o.trim() !== ''
-          ).length;
-          return acc + (filledOpts >= 4 ? 10 : filledOpts >= 2 ? 5 : 1) + (q.keyExplicit ? 1 : 0);
-        }, 0);
-      if (scoreParsed(rawParsed) > scoreParsed(htmlParsed)) {
-        return rawParsed;
-      }
-    }
-    return htmlParsed;
+  if (kind === 'xlsx') {
+    const wb = XLSX.read(buffer, { type: 'array' });
+    const firstSheet = wb.SheetNames[0];
+    if (!firstSheet) return [];
+    const matrix = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { header: 1, defval: '' }) as any[][];
+    return parseSpreadsheetMatrix(matrix, examId);
   }
-  const text = await file.text();
-  if (lower.endsWith('.rtf')) {
+  if (kind === 'xls') {
+    try {
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const firstSheet = wb.SheetNames[0];
+      if (firstSheet) {
+        const matrix = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { header: 1, defval: '' }) as any[][];
+        const parsedXls = parseSpreadsheetMatrix(matrix, examId);
+        if (parsedXls.length > 0) return parsedXls;
+      }
+    } catch {
+      // Lanjut ke pesan .doc jika bukan file Excel valid
+    }
+    throw new Error(
+      'Format Word lama (.doc) tidak dapat dibaca langsung. Buka file di Word/WPS lalu simpan ulang sebagai "Word Document (.docx)" atau copy-paste ke kotak Copy-Paste Soal.'
+    );
+  }
+  if (kind === 'doc') {
+    throw new Error(
+      'Format Word lama (.doc) tidak dapat dibaca langsung. Buka file di Word/WPS lalu simpan ulang sebagai "Word Document (.docx)" atau copy-paste ke kotak Copy-Paste Soal.'
+    );
+  }
+  if (kind === 'docx') {
+    return parseDocxBufferQuestions(buffer, examId);
+  }
+
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(buffer));
+  if (kind === 'rtf') {
     return parseQuestionsFromRawText(stripBasicRtf(text), examId);
+  }
+  if (kind === 'csv') {
+    const parsedCsv = parseSpreadsheetMatrix(parseCsvTextToMatrix(text), examId);
+    if (parsedCsv.length > 0) return parsedCsv;
   }
   return parseQuestionsFromRawText(text, examId);
 }
