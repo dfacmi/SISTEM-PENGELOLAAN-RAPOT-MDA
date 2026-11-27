@@ -395,14 +395,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
       <div className="bg-white border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
               <span className="break-words">Modul Ujian CBT Pilihan Ganda (Anti-AI &amp; Web Lockdown)</span>
             </div>
-            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl mt-0.5 break-words">
+            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl mt-1 break-words">
               Manajemen 7 Paket Mapel Ujian Mandiri &amp; Pengawasan Live
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5 break-words">
+            <p className="text-sm text-slate-500 mt-1 break-words leading-relaxed">
               Setiap mata pelajaran memiliki token, bank soal, durasi, acak soal/opsi, monitoring pelanggaran, dan pemetaan nilai rapor tersendiri.
             </p>
           </div>
@@ -413,9 +413,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 type="button"
                 disabled={isBusy}
                 onClick={() => void onSeedDefaultExams()}
-                className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <Sparkles className="w-4 h-4 shrink-0" />
                 <span>Buat 7 Paket Mapel Standar MDA</span>
               </button>
             )}
@@ -423,9 +423,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
               type="button"
               disabled={isBusy}
               onClick={() => void handleCreateBlankExam()}
-              className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold disabled:opacity-50"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs sm:text-sm font-bold disabled:opacity-50"
             >
-              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Tambah Mapel Ujian</span>
             </button>
           </div>
@@ -434,20 +434,20 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
         {/* Mode Pekan Ujian Toggle Card */}
         {canManageRaporLock && (
           <div
-            className={`p-3.5 rounded-xl border flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
+            className={`p-4 rounded-xl border flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
               raporLocked
                 ? 'bg-amber-50 border-amber-300'
                 : 'bg-slate-50 border-slate-200'
             }`}
           >
-            <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-start sm:items-center gap-2">
                 {raporLocked ? (
                   <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
                 ) : (
                   <LockOpen className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5 sm:mt-0" />
                 )}
-                <span className="text-xs font-bold text-slate-900 break-words">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 break-words">
                   Kunci Sementara Akses Rapor (Mode Pekan Ujian):{' '}
                   <span className={raporLocked ? 'text-amber-700' : 'text-emerald-700'}>
                     {raporLocked
@@ -461,7 +461,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 value={raporLockMsg}
                 onChange={(e) => setRaporLockMsg(e.target.value)}
                 placeholder="Pesan pemberitahuan saat Portal Rapor dikunci..."
-                className="w-full min-w-0 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-700"
+                className="w-full min-w-0 min-h-[42px] px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl text-slate-700"
               />
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0">
@@ -469,7 +469,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 type="button"
                 disabled={isBusy}
                 onClick={() => void onToggleRaporLock(!raporLocked, raporLockMsg)}
-                className={`w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 ${
+                className={`w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 ${
                   raporLocked
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     : 'bg-amber-600 hover:bg-amber-700 text-white'
@@ -477,12 +477,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
               >
                 {raporLocked ? (
                   <>
-                    <Unlock className="w-3.5 h-3.5 shrink-0" />
+                    <Unlock className="w-4 h-4 shrink-0" />
                     <span>Buka Kembali Portal Rapor</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                    <Lock className="w-4 h-4 shrink-0" />
                     <span>Aktifkan Kunci Rapor</span>
                   </>
                 )}
@@ -492,7 +492,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   type="button"
                   disabled={isBusy}
                   onClick={() => void onToggleRaporLock(true, raporLockMsg)}
-                  className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-2 rounded-xl border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 text-xs font-semibold text-center"
+                  className="w-full sm:w-auto min-h-[42px] px-3.5 py-2 rounded-xl border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 text-xs sm:text-sm font-semibold text-center"
                 >
                   Simpan Pesan
                 </button>
@@ -506,16 +506,16 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
       {exams.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-3">
           <BookOpen className="w-10 h-10 text-emerald-600 mx-auto" />
-          <h3 className="font-display font-bold text-slate-900 text-base">
+          <h3 className="font-display font-bold text-slate-900 text-lg">
             Belum Ada Paket Ujian CBT
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
             Klik tombol &ldquo;Buat 7 Paket Mapel Standar MDA&rdquo; untuk langsung membuat 7 paket ujian terpisah (Aqidah, Akhlak, Fikih, Dakwah, UI/UX, Graphic Design, Videography).
           </p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {exams.map((exam) => {
               const qCount = allQuestions.filter((q) => q.examId === exam.id).length;
               const isSelected = selectedExam?.id === exam.id;
@@ -524,7 +524,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   key={exam.id}
                   type="button"
                   onClick={() => setSelectedExamId(exam.id)}
-                  className={`text-left p-3.5 rounded-2xl border transition-all ${
+                  className={`text-left p-4 rounded-2xl border transition-all ${
                     isSelected
                       ? 'bg-[#0E2228] text-white border-[#0E2228] shadow-md'
                       : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40'
@@ -532,14 +532,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                      className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-md ${
                         isSelected ? 'bg-white/15 text-[#1DF27A]' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {exam.mapelCode || 'CBT'}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-md uppercase ${
                         exam.status === 'active'
                           ? 'bg-emerald-500 text-white'
                           : exam.status === 'finished'
@@ -554,11 +554,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           : 'Draft'}
                     </span>
                   </div>
-                  <div className="font-display font-bold text-sm mt-2 truncate">
+                  <div className="font-display font-bold text-base mt-2.5 truncate">
                     {exam.title}
                   </div>
                   <div
-                    className={`mt-1.5 flex items-center justify-between text-[11px] ${
+                    className={`mt-1.5 flex items-center justify-between text-xs ${
                       isSelected ? 'text-slate-300' : 'text-slate-500'
                     }`}
                   >
@@ -578,51 +578,51 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
           {selectedExam && examDraft && (
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs min-w-0">
               {/* Subtabs Bar */}
-              <div className="p-3 sm:px-5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="p-3.5 sm:px-5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold text-emerald-700">
+                  <div className="text-xs font-semibold text-emerald-700">
                     Paket Aktif: {selectedExam.mapelCode || 'CBT'}
                   </div>
-                  <h3 className="font-display font-bold text-slate-900 text-base break-words">
+                  <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg break-words">
                     {selectedExam.title}
                   </h3>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                   <button
                     type="button"
                     onClick={() => setSubTab('settings')}
-                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                       subTab === 'settings'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <Settings2 className="w-3.5 h-3.5 shrink-0" />
+                    <Settings2 className="w-4 h-4 shrink-0" />
                     <span>Pengaturan &amp; Pemetaan Rapor</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSubTab('questions')}
-                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                       subTab === 'questions'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <FileText className="w-3.5 h-3.5 shrink-0" />
+                    <FileText className="w-4 h-4 shrink-0" />
                     <span>Bank Soal &amp; Import ({questionDrafts.length})</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSubTab('monitor')}
-                    className={`flex-1 sm:flex-initial justify-center min-h-[38px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    className={`flex-1 sm:flex-initial justify-center min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                       subTab === 'monitor'
                         ? 'bg-[#0E2228] text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    <ShieldAlert className="w-4 h-4 shrink-0" />
                     <span>Monitoring Pengawas</span>
                   </button>
                 </div>
@@ -633,7 +633,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                 <div className="p-4 sm:p-6 space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Nama Mata Pelajaran / Paket Ujian
                       </label>
                       <input
@@ -642,11 +642,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         onChange={(e) =>
                           setExamDraft({ ...examDraft, title: e.target.value })
                         }
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl"
+                        className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Kode Mapel
                       </label>
                       <input
@@ -655,11 +655,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         onChange={(e) =>
                           setExamDraft({ ...examDraft, mapelCode: e.target.value })
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl"
+                        className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Status Sesi Ujian
                       </label>
                       <select
@@ -670,7 +670,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             status: e.target.value as CbtExamStatus,
                           })
                         }
-                        className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-white"
+                        className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm font-semibold border border-slate-200 rounded-xl bg-white"
                       >
                         <option value="draft">Draft (Belum Dibuka ke Santri)</option>
                         <option value="active">Aktif (Santri Bisa Mulai Ujian)</option>
@@ -679,10 +679,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                     </div>
 
                     <div className="min-w-0">
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Token Ujian (6 Karakter)
                       </label>
-                      <div className="flex gap-1.5 min-w-0">
+                      <div className="flex gap-2 min-w-0">
                         <input
                           type="text"
                           value={examDraft.token}
@@ -692,7 +692,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               token: e.target.value.toUpperCase(),
                             })
                           }
-                          className="flex-1 min-w-0 px-3 py-2 text-xs font-mono font-bold tracking-widest border border-slate-200 rounded-xl uppercase"
+                          className="flex-1 min-w-0 min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono font-bold tracking-widest border border-slate-200 rounded-xl uppercase"
                         />
                         <button
                           type="button"
@@ -702,16 +702,16 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               token: generateRandomCbtToken(6),
                             })
                           }
-                          className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold inline-flex items-center gap-1 shrink-0"
+                          className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 shrink-0"
                         >
-                          <Shuffle className="w-3.5 h-3.5" />
+                          <Shuffle className="w-4 h-4" />
                           <span>Acak</span>
                         </button>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Durasi Pengerjaan (Menit)
                       </label>
                       <input
@@ -725,12 +725,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             durationMinutes: Math.max(5, Number(e.target.value) || 60),
                           })
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl"
+                        className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                         Batas Pelanggaran Web Lockdown
                       </label>
                       <input
@@ -744,14 +744,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             maxViolations: Math.max(1, Number(e.target.value) || 3),
                           })
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl"
+                        className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
                   </div>
 
                   {/* Toggles */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-                    <label className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs">
+                    <label className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         checked={examDraft.shuffleQuestions}
@@ -761,13 +761,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             shuffleQuestions: e.target.checked,
                           })
                         }
-                        className="rounded text-emerald-600"
+                        className="w-4 h-4 rounded text-emerald-600 shrink-0"
                       />
                       <span className="font-semibold text-slate-800">
                         Acak Urutan Soal per Santri
                       </span>
                     </label>
-                    <label className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs">
+                    <label className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         checked={examDraft.shuffleOptions}
@@ -777,13 +777,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             shuffleOptions: e.target.checked,
                           })
                         }
-                        className="rounded text-emerald-600"
+                        className="w-4 h-4 rounded text-emerald-600 shrink-0"
                       />
                       <span className="font-semibold text-slate-800">
                         Acak Opsi Jawaban (A/B/C/D)
                       </span>
                     </label>
-                    <label className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs">
+                    <label className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         checked={examDraft.autoSyncToRapor}
@@ -793,13 +793,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             autoSyncToRapor: e.target.checked,
                           })
                         }
-                        className="rounded text-emerald-600"
+                        className="w-4 h-4 rounded text-emerald-600 shrink-0"
                       />
                       <span className="font-semibold text-slate-800">
                         Otomatis Masukkan Nilai ke Rapor Saat Selesai
                       </span>
                     </label>
-                    <label className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs">
+                    <label className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         checked={examDraft.showScoreAfterFinish}
@@ -809,7 +809,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             showScoreAfterFinish: e.target.checked,
                           })
                         }
-                        className="rounded text-emerald-600"
+                        className="w-4 h-4 rounded text-emerald-600 shrink-0"
                       />
                       <span className="font-semibold text-slate-800">
                         Tampilkan Nilai Langsung ke Santri Setelah Selesai
@@ -818,18 +818,18 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   </div>
 
                   {/* Target Rapor Mapping */}
-                  <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-3">
+                  <div className="p-4 sm:p-5 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-3.5">
                     <div>
-                      <div className="text-xs font-bold text-emerald-950">
+                      <div className="text-sm font-bold text-emerald-950">
                         Pemetaan Target Nilai Rapor Semester (Sinkronisasi Aman ke UAS, 5 Pilar &amp; KKM)
                       </div>
-                      <p className="text-[11px] text-emerald-800/90 mt-0.5">
+                      <p className="text-xs sm:text-sm text-emerald-800/90 mt-1 leading-relaxed">
                         Untuk mapel Diniyah &amp; Skill Digital, skor CBT masuk khusus ke komponen <strong>UAS</strong> tanpa menimpa nilai SK (Sikap), TG (Tugas), atau UL, lalu NR dihitung otomatis.
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                           Kategori Kolom Rapor
                         </label>
                         <select
@@ -855,7 +855,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               },
                             });
                           }}
-                          className="w-full px-3 py-2 text-xs border border-emerald-200 rounded-xl bg-white"
+                          className="w-full min-h-[44px] h-11 px-3.5 py-2 text-base sm:text-sm border border-emerald-200 rounded-xl bg-white"
                         >
                           <option value="none">Tidak Disinkronkan ke Rapor</option>
                           <option value="diniyah">Mata Pelajaran Diniyah</option>
@@ -870,7 +870,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           isRemovedDigitalSubject(examDraft.targetRaporMapping.subjectName);
                         return (
                           <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                               Target Mata Pelajaran / Materi
                             </label>
                             <select
@@ -888,7 +888,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                   },
                                 })
                               }
-                              className="w-full px-3 py-2 text-xs border border-emerald-200 rounded-xl bg-white"
+                              className="w-full min-h-[44px] h-11 px-3.5 py-2 text-base sm:text-sm border border-emerald-200 rounded-xl bg-white"
                             >
                               {isLegacyRemovedDigital && (
                                 <option value="" disabled>
@@ -920,7 +920,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               )}
                             </select>
                             {isLegacyRemovedDigital && (
-                              <p className="mt-1 text-[10px] text-amber-700">
+                              <p className="mt-1.5 text-xs text-amber-700">
                                 Paket CBT lama ini terhubung ke mapel nonaktif (
                                 {examDraft.targetRaporMapping.subjectName}). Pilih mapel aktif di atas jika ingin memetakan ulang.
                               </p>
@@ -931,7 +931,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                       {examDraft.targetRaporMapping.category === 'skillDigital' && (
                         <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                          <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                             Kolom Nilai Skill Digital
                           </label>
                           <select
@@ -945,7 +945,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                 },
                               })
                             }
-                            className="w-full px-3 py-2 text-xs border border-emerald-200 rounded-xl bg-white"
+                            className="w-full min-h-[44px] h-11 px-3.5 py-2 text-base sm:text-sm border border-emerald-200 rounded-xl bg-white"
                           >
                             <option value="pengetahuan">Nilai Pengetahuan (Teori CBT)</option>
                             <option value="keterampilan">Nilai Keterampilan</option>
@@ -961,9 +961,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       type="button"
                       disabled={isBusy}
                       onClick={() => void onDeleteExam(selectedExam.id)}
-                      className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold disabled:opacity-50"
+                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs sm:text-sm font-semibold disabled:opacity-50"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                       <span>Hapus Paket Mapel Ini</span>
                     </button>
 
@@ -971,7 +971,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       type="button"
                       disabled={isBusy}
                       onClick={() => void onSaveExam(examDraft)}
-                      className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold disabled:opacity-50"
                     >
                       <Save className="w-4 h-4" />
                       <span>Simpan Pengaturan Paket Mapel</span>
@@ -986,17 +986,17 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                   {/* Bulk Import Cards */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
                     {/* File Upload Card */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 min-w-0">
-                      <div className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 min-w-0">
+                      <div className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
                         <Upload className="w-4 h-4 text-emerald-700 shrink-0" />
                         <span className="break-words">Upload File Soal (Excel / CSV / Word .docx / TXT)</span>
                       </div>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed">
                         Untuk Excel/CSV gunakan kolom: <strong>Pertanyaan, Opsi A, Opsi B, Opsi C, Opsi D, Opsi E (opsional), Kunci Jawaban, URL Gambar (opsional)</strong>. Mendukung teks Arab RTL.
                       </p>
                       <div className="flex flex-wrap gap-2">
                         <label
-                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold select-none ${
+                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold select-none ${
                             isImportingFile ? 'opacity-60 pointer-events-none' : ''
                           }`}
                         >
@@ -1007,11 +1007,11 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             aria-label="Pilih file Excel atau CSV"
                           />
-                          <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+                          <FileSpreadsheet className="w-4 h-4 shrink-0" />
                           <span>{isImportingFile ? 'Membaca File...' : 'Pilih Excel / CSV'}</span>
                         </label>
                         <label
-                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold select-none ${
+                          className={`relative overflow-hidden cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold select-none ${
                             isImportingFile ? 'opacity-60 pointer-events-none' : ''
                           }`}
                         >
@@ -1022,32 +1022,32 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             aria-label="Pilih file Word docx atau TXT"
                           />
-                          <FileText className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+                          <FileText className="w-4 h-4 text-[#1DF27A] shrink-0" />
                           <span>{isImportingFile ? 'Membaca File...' : 'Pilih Word (.docx) / TXT'}</span>
                         </label>
                         <button
                           type="button"
                           onClick={() => downloadQuestionTemplateXlsx(selectedExam.title)}
-                          className="inline-flex items-center justify-center gap-1.5 min-h-[42px] px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-semibold"
+                          className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-sm font-semibold"
                         >
-                          <Download className="w-3.5 h-3.5 shrink-0" />
+                          <Download className="w-4 h-4 shrink-0" />
                           <span>Download Template Excel</span>
                         </button>
                       </div>
                       {fileImportError && (
-                        <div className="p-2.5 rounded-xl border border-amber-300 bg-amber-50 text-[11px] text-amber-900 flex items-start gap-2">
+                        <div className="p-3 rounded-xl border border-amber-300 bg-amber-50 text-xs text-amber-900 flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                           <span className="leading-relaxed break-words">{fileImportError}</span>
                         </div>
                       )}
-                      <p className="text-[10px] text-slate-500 leading-relaxed">
+                      <p className="text-xs text-slate-500 leading-relaxed">
                         Tips HP: pilih file <strong>.docx / .xlsx / .csv / .txt</strong> dari folder <em>Download / Dokumen</em> perangkat.
                       </p>
                     </div>
 
                     {/* Paste & Bulk Keys Card */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2.5 min-w-0">
-                      <div className="font-display font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 min-w-0">
+                      <div className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
                         <ClipboardPaste className="w-4 h-4 text-emerald-700 shrink-0" />
                         <span className="break-words">Copy-Paste Soal + Kunci Jawaban Massal</span>
                       </div>
@@ -1056,7 +1056,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         value={pasteText}
                         onChange={(e) => setPasteText(e.target.value)}
                         placeholder={'Tempel soal di sini, contoh:\n1. Rukun iman yang pertama adalah...\nA. Iman kepada Allah\nB. Iman kepada Malaikat\nC. Iman kepada Kitab\nD. Iman kepada Rasul\nKunci: A'}
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"
+                        className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                       />
                       <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                         <input
@@ -1064,19 +1064,19 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           value={bulkKeysText}
                           onChange={(e) => setBulkKeysText(e.target.value)}
                           placeholder="Kunci Massal (opsional): 1.A, 2.C, 3.B atau ABCD..."
-                          className="flex-1 min-w-0 px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-white"
+                          className="flex-1 min-w-0 h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl bg-white"
                         />
                         <button
                           type="button"
                           onClick={handleParsePasteBox}
-                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0"
+                          className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shrink-0"
                         >
                           Ekstrak Soal Paste
                         </button>
                         <button
                           type="button"
                           onClick={handleApplyBulkKeysToPreviewOrBank}
-                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold shrink-0"
+                          className="w-full sm:w-auto min-h-[44px] px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 text-sm font-semibold shrink-0"
                         >
                           Cocokkan Kunci
                         </button>
@@ -1091,28 +1091,28 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                       .map((q, idx) => ({ num: idx + 1, warnings: q.warnings }))
                       .filter((item) => item.warnings.length > 0);
                     return (
-                    <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 space-y-3 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50/40 space-y-3 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-bold text-emerald-900">
+                            <span className="text-sm font-bold text-emerald-900">
                               Pratinjau Import: {parsedPreview.length} Soal Terdeteksi · {detectedKeyCount} Kunci Terdeteksi
                             </span>
                             {incompleteItems.length === 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                                <CheckCircle2 className="w-3 h-3 shrink-0" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                                 Semua Soal &amp; Kunci Lengkap
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
-                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 text-xs font-bold">
+                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                                 Perhatian: {incompleteItems.length} soal belum lengkap (No.{' '}
                                 {incompleteItems.slice(0, 8).map((i) => i.num).join(', ')}
                                 {incompleteItems.length > 8 ? `, +${incompleteItems.length - 8} lainnya` : ''})
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-600 break-words">
+                          <div className="text-xs text-slate-600 break-words leading-relaxed">
                             Periksa kelengkapan opsi, kunci jawaban, dan tampilan Arab RTL sebelum menekan Terapkan &amp; Simpan Bank Soal.
                           </div>
                         </div>
@@ -1122,7 +1122,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             onChange={(e) =>
                               setImportMode(e.target.value as 'append' | 'replace')
                             }
-                            className="w-full sm:w-auto max-w-full min-w-0 px-2.5 py-1.5 text-xs font-semibold border border-emerald-300 rounded-lg bg-white"
+                            className="w-full sm:w-auto max-w-full min-w-0 min-h-[42px] px-3 py-2 text-base sm:text-sm font-semibold border border-emerald-300 rounded-xl bg-white"
                           >
                             <option value="append">Tambahkan ke Bank Soal</option>
                             <option value="replace">Ganti Seluruh Soal Mapel Ini</option>
@@ -1130,14 +1130,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           <button
                             type="button"
                             onClick={handleCommitParsedPreview}
-                            className="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                            className="flex-1 sm:flex-initial min-h-[42px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold"
                           >
                             Terapkan {parsedPreview.length} Soal
                           </button>
                           <button
                             type="button"
                             onClick={() => setParsedPreview(null)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold"
+                            className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 text-sm font-semibold"
                           >
                             Batal
                           </button>
@@ -1148,7 +1148,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         {parsedPreview.map((q, idx) => (
                           <div
                             key={q.id}
-                            className={`p-3 rounded-xl border text-xs space-y-1.5 min-w-0 ${
+                            className={`p-3.5 rounded-xl border text-sm space-y-2 min-w-0 ${
                               q.warnings.length > 0
                                 ? 'bg-amber-50/50 border-amber-300'
                                 : 'bg-white border-slate-200'
@@ -1158,7 +1158,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               <div
                                 dir={hasArabicText(q.pertanyaan) ? 'rtl' : 'ltr'}
                                 className={`font-semibold text-slate-900 flex-1 min-w-0 break-words ${
-                                  hasArabicText(q.pertanyaan) ? 'text-right text-sm' : ''
+                                  hasArabicText(q.pertanyaan) ? 'text-right text-base' : ''
                                 }`}
                               >
                                 {idx + 1}. {q.pertanyaan || '(Pertanyaan kosong)'}
@@ -1182,7 +1182,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                       : prev
                                   );
                                 }}
-                                className="px-2 py-1 text-[11px] font-mono font-bold border border-emerald-300 rounded-md bg-emerald-50 text-emerald-900 shrink-0"
+                                className="min-h-[38px] px-2.5 py-1.5 text-sm sm:text-xs font-mono font-bold border border-emerald-300 rounded-lg bg-emerald-50 text-emerald-900 shrink-0"
                               >
                                 <option value="A">Kunci: A</option>
                                 <option value="B">Kunci: B</option>
@@ -1191,7 +1191,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                 {q.opsiE && <option value="E">Kunci: E</option>}
                               </select>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600">
                               <span dir={hasArabicText(q.opsiA) ? 'rtl' : 'ltr'}>A. {q.opsiA}</span>
                               <span dir={hasArabicText(q.opsiB) ? 'rtl' : 'ltr'}>B. {q.opsiB}</span>
                               <span dir={hasArabicText(q.opsiC) ? 'rtl' : 'ltr'}>C. {q.opsiC}</span>
@@ -1201,8 +1201,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               )}
                             </div>
                             {q.warnings.length > 0 && (
-                              <div className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                              <div className="text-xs text-amber-700 font-semibold flex items-center gap-1.5">
+                                <AlertTriangle className="w-4 h-4 shrink-0" />
                                 <span>{q.warnings.join(' · ')}</span>
                               </div>
                             )}
@@ -1215,10 +1215,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                   {/* Question Bank Header & Save Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                    <div className="text-xs font-bold text-slate-800">
+                    <div className="text-sm font-bold text-slate-800">
                       Daftar Bank Soal ({questionDrafts.length} Butir)
                       {questionsDirty && (
-                        <span className="ml-2 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px]">
+                        <span className="ml-2 px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 text-xs font-semibold">
                           Belum disimpan ke Google Sheets
                         </span>
                       )}
@@ -1239,9 +1239,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             kunciJawaban: 'A',
                           })
                         }
-                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
+                        className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         <span>Tambah Soal Manual</span>
                       </button>
                       <button
@@ -1250,9 +1250,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         onClick={() =>
                           void onSaveQuestions(selectedExam.id, questionDrafts)
                         }
-                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                        className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold disabled:opacity-50"
                       >
-                        <Save className="w-3.5 h-3.5" />
+                        <Save className="w-4 h-4" />
                         <span>Simpan Bank Soal Mapel Ini</span>
                       </button>
                     </div>
@@ -1260,8 +1260,8 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                   {/* Manual/Edit Modal Inline */}
                   {editingQuestion && (
-                    <div className="p-4 rounded-2xl border-2 border-slate-800 bg-slate-50 space-y-3">
-                      <div className="text-xs font-bold text-slate-900">
+                    <div className="p-4 sm:p-5 rounded-2xl border-2 border-slate-800 bg-slate-50 space-y-3.5">
+                      <div className="text-sm font-bold text-slate-900">
                         {questionDrafts.some((q) => q.id === editingQuestion.id)
                           ? `Edit Soal No. ${editingQuestion.orderNumber}`
                           : 'Tambah Soal Baru'}
@@ -1277,9 +1277,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           })
                         }
                         placeholder="Tulis pertanyaan (mendukung Latin & Arab RTL)..."
-                        className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white"
+                        className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-300 rounded-xl bg-white"
                       />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {(['A', 'B', 'C', 'D', 'E'] as CbtOptionKey[]).map((opt) => {
                           const field = `opsi${opt}` as
                             | 'opsiA'
@@ -1290,7 +1290,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           const val = editingQuestion[field] || '';
                           return (
                             <div key={opt}>
-                              <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                              <label className="block text-xs font-semibold text-slate-600 mb-1">
                                 Opsi {opt} {opt === 'E' ? '(Opsional)' : ''}
                               </label>
                               <input
@@ -1303,13 +1303,13 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                     [field]: e.target.value,
                                   })
                                 }
-                                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                                className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-300 rounded-xl bg-white"
                               />
                             </div>
                           );
                         })}
                         <div>
-                          <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">
                             Kunci Jawaban Benar
                           </label>
                           <select
@@ -1320,7 +1320,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                 kunciJawaban: e.target.value as CbtOptionKey,
                               })
                             }
-                            className="w-full px-3 py-1.5 text-xs font-bold border border-emerald-300 rounded-lg bg-white"
+                            className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-bold border border-emerald-300 rounded-xl bg-white"
                           >
                             <option value="A">A</option>
                             <option value="B">B</option>
@@ -1330,7 +1330,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           </select>
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">
                             URL Gambar Soal (Opsional)
                           </label>
                           <input
@@ -1343,7 +1343,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               })
                             }
                             placeholder="https://..."
-                            className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                            className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-300 rounded-xl bg-white"
                           />
                         </div>
                       </div>
@@ -1351,14 +1351,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setEditingQuestion(null)}
-                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                          className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold"
                         >
                           Batal
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSaveManualOrEditedQuestion(editingQuestion)}
-                          className="w-full sm:w-auto min-h-[40px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold"
+                          className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold"
                         >
                           Simpan Butir Soal
                         </button>
@@ -1368,26 +1368,26 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
 
                   {/* Question List */}
                   {questionDrafts.length === 0 ? (
-                    <div className="p-6 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-2xl">
+                    <div className="p-6 text-center text-sm text-slate-500 border border-dashed border-slate-200 rounded-2xl leading-relaxed">
                       Belum ada soal pada paket mapel ini. Upload file Excel/CSV/Word, tempel teks di atas, atau tambah soal secara manual.
                     </div>
                   ) : (
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
                       {questionDrafts.map((q, idx) => (
                         <div
                           key={q.id}
-                          className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-start justify-between gap-3"
+                          className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-start justify-between gap-3"
                         >
-                          <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex-1 space-y-2 min-w-0">
                             <div
                               dir={hasArabicText(q.pertanyaan) ? 'rtl' : 'ltr'}
-                              className={`text-xs font-bold text-slate-900 whitespace-pre-line break-words ${
-                                hasArabicText(q.pertanyaan) ? 'text-right text-sm' : ''
+                              className={`text-sm font-bold text-slate-900 whitespace-pre-line break-words leading-relaxed ${
+                                hasArabicText(q.pertanyaan) ? 'text-right text-base' : ''
                               }`}
                             >
                               {idx + 1}. {q.pertanyaan}
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600">
                               {(['A', 'B', 'C', 'D', 'E'] as CbtOptionKey[]).map((opt) => {
                                 const text =
                                   opt === 'A'
@@ -1405,7 +1405,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                   <div
                                     key={opt}
                                     dir={hasArabicText(text) ? 'rtl' : 'ltr'}
-                                    className={`px-2 py-1 rounded-md break-words ${
+                                    className={`px-2.5 py-1.5 rounded-lg break-words ${
                                       isKey
                                         ? 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-200'
                                         : 'bg-slate-50'
@@ -1417,14 +1417,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               })}
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={() => setEditingQuestion({ ...q })}
-                              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700"
+                              className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700"
                               title="Edit Soal"
                             >
-                              <Edit3 className="w-3.5 h-3.5" />
+                              <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                               type="button"
@@ -1436,10 +1436,10 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                 );
                                 setQuestionsDirty(true);
                               }}
-                              className="p-2 rounded-lg border border-rose-200 hover:bg-rose-50 text-rose-600"
+                              className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center p-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600"
                               title="Hapus Soal"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -1453,12 +1453,12 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
               {subTab === 'monitor' && (
                 <div className="p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2.5 text-sm">
                       <select
                         value={monitorClassFilter}
                         onChange={(e) => setMonitorClassFilter(e.target.value)}
                         aria-label="Filter Kelas Monitoring CBT"
-                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                        className="min-h-[42px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-base sm:text-sm font-semibold text-slate-800"
                       >
                         <option value="ALL">Semua Kelas ({db.students.length})</option>
                         {dynamicClasses.map((cls) => (
@@ -1467,22 +1467,22 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           </option>
                         ))}
                       </select>
-                      <span className="px-2.5 py-1 rounded-lg bg-slate-100 font-mono font-bold text-slate-800 inline-flex items-center gap-1">
-                        <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
+                      <span className="px-3 py-1.5 rounded-lg bg-slate-100 font-mono text-xs font-bold text-slate-800 inline-flex items-center gap-1.5">
+                        <KeyRound className="w-4 h-4 text-emerald-700" />
                         Token: {selectedExam.token}
                       </span>
-                      <span className="text-slate-500">
+                      <span className="text-xs sm:text-sm text-slate-500">
                         Selesai: <strong>{submittedCountForSelected}</strong> / {examAttempts.length} santri
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer min-h-[38px]">
+                      <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer min-h-[42px]">
                         <input
                           type="checkbox"
                           checked={autoRefreshMonitor}
                           onChange={(e) => setAutoRefreshMonitor(e.target.checked)}
-                          className="rounded text-emerald-600"
+                          className="w-4 h-4 rounded text-emerald-600"
                         />
                         <span>Auto-Refresh 10 dtk</span>
                       </label>
@@ -1490,9 +1490,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                         type="button"
                         disabled={isBusy}
                         onClick={() => void onRefreshLive()}
-                        className="flex-1 sm:flex-initial min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold"
+                        className="flex-1 sm:flex-initial min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${isBusy ? 'animate-spin' : ''}`} />
                         <span>Muat Status Terbaru</span>
                       </button>
                       <button
@@ -1504,25 +1504,25 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                             examId: selectedExam.id,
                           })
                         }
-                        className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold disabled:opacity-50"
+                        className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <span>Sinkronkan Semua Nilai ke Rapor</span>
                       </button>
                     </div>
                   </div>
 
                   <div className="w-full max-w-full overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table className="w-full min-w-[760px] text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                    <table className="w-full min-w-[780px] text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
                         <tr>
-                          <th className="py-2.5 px-3 font-bold">Santri</th>
-                          <th className="py-2.5 px-3 font-bold">Status</th>
-                          <th className="py-2.5 px-3 font-bold">Progres</th>
-                          <th className="py-2.5 px-3 font-bold">Sisa Waktu</th>
-                          <th className="py-2.5 px-3 font-bold">Pelanggaran</th>
-                          <th className="py-2.5 px-3 font-bold">Skor</th>
-                          <th className="py-2.5 px-3 font-bold text-right">Aksi Pengawas</th>
+                          <th className="py-3 px-3.5 font-bold">Santri</th>
+                          <th className="py-3 px-3.5 font-bold">Status</th>
+                          <th className="py-3 px-3.5 font-bold">Progres</th>
+                          <th className="py-3 px-3.5 font-bold">Sisa Waktu</th>
+                          <th className="py-3 px-3.5 font-bold">Pelanggaran</th>
+                          <th className="py-3 px-3.5 font-bold">Skor</th>
+                          <th className="py-3 px-3.5 font-bold text-right">Aksi Pengawas</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -1543,47 +1543,47 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                           return (
                             <React.Fragment key={student.id}>
                               <tr className="hover:bg-slate-50/70">
-                                <td className="py-2.5 px-3">
-                                  <div className="font-bold text-slate-900">{student.nama}</div>
-                                  <div className="text-[11px] font-mono text-slate-500">
+                                <td className="py-3 px-3.5">
+                                  <div className="font-bold text-slate-900 text-sm">{student.nama}</div>
+                                  <div className="text-xs font-mono text-slate-500 mt-0.5">
                                     {student.nisnMda} · {student.kelas}
                                   </div>
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-3 px-3.5">
                                   {!attempt ? (
-                                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-semibold">
+                                    <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-semibold">
                                       Belum Mulai
                                     </span>
                                   ) : attempt.status === 'locked' ? (
-                                    <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[11px] font-bold">
+                                    <span className="px-2.5 py-1 rounded-md bg-rose-100 text-rose-800 text-xs font-bold">
                                       Terkunci Pelanggaran
                                     </span>
                                   ) : attempt.status === 'submitted' ? (
-                                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                                    <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
                                       Selesai
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[11px] font-bold">
+                                    <span className="px-2.5 py-1 rounded-md bg-sky-100 text-sky-800 text-xs font-bold">
                                       Mengerjakan
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono">
+                                <td className="py-3 px-3.5 font-mono text-sm">
                                   {attempt ? `${answeredCount}/${totalQ}` : `0/${totalQ}`}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono">
+                                <td className="py-3 px-3.5 font-mono text-sm">
                                   {attempt?.status === 'submitted' ? (
                                     <span className="text-slate-400">Selesai</span>
                                   ) : attempt ? (
-                                    <span className="inline-flex items-center gap-1 text-slate-800">
-                                      <Clock className="w-3 h-3 text-slate-400" />
+                                    <span className="inline-flex items-center gap-1.5 text-slate-800">
+                                      <Clock className="w-3.5 h-3.5 text-slate-400" />
                                       {formatCountdown(remainingSec)}
                                     </span>
                                   ) : (
                                     <span className="text-slate-400">-</span>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-3 px-3.5">
                                   {attempt ? (
                                     <button
                                       type="button"
@@ -1592,7 +1592,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                           expandedViolationId === attempt.id ? null : attempt.id
                                         )
                                       }
-                                      className={`px-2 py-0.5 rounded-md font-mono font-bold text-[11px] ${
+                                      className={`min-h-[34px] px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${
                                         attempt.violationCount >= selectedExam.maxViolations
                                           ? 'bg-rose-100 text-rose-800'
                                           : attempt.violationCount > 0
@@ -1606,14 +1606,14 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                     <span className="text-slate-400">-</span>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono font-bold">
+                                <td className="py-3 px-3.5 font-mono font-bold">
                                   {typeof attempt?.score === 'number' ? (
                                     <div className="space-y-0.5">
-                                      <span className="text-emerald-700 text-sm">
+                                      <span className="text-emerald-700 text-base">
                                         {attempt.score}
                                       </span>
                                       {attempt.syncedToRaporAt && (
-                                        <div className="text-[10px] font-sans text-emerald-600">
+                                        <div className="text-xs font-sans text-emerald-600">
                                           Tersinkron Rapor
                                         </div>
                                       )}
@@ -1622,7 +1622,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                     <span className="text-slate-400">-</span>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 text-right">
+                                <td className="py-3 px-3.5 text-right">
                                   {attempt && (
                                     <div className="inline-flex flex-wrap justify-end gap-1.5">
                                       {attempt.status === 'locked' && (
@@ -1636,9 +1636,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                               attemptId: attempt.id,
                                             })
                                           }
-                                          className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold inline-flex items-center gap-1"
+                                          className="min-h-[36px] px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold inline-flex items-center gap-1.5"
                                         >
-                                          <Unlock className="w-3 h-3" />
+                                          <Unlock className="w-3.5 h-3.5" />
                                           <span>Buka Kunci</span>
                                         </button>
                                       )}
@@ -1653,7 +1653,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                               attemptId: attempt.id,
                                             })
                                           }
-                                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold"
+                                          className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
                                         >
                                           Sinkron ke Rapor
                                         </button>
@@ -1668,9 +1668,9 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                                             attemptId: attempt.id,
                                           })
                                         }
-                                        className="px-2.5 py-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                                        className="min-h-[36px] px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold inline-flex items-center gap-1.5"
                                       >
-                                        <RotateCcw className="w-3 h-3" />
+                                        <RotateCcw className="w-3.5 h-3.5" />
                                         <span>Reset</span>
                                       </button>
                                     </div>
@@ -1679,7 +1679,7 @@ export const CbtAdminView: React.FC<CbtAdminViewProps> = ({
                               </tr>
                               {expandedViolationId === attempt?.id && (
                                 <tr>
-                                  <td colSpan={7} className="bg-slate-50 px-4 py-3 text-[11px]">
+                                  <td colSpan={7} className="bg-slate-50 px-4 py-3 text-xs">
                                     <div className="font-bold text-slate-800 mb-1">
                                       Riwayat Log Pelanggaran ({attempt.violations.length}):
                                     </div>

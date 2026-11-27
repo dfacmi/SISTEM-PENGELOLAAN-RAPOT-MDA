@@ -73,7 +73,7 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
           >
             {juzDisplay}
           </span>
-          <span className={`${compact ? 'text-[8.5px]' : 'text-[10px]'} font-bold text-emerald-700`}>
+          <span className={`${compact ? 'text-[8.5px]' : 'text-xs'} font-bold text-emerald-700`}>
             / {summary.targetJuz} Juz
           </span>
         </div>
@@ -83,14 +83,14 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div
             className={`${
-              compact ? 'text-[10px]' : 'text-xs sm:text-sm'
+              compact ? 'text-[10px]' : 'text-sm'
             } font-bold text-slate-900 leading-snug`}
           >
             {title}
           </div>
           <span
             className={`${
-              compact ? 'text-[9px] px-1.5 py-0.5' : 'text-[11px] px-2 py-0.5'
+              compact ? 'text-[9px] px-1.5 py-0.5' : 'text-xs px-2.5 py-0.5'
             } rounded-md font-bold tabular-nums bg-emerald-50 border border-emerald-200 text-emerald-800 shrink-0`}
           >
             {clampedPct}%
@@ -98,14 +98,14 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
         </div>
 
         {subtitle && (
-          <div className={`${compact ? 'text-[8.5px]' : 'text-[11px]'} text-slate-500`}>
+          <div className={`${compact ? 'text-[8.5px]' : 'text-xs'} text-slate-500`}>
             {subtitle}
           </div>
         )}
 
         <div
           className={`${
-            compact ? 'text-[9px]' : 'text-xs'
+            compact ? 'text-[9px]' : 'text-xs sm:text-sm'
           } text-slate-700 font-semibold tabular-nums`}
         >
           Total:{' '}
@@ -119,7 +119,7 @@ export const TilawahDonutChart: React.FC<TilawahDonutChartProps> = ({
 
         <div
           className={`${
-            compact ? 'text-[8px]' : 'text-[11px]'
+            compact ? 'text-[8px]' : 'text-xs'
           } text-slate-500 tabular-nums leading-snug`}
         >
           Konversi: 1 Juz = {summary.halamanPerJuz} Halaman · {summary.logsWithTilawahCount} hari tercatat

@@ -454,11 +454,11 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             <PortfolioArtwork preset={item.presetArt} title={item.caption || projectTitle} />
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-transparent p-2.5 flex items-center justify-between gap-2">
-          <div className="text-[11px] font-medium text-white truncate">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-transparent p-3 flex items-center justify-between gap-2">
+          <div className="text-xs font-medium text-white truncate">
             {item.caption || projectTitle}
           </div>
-          <span className="text-[10px] font-semibold text-[#1DF27A] shrink-0">
+          <span className="text-xs font-semibold text-[#1DF27A] shrink-0">
             Perbesar
           </span>
         </div>
@@ -483,9 +483,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               <button
                 type="button"
                 onClick={onExitPublicStandalone}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap"
+                className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0E2228] text-white text-sm font-semibold hover:bg-slate-800 whitespace-nowrap"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-4 h-4" />
                 <span>Masuk ke Portal MDA</span>
               </button>
             )}
@@ -548,22 +548,22 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             </div>
 
             <div
-              className="flex flex-col justify-between gap-3 text-white rounded-xl p-4 w-full lg:w-[400px] xl:w-[430px] min-w-0 max-w-full shrink-0"
+              className="flex flex-col justify-between gap-3.5 text-white rounded-xl p-4 sm:p-5 w-full lg:w-[420px] xl:w-[450px] min-w-0 max-w-full shrink-0"
               style={{ backgroundColor: theme.darkPill }}
             >
-              <div className="space-y-2.5 min-w-0">
+              <div className="space-y-3 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1DF27A]">
-                    <Link2 className="w-3.5 h-3.5 shrink-0" />
+                  <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1DF27A]">
+                    <Link2 className="w-4 h-4 shrink-0" />
                     <span>Link Portofolio Santri</span>
                   </div>
                   {canEdit && onUpdatePortfolioLinks && !editingLinks && (
                     <button
                       type="button"
                       onClick={openEditLinksForm}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[11px] font-medium text-emerald-200 transition-colors"
+                      className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-emerald-200 transition-colors"
                     >
-                      <PenSquare className="w-3 h-3" />
+                      <PenSquare className="w-3.5 h-3.5" />
                       <span>Isi / Edit Link</span>
                     </button>
                   )}
@@ -580,10 +580,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       });
                       setEditingLinks(false);
                     }}
-                    className="space-y-2.5 pt-1"
+                    className="space-y-3 pt-1"
                   >
                     <div>
-                      <label className="block text-[10.5px] font-semibold text-sky-200 mb-1">
+                      <label className="block text-xs font-semibold text-sky-200 mb-1">
                         1. Link Portofolio (Behance) — Cover Hal. 1 &amp; Hal. 5
                       </label>
                       <input
@@ -591,12 +591,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                         value={behanceDraft}
                         onChange={(e) => setBehanceDraft(e.target.value)}
                         placeholder="https://www.behance.net/username"
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-sky-400/40 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
+                        className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-slate-950/70 border border-sky-400/40 text-base sm:text-xs font-mono text-white placeholder:text-slate-400 focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10.5px] font-semibold text-amber-200 mb-1">
+                      <label className="block text-xs font-semibold text-amber-200 mb-1">
                         2. Link Kumpulan Karya 1 Semester (PDF Google Drive)
                       </label>
                       <input
@@ -604,12 +604,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                         value={pdfUrlDraft}
                         onChange={(e) => setPdfUrlDraft(e.target.value)}
                         placeholder="https://drive.google.com/file/d/..."
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-amber-400/40 text-[11px] font-mono text-white placeholder:text-slate-400 focus:outline-none"
+                        className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-slate-950/70 border border-amber-400/40 text-base sm:text-xs font-mono text-white placeholder:text-slate-400 focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10.5px] font-semibold text-amber-100 mb-1">
+                      <label className="block text-xs font-semibold text-amber-100 mb-1">
                         Nama Pelajaran (untuk PDF Kumpulan Karya)
                       </label>
                       <input
@@ -617,15 +617,15 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                         value={pdfSubjectDraft}
                         onChange={(e) => setPdfSubjectDraft(e.target.value)}
                         placeholder="UI/UX Design & Graphic Design"
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-amber-400/30 text-[11px] text-white placeholder:text-slate-400 focus:outline-none"
+                        className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-slate-950/70 border border-amber-400/30 text-base sm:text-xs text-white placeholder:text-slate-400 focus:outline-none"
                       />
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {SUBJECT_PRESETS.map((opt) => (
                           <button
                             key={opt}
                             type="button"
                             onClick={() => setPdfSubjectDraft(opt)}
-                            className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[9.5px] text-amber-200"
+                            className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs text-amber-200"
                           >
                             {opt}
                           </button>
@@ -633,51 +633,51 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       <button
                         type="submit"
-                        className="px-3 py-1.5 rounded-md bg-[#1DF27A] text-slate-950 text-[11px] font-bold"
+                        className="min-h-[42px] px-3.5 py-2 rounded-lg bg-[#1DF27A] text-slate-950 text-xs sm:text-sm font-bold"
                       >
                         Simpan Link Portofolio
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditingLinks(false)}
-                        className="px-2.5 py-1.5 rounded-md text-[11px] text-slate-300 hover:text-white"
+                        className="min-h-[42px] px-3 py-2 rounded-lg text-xs sm:text-sm text-slate-300 hover:text-white"
                       >
                         Batal
                       </button>
                     </div>
                   </form>
                 ) : (
-                  <div className="space-y-2 min-w-0">
+                  <div className="space-y-2.5 min-w-0">
                     {/* Link 1: Behance / Google Drive */}
                     {(() => {
                       const behanceDownloadUrl = getGoogleDriveDownloadUrl(
                         links.behanceUrl
                       );
                       return (
-                        <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                        <div className="rounded-xl bg-white/10 border border-white/10 p-3 space-y-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="min-w-0">
-                              <span className="text-[10px] font-bold uppercase tracking-wide text-sky-300 block">
+                              <span className="text-xs font-bold uppercase tracking-wide text-sky-300 block">
                                 1. Link Portofolio (Behance)
                               </span>
-                              <span className="text-[9.5px] text-slate-300">
+                              <span className="text-xs text-slate-300">
                                 Tampil di Cover Hal. 1 &amp; Hal. 5
                               </span>
                             </div>
                             {links.behanceUrl && (
-                              <div className="flex flex-wrap items-center gap-1 shrink-0">
+                              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => void handleCopy('behance', links.behanceUrl)}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                                  className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold"
                                 >
                                   {copiedKey === 'behance' ? (
-                                    <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                                    <Check className="w-3.5 h-3.5 text-[#1DF27A]" />
                                   ) : (
-                                    <Copy className="w-2.5 h-2.5" />
+                                    <Copy className="w-3.5 h-3.5" />
                                   )}
                                   <span>{copiedKey === 'behance' ? 'Disalin' : 'Salin'}</span>
                                 </button>
@@ -685,19 +685,19 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                                   href={links.behanceUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-400 hover:bg-sky-300 text-slate-950 text-[10px] font-bold transition-colors"
+                                  className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-400 hover:bg-sky-300 text-slate-950 text-xs font-bold transition-colors"
                                 >
                                   <span>Buka</span>
-                                  <ExternalLink className="w-2.5 h-2.5" />
+                                  <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
                                 {behanceDownloadUrl && (
                                   <a
                                     href={behanceDownloadUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white hover:bg-sky-50 text-slate-950 text-[10px] font-bold transition-colors"
+                                    className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-sky-50 text-slate-950 text-xs font-bold transition-colors"
                                   >
-                                    <Download className="w-2.5 h-2.5" />
+                                    <Download className="w-3.5 h-3.5" />
                                     <span>Unduh</span>
                                   </a>
                                 )}
@@ -709,12 +709,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                               href={links.behanceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="block text-[10.5px] font-mono text-sky-100 break-all hover:underline"
+                              className="block text-xs font-mono text-sky-100 break-all hover:underline"
                             >
                               {links.behanceUrl}
                             </a>
                           ) : (
-                            <div className="text-[10.5px] text-slate-400 italic">
+                            <div className="text-xs text-slate-400 italic">
                               Portofolio Behance belum diisi
                             </div>
                           )}
@@ -726,29 +726,29 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     {(() => {
                       const pdfDownloadUrl = getGoogleDriveDownloadUrl(links.pdfUrl);
                       return (
-                        <div className="rounded-lg bg-white/10 border border-white/10 p-2.5 space-y-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                            <div className="flex flex-wrap items-center gap-1 min-w-0">
-                              <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                        <div className="rounded-xl bg-white/10 border border-white/10 p-3 space-y-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                              <span className="text-xs font-bold uppercase tracking-wide text-amber-300">
                                 2. Link Kumpulan Karya (PDF)
                               </span>
                               {links.pdfSubject && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-[9.5px] font-semibold text-amber-200">
+                                <span className="px-2 py-0.5 rounded bg-amber-400/20 text-xs font-semibold text-amber-200">
                                   {links.pdfSubject}
                                 </span>
                               )}
                             </div>
                             {links.pdfUrl && (
-                              <div className="flex flex-wrap items-center gap-1 shrink-0">
+                              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => void handleCopy('pdf', links.pdfUrl)}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] font-semibold"
+                                  className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold"
                                 >
                                   {copiedKey === 'pdf' ? (
-                                    <Check className="w-2.5 h-2.5 text-[#1DF27A]" />
+                                    <Check className="w-3.5 h-3.5 text-[#1DF27A]" />
                                   ) : (
-                                    <Copy className="w-2.5 h-2.5" />
+                                    <Copy className="w-3.5 h-3.5" />
                                   )}
                                   <span>{copiedKey === 'pdf' ? 'Disalin' : 'Salin'}</span>
                                 </button>
@@ -756,19 +756,19 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                                   href={links.pdfUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-300 hover:bg-amber-200 text-slate-950 text-[10px] font-bold transition-colors"
+                                  className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-300 hover:bg-amber-200 text-slate-950 text-xs font-bold transition-colors"
                                 >
                                   <span>Buka</span>
-                                  <ExternalLink className="w-2.5 h-2.5" />
+                                  <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
                                 {pdfDownloadUrl && (
                                   <a
                                     href={pdfDownloadUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white hover:bg-amber-50 text-slate-950 text-[10px] font-bold transition-colors"
+                                    className="min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-amber-50 text-slate-950 text-xs font-bold transition-colors"
                                   >
-                                    <Download className="w-2.5 h-2.5" />
+                                    <Download className="w-3.5 h-3.5" />
                                     <span>Unduh</span>
                                   </a>
                                 )}
@@ -780,12 +780,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                               href={links.pdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="block text-[10.5px] font-mono text-amber-100 break-all hover:underline"
+                              className="block text-xs font-mono text-amber-100 break-all hover:underline"
                             >
                               {links.pdfUrl}
                             </a>
                           ) : (
-                            <div className="text-[10.5px] text-slate-400 italic">
+                            <div className="text-xs text-slate-400 italic">
                               Link PDF Kumpulan Karya belum diisi
                             </div>
                           )}
@@ -801,7 +801,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleNewProject('sidang')}
-                    className="w-full min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
+                    className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#1DF27A] hover:bg-emerald-400 text-sm font-bold text-slate-950 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Upload Hasil Sidang Karya</span>
@@ -814,15 +814,15 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
 
         {/* Narasi Otomatis Bahasa Orang Tua (Dapat Diedit Admin/Guru) */}
         <div className="bg-white border border-emerald-200 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <div className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
                   Ringkasan Perkembangan Karya &amp; Kompetensi (Tampil di Rapor Hal. 5 &amp; Portal Wali)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-1">
                 Periode {targetSemester} {targetYear} · Dirangkum otomatis dengan bahasa hangat untuk wali santri
                 {savedNarrative ? ' (sudah disesuaikan manual).' : ' (otomatis dari capaian santri).'}
               </p>
@@ -836,9 +836,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     setSummaryDraft(autoGeneratedNarrative);
                     setSummaryDirty(autoGeneratedNarrative !== savedNarrative);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold text-emerald-800 transition-colors"
+                  className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs sm:text-sm font-semibold text-emerald-800 transition-colors"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   <span>Buat Ulang Otomatis</span>
                 </button>
                 {onSavePortfolioSummary && (
@@ -853,13 +853,13 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       );
                       setSummaryDirty(false);
                     }}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                    className={`min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                       summaryDirty
                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
                         : 'bg-[#0E2228] hover:bg-slate-800 text-white'
                     }`}
                   >
-                    <Save className="w-3.5 h-3.5" />
+                    <Save className="w-4 h-4" />
                     <span>Simpan Ringkasan</span>
                   </button>
                 )}
@@ -876,10 +876,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                 setSummaryDirty(true);
               }}
               placeholder="Ringkasan capaian karya & kompetensi santri untuk orang tua..."
-              className="w-full px-3.5 py-2.5 text-xs sm:text-[13px] leading-relaxed text-slate-800 bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-3.5 py-3 text-base sm:text-sm leading-relaxed text-slate-800 bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             />
           ) : (
-            <div className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-100 text-xs sm:text-[13px] leading-relaxed text-slate-700 whitespace-pre-line">
+            <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 text-sm leading-relaxed text-slate-700 whitespace-pre-line">
               {savedNarrative || autoGeneratedNarrative}
             </div>
           )}
@@ -896,7 +896,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     key={jenis}
                     type="button"
                     onClick={() => setTypeFilter(jenis)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                       active
                         ? 'bg-emerald-600 text-white'
                         : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
@@ -908,13 +908,13 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               })}
             </div>
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari judul karya atau pelajaran..."
-                className="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-xl w-full md:w-56"
+                className="min-h-[44px] h-11 pl-10 pr-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl w-full md:w-64"
               />
             </div>
           </div>
@@ -928,12 +928,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
           >
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
-                <h2 className="font-display font-bold text-slate-900 text-base break-words">
+                <h2 className="font-display font-bold text-slate-900 text-lg break-words">
                   {editingSourceIds.length > 0
                     ? 'Edit Hasil Sidang Karya'
                     : 'Upload Hasil Sidang Karya'}
                 </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                   Mendukung upload foto/PNG ukuran besar (3–25 MB) untuk 3 slot berjajar — otomatis dikompresi WebP tajam &amp; aman di Google Sheets.
                 </p>
               </div>
@@ -943,14 +943,14 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   setEditingProject(null);
                   setEditingSourceIds([]);
                 }}
-                className="text-xs text-slate-500 hover:text-slate-800 shrink-0 px-2 py-1"
+                className="min-h-[40px] text-sm font-semibold text-slate-500 hover:text-slate-800 shrink-0 px-3 py-1.5 rounded-lg hover:bg-slate-100"
               >
                 Tutup
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
-              <span className="text-[11px] font-semibold text-slate-600 mr-1">
+            <div className="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <span className="text-xs font-semibold text-slate-600 mr-1">
                 Pilih Cepat Pelajaran / Jenis:
               </span>
               {KARYA_TYPE_PRESETS.map((preset) => (
@@ -968,7 +968,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       featured: preset.jenis === 'Sidang Karya' ? true : editingProject.featured,
                     })
                   }
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
+                  className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                     editingProject.jenis.toLowerCase() === preset.jenis.toLowerCase()
                       ? 'bg-emerald-600 text-white border-emerald-600'
                       : preset.highlight
@@ -983,7 +983,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Karya
                 </label>
                 <input
@@ -994,12 +994,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     setEditingProject({ ...editingProject, judul: e.target.value })
                   }
                   placeholder="Contoh: Sidang Karya – Desain Aplikasi Mutabaah Tahfidz"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Nama Pelajaran / Jenis
                 </label>
                 <input
@@ -1010,12 +1010,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     setEditingProject({ ...editingProject, jenis: e.target.value })
                   }
                   placeholder="Sidang Karya / UI/UX Design"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
 
               <div className="md:col-span-3">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                   Keterangan Singkat <span className="text-slate-400 font-normal">(opsional, maks. 1 baris)</span>
                 </label>
                 <input
@@ -1028,13 +1028,13 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     })
                   }
                   placeholder="Contoh: Presentasi desain UI/UX aplikasi dakwah digital santri"
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
             </div>
 
             {uploadError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
                 {uploadError}
               </div>
             )}
@@ -1042,10 +1042,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
             {/* 3 High-Clarity WebP Image Upload Slots (720px, <=30k chars/slot, safe Sheets row split) */}
             <div className="pt-2 border-t border-slate-100">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div className="text-xs font-semibold text-slate-800">
+                <div className="text-sm font-semibold text-slate-800">
                   Upload 3 Slot Foto Hasil Sidang Karya (Tampil 3 Kolom Berjajar di Hal. 5 Rapor &amp; PDF)
                 </div>
-                <span className="text-[11px] text-slate-500">
+                <span className="text-xs text-slate-500">
                   Kompresi tajam WebP (maks 720px, ≤ 30 rb kar/slot · Anti-Limit 50 rb Sheets)
                 </span>
               </div>
@@ -1068,7 +1068,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-slate-800">
+                          <span className="text-sm font-semibold text-slate-800">
                             {idx === 0
                               ? 'Foto Karya 1 / Utama'
                               : idx === 1
@@ -1076,11 +1076,11 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                                 : 'Foto Karya 3'}
                           </span>
                           {meta ? (
-                            <span className="text-[10.5px] font-mono text-emerald-700 font-semibold">
+                            <span className="text-xs font-mono text-emerald-700 font-semibold">
                               {meta.width}px · {(meta.byteLength / 1024).toFixed(1)} KB
                             </span>
                           ) : m.url.startsWith('data:') ? (
-                            <span className="text-[10.5px] font-mono text-slate-500">
+                            <span className="text-xs font-mono text-slate-500">
                               {(m.url.length / 1000).toFixed(1)}k kar
                             </span>
                           ) : null}
@@ -1102,7 +1102,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           ) : (
                             <div className="text-center text-slate-400 space-y-1">
                               <ImageIcon className="w-7 h-7 mx-auto opacity-60" />
-                              <div className="text-[11px]">Belum ada foto</div>
+                              <div className="text-xs">Belum ada foto</div>
                             </div>
                           )}
                         </div>
@@ -1125,7 +1125,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                             setEditingProject({ ...editingProject, mediaItems: next });
                           }}
                           placeholder={`Caption singkat Foto Karya ${idx + 1}`}
-                          className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                          className="w-full min-h-[42px] px-3 py-2 text-base sm:text-xs bg-white border border-slate-200 rounded-lg"
                         />
 
                         <div>
@@ -1151,10 +1151,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                               setEditingProject({ ...editingProject, mediaItems: next });
                             }}
                             placeholder="Atau tempel URL / Google Drive"
-                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                            className="w-full min-h-[42px] px-3 py-2 text-base sm:text-xs bg-white border border-slate-200 rounded-lg"
                           />
                           {m.url && /googleusercontent\.com/i.test(m.url) && (
-                            <p className="text-[10px] text-emerald-700 mt-1">
+                            <p className="text-xs text-emerald-700 mt-1">
                               Link Google Drive otomatis dikonversi untuk PDF.
                             </p>
                           )}
@@ -1162,15 +1162,15 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer transition-colors">
+                        <label className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold cursor-pointer transition-colors">
                           {uploadingSlot === idx ? (
                             <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1DF27A]" />
+                              <Loader2 className="w-4 h-4 animate-spin text-[#1DF27A]" />
                               <span>Mengoptimalkan...</span>
                             </>
                           ) : (
                             <>
-                              <Upload className="w-3.5 h-3.5 text-[#1DF27A]" />
+                              <Upload className="w-4 h-4 text-[#1DF27A]" />
                               <span>Upload Foto</span>
                             </>
                           )}
@@ -1187,9 +1187,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleClearMediaSlot(idx)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 text-xs font-semibold"
+                            className="min-h-[42px] inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 text-xs sm:text-sm font-semibold"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                             <span>Hapus</span>
                           </button>
                         )}
@@ -1200,21 +1200,21 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setEditingProject(null);
                   setEditingSourceIds([]);
                 }}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={uploadingSlot !== null}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold hover:bg-emerald-700"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 disabled:opacity-50 text-white text-sm font-semibold hover:bg-emerald-700"
               >
                 Simpan Hasil Sidang Karya
               </button>
@@ -1225,12 +1225,12 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
         {/* Portfolio Projects List */}
         {filteredProjects.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center space-y-3">
-            <div className="text-sm font-semibold text-slate-800">
+            <div className="text-base font-semibold text-slate-800">
               {groupedProjects.length === 0
                 ? `Belum ada dokumentasi Sidang Karya untuk ${student.nama}`
                 : 'Tidak ada karya yang cocok dengan filter jenis/pencarian.'}
             </div>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
+            <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
               Upload hingga 3 foto hasil Sidang Karya santri (bebas ukuran, otomatis dioptimalkan ke WebP tajam) agar tampil 3 kolom berjajar di Halaman 5 Rapor &amp; PDF.
             </p>
             {canEdit && (
@@ -1238,7 +1238,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleNewProject('sidang')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                  className="min-h-[44px] inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Upload Hasil Sidang Karya</span>
@@ -1261,10 +1261,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                   className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-100 pb-4">
-                    <div className="space-y-1 min-w-0">
+                    <div className="space-y-1.5 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className="text-[11px] font-display font-extrabold text-slate-950 px-3 py-0.5 rounded-full"
+                          className="text-xs font-display font-extrabold text-slate-950 px-3 py-0.5 rounded-full"
                           style={{ backgroundColor: theme.sectionSky }}
                         >
                           {proj.jenis.toUpperCase()}
@@ -1277,7 +1277,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                         {proj.judul}
                       </h2>
                       {proj.keteranganSingkat && (
-                        <p className="text-xs text-slate-500 break-words">
+                        <p className="text-sm text-slate-500 break-words">
                           {proj.keteranganSingkat}
                         </p>
                       )}
@@ -1297,9 +1297,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                               jenis: proj.jenis,
                             })
                           }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 whitespace-nowrap"
+                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-semibold hover:bg-emerald-700 whitespace-nowrap"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-4 h-4" />
                           <span>Lihat Penuh</span>
                         </button>
                       )}
@@ -1308,10 +1308,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           href={proj.externalLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap"
+                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E2228] text-white text-xs sm:text-sm font-semibold hover:bg-slate-800 whitespace-nowrap"
                         >
                           <span>Buka Link</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-4 h-4" />
                         </a>
                       )}
                       {canEdit && (
@@ -1319,7 +1319,7 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => openEditProject(proj)}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="min-h-[40px] px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50"
                           >
                             Edit
                           </button>
@@ -1331,10 +1331,10 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
                                 db.portfolios.filter((x) => !idsToDelete.has(x.id))
                               );
                             }}
-                            className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                            className="min-h-[40px] min-w-[40px] p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 inline-flex items-center justify-center"
                             title="Hapus karya"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -1385,14 +1385,14 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
           >
             <div className="flex items-start justify-between gap-2 px-4 sm:px-5 py-3.5 border-b border-slate-200">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-emerald-700 uppercase">
+                <div className="text-xs font-bold text-emerald-700 uppercase">
                   {lightboxMedia.jenis}
                 </div>
-                <div className="font-display font-bold text-sm text-slate-900 break-words">
+                <div className="font-display font-bold text-base text-slate-900 break-words">
                   {lightboxMedia.projectTitle}
                 </div>
                 {lightboxMedia.item.caption && (
-                  <div className="text-xs text-slate-500 break-words">
+                  <div className="text-sm text-slate-500 break-words">
                     {lightboxMedia.item.caption}
                   </div>
                 )}
@@ -1400,9 +1400,9 @@ export const PortfolioHubView: React.FC<PortfolioHubViewProps> = ({
               <button
                 type="button"
                 onClick={() => setLightboxMedia(null)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="h-[280px] sm:h-[460px] shrink-0 bg-slate-900 flex items-center justify-center p-2">

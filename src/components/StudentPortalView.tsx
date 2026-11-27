@@ -238,7 +238,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
   return (
     <div className="space-y-4 sm:space-y-6 pb-4 min-w-0 max-w-full">
       {/* Mobile Quick Section Jump Bar */}
-      <div className="sm:hidden -mx-1 px-1 flex items-center gap-1.5 overflow-x-auto pb-1">
+      <div className="sm:hidden -mx-1 px-1 flex items-center gap-2 overflow-x-auto pb-1">
         {[
           ['sec-identitas', 'Identitas'],
           ['sec-pilar', '5 Pilar'],
@@ -251,7 +251,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             key={targetId}
             type="button"
             onClick={() => scrollToSection(targetId)}
-            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 whitespace-nowrap shrink-0 shadow-2xs"
+            className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-emerald-200 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 whitespace-nowrap shrink-0 shadow-2xs"
           >
             {label}
           </button>
@@ -266,7 +266,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       >
         {/* MDA Gradient Strip Header */}
         <div
-          className="px-4 sm:px-5 py-3.5 sm:py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+          className="px-4 sm:px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
           style={{ background: theme.bannerGradient }}
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -274,17 +274,17 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               <MdaLogo size="sm" customLogoUrl={tpl.customLogoUrl} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-display font-extrabold text-sm sm:text-base leading-tight break-words">
+              <div className="font-display font-extrabold text-base sm:text-lg leading-tight break-words">
                 {tpl.subjudulCompetence}
               </div>
-              <div className="text-[11px] sm:text-xs text-emerald-100 truncate">
+              <div className="text-xs sm:text-sm text-emerald-100 truncate">
                 {tpl.namaLembaga} · {tpl.namaPesantren}
               </div>
             </div>
           </div>
 
           {!allowStudentSwitch && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/35 border border-white/25 text-xs font-semibold text-white self-start sm:self-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/35 border border-white/25 text-xs sm:text-sm font-semibold text-white self-start sm:self-auto">
               <Lock className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
               <span className="truncate">Akses Privat Wali · {student.nama}</span>
             </div>
@@ -292,18 +292,18 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
         </div>
 
         {/* Clean Responsive Student Identity Layout */}
-        <div className="p-4 sm:p-6 bg-white/90 flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+        <div className="p-5 sm:p-6 bg-white/90 flex flex-col lg:flex-row lg:items-start justify-between gap-5">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 flex-1 min-w-0">
             {/* Avatar + Direct Photo Upload Button */}
-            <div className="flex flex-col items-center gap-2 shrink-0">
+            <div className="flex flex-col items-center gap-2.5 shrink-0">
               <StudentAvatar
                 name={student.nama}
                 fotoUrl={student.fotoUrl}
                 className="w-24 h-28 sm:w-28 sm:h-32 text-2xl shadow-xs"
               />
               {allowStudentSwitch && onUpdateStudentPhoto && (
-                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-emerald-200 hover:bg-emerald-50 text-xs font-semibold text-emerald-800 cursor-pointer transition-colors">
-                  <Camera className="w-3.5 h-3.5" />
+                <label className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs sm:text-sm font-semibold text-emerald-800 cursor-pointer transition-colors">
+                  <Camera className="w-4 h-4" />
                   <span>{uploadingPhoto ? 'Mengunggah...' : 'Ubah Foto'}</span>
                   <input
                     type="file"
@@ -318,14 +318,14 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             {/* Identity Details Grid */}
             <div className="w-full min-w-0 space-y-3 text-left">
               <div className="text-center sm:text-left">
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                   Nama Lengkap Santri
                 </div>
                 {allowStudentSwitch ? (
                   <select
                     value={student.id}
                     onChange={(e) => onSelectStudent(e.target.value)}
-                    className="mt-0.5 font-display font-extrabold text-xl sm:text-2xl text-slate-950 bg-transparent border-b border-dashed border-emerald-400 focus:outline-none focus:border-emerald-600 pr-4 w-full sm:w-auto max-w-full min-w-0 truncate"
+                    className="mt-1 min-h-[44px] font-display font-extrabold text-xl sm:text-2xl text-slate-950 bg-transparent border-b border-dashed border-emerald-400 focus:outline-none focus:border-emerald-600 pr-4 w-full sm:w-auto max-w-full min-w-0 truncate"
                   >
                     {db.students.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -338,44 +338,44 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     {student.nama}
                   </h1>
                 )}
-                <div className="font-mono font-bold text-xs text-emerald-700 mt-1">
+                <div className="font-mono font-bold text-xs sm:text-sm text-emerald-700 mt-1">
                   ID: {student.nisnMda}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3 border-t border-slate-100">
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                     Program &amp; Kelas
                   </div>
-                  <div className="text-xs sm:text-sm font-bold text-slate-800 mt-0.5">
+                  <div className="text-sm font-bold text-slate-800 mt-0.5">
                     {student.program}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                     Semester &amp; Tahun Akademik
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-slate-700 mt-0.5">
+                  <div className="text-sm font-medium text-slate-700 mt-0.5">
                     Semester {currentReport.semester} · TA {currentReport.tahunAkademik}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                     Wali Kelas
                   </div>
-                  <div className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">
+                  <div className="text-sm font-semibold text-slate-800 mt-0.5">
                     {student.waliKelasNama}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                     Tanggal Pembagian Rapor
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-700 mt-0.5 tabular-nums">
+                  <div className="text-sm text-slate-700 mt-0.5 tabular-nums">
                     {resolveTanggalRapor(
                       currentReport.tanggalRapor,
                       currentReport.semester,
@@ -385,10 +385,10 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                 </div>
 
                 <div className="sm:col-span-2">
-                  <div className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                     Keputusan Semester
                   </div>
-                  <div className="text-xs sm:text-sm font-bold text-emerald-700 mt-0.5">
+                  <div className="text-sm font-bold text-emerald-700 mt-0.5">
                     {currentReport.keputusanSemester}
                   </div>
                 </div>
@@ -400,7 +400,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenPrint(student.id)}
-              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E2228] text-white hover:bg-slate-800 text-xs font-semibold"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E2228] text-white hover:bg-slate-800 text-sm font-semibold"
             >
               <Printer className="w-4 h-4 text-[#1DF27A] shrink-0" />
               <span>Cetak / Ekspor PDF Rapor</span>
@@ -409,7 +409,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenPortfolio(student.id)}
-              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 hover:bg-emerald-50 text-xs font-semibold"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 hover:bg-emerald-50 text-sm font-semibold"
             >
               <FolderGit2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Buka Semua Portofolio ({studentProjects.length})</span>
@@ -421,27 +421,27 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       {/* MDA 5-Pillar Horizontal Mint Progress Bars (Matching PDF Page 2) */}
       <div
         id="sec-pilar"
-        className="border border-emerald-200 rounded-2xl p-4 sm:p-5 space-y-4 scroll-mt-20"
+        className="border border-emerald-200 rounded-2xl p-5 sm:p-6 space-y-4 scroll-mt-20"
         style={{ backgroundColor: theme.pageTint }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div
-              className="inline-block text-slate-950 font-display font-extrabold text-[11px] px-3.5 py-1 rounded-full mb-1.5"
+              className="inline-block text-slate-950 font-display font-extrabold text-xs px-3.5 py-1 rounded-full mb-2"
               style={{ backgroundColor: theme.sectionSky }}
             >
               RINGKASAN CAPAIAN 5 PILAR
             </div>
-            <h2 className="font-display font-bold text-slate-900 text-base">
+            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl">
               Capaian Kompetensi {student.nama}
             </h2>
           </div>
-          <div className="text-[11px] text-slate-600 italic">
+          <div className="text-xs sm:text-sm text-slate-600 italic">
             Semester {currentReport.semester} TA {currentReport.tahunAkademik}
           </div>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {[
             ['Penguasaan Multimedia', currentReport.pilar.penguasaanMultimedia],
             ['Diniyah dan Pembelajaran', currentReport.pilar.diniyahPembelajaran],
@@ -450,7 +450,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             ['Character Building', currentReport.pilar.characterBuilding],
           ].map(([label, pct]) => (
             <div key={label as string} className="flex items-center gap-2.5 sm:gap-3">
-              <div className="relative flex-1 h-9 bg-white rounded-full border border-emerald-200 overflow-hidden flex items-center">
+              <div className="relative flex-1 h-10 bg-white rounded-full border border-emerald-200 overflow-hidden flex items-center">
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -458,12 +458,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     backgroundColor: theme.barTrack,
                   }}
                 />
-                <span className="absolute left-3.5 sm:left-4 text-[11px] sm:text-xs font-bold text-slate-900 truncate pr-2">
+                <span className="absolute left-3.5 sm:left-4 text-xs sm:text-sm font-bold text-slate-900 truncate pr-2">
                   {label}
                 </span>
               </div>
               <div
-                className="w-14 sm:w-18 h-9 text-white rounded-full flex items-center justify-center font-mono text-xs font-bold tabular-nums shrink-0"
+                className="w-16 sm:w-[72px] h-10 text-white rounded-full flex items-center justify-center font-mono text-sm font-bold tabular-nums shrink-0"
                 style={{ backgroundColor: theme.darkPill }}
               >
                 {pct}%
@@ -473,7 +473,7 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
         </div>
 
         {/* 6 MDA KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
           {[
             ['Character Building', `${currentReport.kpiMda.characterBuildingCount}`],
             ['Multimedia Project', `${currentReport.kpiMda.multimediaProjectCount}`],
@@ -484,10 +484,10 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           ].map(([title, val]) => (
             <div
               key={title}
-              className="bg-white border border-emerald-100 rounded-xl p-3 flex flex-col justify-between gap-2 text-center"
+              className="bg-white border border-emerald-100 rounded-xl p-3.5 flex flex-col justify-between gap-2 text-center"
             >
-              <div className="text-[11px] font-semibold text-slate-700">{title}</div>
-              <div className="bg-[#1DF27A] text-slate-950 font-mono font-bold text-xs py-1 px-2 rounded-full tabular-nums truncate">
+              <div className="text-xs font-semibold text-slate-700">{title}</div>
+              <div className="bg-[#1DF27A] text-slate-950 font-mono font-bold text-xs sm:text-sm py-1.5 px-2.5 rounded-full tabular-nums truncate">
                 {val}
               </div>
             </div>
@@ -497,11 +497,11 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
       {/* 5 Pillars Radar + Multi-Semester Growth Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
-        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5">
-          <h2 className="font-display font-bold text-slate-900 text-base">
+        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6">
+          <h2 className="font-display font-bold text-slate-900 text-lg">
             Grafik Radar 5 Pilar
           </h2>
-          <p className="text-xs text-slate-500 mb-3">
+          <p className="text-sm text-slate-500 mb-3 mt-0.5">
             Perbandingan kompetensi semester aktif vs sebelumnya
           </p>
           <RadarFivePillarsChart
@@ -516,12 +516,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           />
         </div>
 
-        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
           <div className="min-w-0">
-            <h2 className="font-display font-bold text-slate-900 text-base">
+            <h2 className="font-display font-bold text-slate-900 text-lg">
               {tpl.portalTrendTitle}
             </h2>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-sm text-slate-500 mb-4 mt-0.5">
               {tpl.portalTrendSubtitle}
             </p>
             <SemesterProgressChart data={trendData} />
@@ -531,18 +531,18 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
       {/* Tahfidz + Sikap & Character Building */}
       <div id="sec-tahfidz" className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
-        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display font-bold text-slate-900 text-base inline-flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-emerald-600" />
+        <div className="lg:col-span-5 min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display font-bold text-slate-900 text-lg inline-flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>Tahfidz Al-Qur’an</span>
             </h2>
-            <span className="font-mono text-xs font-bold text-emerald-700 tabular-nums">
+            <span className="font-mono text-sm font-bold text-emerald-700 tabular-nums shrink-0">
               {currentReport.tahfidz.nilaiAkhir} ({currentReport.tahfidz.predikat})
             </span>
           </div>
 
-          <div className="divide-y divide-slate-100 text-xs">
+          <div className="divide-y divide-slate-100 text-sm">
             {[
               ['Total Hafalan', currentReport.tahfidz.totalHafalan],
               ['Capaian Semester Ini', currentReport.tahfidz.capaianSemesterIni],
@@ -550,14 +550,14 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               ['Setoran Ziyadah', currentReport.tahfidz.totalSetoranZiyadah],
               ['Total Murojaah', currentReport.tahfidz.totalMurojaah],
             ].map(([lbl, val]) => (
-              <div key={lbl} className="py-2 flex items-center justify-between gap-2">
+              <div key={lbl} className="py-2.5 flex items-center justify-between gap-2">
                 <span className="font-normal text-slate-600">{lbl}</span>
                 <span className="font-bold text-slate-950 text-right tabular-nums">{val || '—'}</span>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-2 gap-2.5 pt-2">
             {[
               ['Kelancaran', currentReport.tahfidz.kelancaran],
               ['Tajwid', currentReport.tahfidz.tajwid],
@@ -566,9 +566,9 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             ].map(([lbl, score]) => (
               <div
                 key={lbl as string}
-                className="p-2.5 rounded-lg bg-[#E8FAF3] border border-emerald-100 flex items-center justify-between text-xs"
+                className="p-3 rounded-xl bg-[#E8FAF3] border border-emerald-100 flex items-center justify-between text-xs sm:text-sm"
               >
-                <span className="text-slate-700">{lbl}</span>
+                <span className="text-slate-700 font-medium">{lbl}</span>
                 <span className="font-mono font-bold text-slate-900 tabular-nums">
                   {score}
                 </span>
@@ -576,13 +576,13 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             ))}
           </div>
 
-          <p className="text-xs text-slate-700 leading-relaxed bg-emerald-50/70 border border-emerald-100 rounded-xl p-3">
+          <p className="text-sm text-slate-700 leading-relaxed bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5">
             {currentReport.tahfidz.deskripsi}
           </p>
         </div>
 
-        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
-          <h2 className="font-display font-bold text-slate-900 text-base">
+        <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
+          <h2 className="font-display font-bold text-slate-900 text-lg">
             Sikap, Karakter &amp; Program Character Building
           </h2>
 
@@ -591,11 +591,11 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             {currentReport.sikap.map((s) => (
               <div
                 key={s.aspek}
-                className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-1 text-xs"
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-1.5 text-sm"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-slate-900">{s.aspek}</span>
-                  <span className="font-mono font-bold text-emerald-700 shrink-0">
+                  <span className="font-mono text-xs font-bold text-emerald-700 shrink-0">
                     {s.predikat} · {getKategoriPredikat(s.predikat)}
                   </span>
                 </div>
@@ -606,40 +606,40 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
           {/* Desktop Attitude Table */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="text-white" style={{ backgroundColor: theme.darkPill }}>
-                  <th className="py-2 px-3">Aspek Sikap</th>
-                  <th className="py-2 px-3 w-32">Predikat</th>
-                  <th className="py-2 px-3">Catatan</th>
+                <tr className="text-white text-xs sm:text-sm" style={{ backgroundColor: theme.darkPill }}>
+                  <th className="py-2.5 px-3.5">Aspek Sikap</th>
+                  <th className="py-2.5 px-3.5 w-36">Predikat</th>
+                  <th className="py-2.5 px-3.5">Catatan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {currentReport.sikap.map((s) => (
                   <tr key={s.aspek}>
-                    <td className="py-2 px-3 font-medium text-slate-800">{s.aspek}</td>
-                    <td className="py-2 px-3 font-mono font-bold text-emerald-700">
+                    <td className="py-2.5 px-3.5 font-medium text-slate-800">{s.aspek}</td>
+                    <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-700">
                       {s.predikat} · {getKategoriPredikat(s.predikat)}
                     </td>
-                    <td className="py-2 px-3 text-slate-600">{s.deskripsi}</td>
+                    <td className="py-2.5 px-3.5 text-slate-600 leading-relaxed">{s.deskripsi}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="space-y-2.5 pt-2 border-t border-slate-100">
-            <h3 className="font-display font-bold text-sm sm:text-base text-slate-950">
+          <div className="space-y-3 pt-2 border-t border-slate-100">
+            <h3 className="font-display font-bold text-base text-slate-950">
               Program Character Building
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {currentReport.characterPrograms.map((c) => (
                 <div
                   key={c.kegiatan}
-                  className="p-3 rounded-xl bg-[#E8FAF3] border border-emerald-200/80 text-xs"
+                  className="p-3.5 rounded-xl bg-[#E8FAF3] border border-emerald-200/80 text-xs sm:text-sm"
                 >
                   <div className="font-bold text-slate-950 leading-snug">{c.kegiatan}</div>
-                  <div className="text-slate-700 mt-1 leading-relaxed">
+                  <div className="text-slate-700 mt-1.5 leading-relaxed">
                     {c.keterangan || '—'}
                   </div>
                 </div>
@@ -652,11 +652,11 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       {/* Diniyah & Skill Digital (Responsive Mobile Cards + Desktop Tables) */}
       <div id="sec-akademik" className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 scroll-mt-20 min-w-0">
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden min-w-0">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 className="font-display font-bold text-slate-900 text-sm">
+          <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between gap-2">
+            <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
               Mata Pelajaran Diniyah
             </h3>
-            <span className="font-mono text-xs font-bold text-emerald-700 tabular-nums">
+            <span className="font-mono text-xs sm:text-sm font-bold text-emerald-700 tabular-nums shrink-0">
               Rata-rata: {diniyahAvg}
             </span>
           </div>
@@ -664,51 +664,51 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-slate-100">
             {currentReport.diniyah.map((d) => (
-              <div key={d.no} className="p-4 space-y-1.5 text-xs">
+              <div key={d.no} className="p-4 space-y-1.5 text-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-bold text-slate-900">{d.mataPelajaran}</div>
-                    <div className="text-slate-500">{d.kitabMateri}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{d.kitabMateri}</div>
                   </div>
                   <div className="text-right font-mono shrink-0">
-                    <div className="font-bold text-sm text-slate-900 tabular-nums">
+                    <div className="font-bold text-base text-slate-900 tabular-nums">
                       {d.nilai} ({d.predikat})
                     </div>
-                    <div className="text-[11px] text-emerald-700 font-sans font-semibold">
+                    <div className="text-xs text-emerald-700 font-sans font-semibold">
                       KKM {d.kkm} · {d.nilai >= d.kkm ? 'Tuntas' : 'Bimbingan'}
                     </div>
                   </div>
                 </div>
-                {d.deskripsi && <p className="text-slate-600">{d.deskripsi}</p>}
+                {d.deskripsi && <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{d.deskripsi}</p>}
               </div>
             ))}
           </div>
 
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="text-white" style={{ backgroundColor: theme.darkPill }}>
-                <th className="py-2 px-3">Mapel &amp; Kitab</th>
-                <th className="py-2 px-3 text-right">KKM</th>
-                <th className="py-2 px-3 text-right">Nilai</th>
-                <th className="py-2 px-3">Predikat</th>
+              <tr className="text-white text-xs sm:text-sm" style={{ backgroundColor: theme.darkPill }}>
+                <th className="py-3 px-4">Mapel &amp; Kitab</th>
+                <th className="py-3 px-3 text-right">KKM</th>
+                <th className="py-3 px-3 text-right">Nilai</th>
+                <th className="py-3 px-4">Predikat</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {currentReport.diniyah.map((d) => (
                 <tr key={d.no}>
-                  <td className="py-2.5 px-3">
+                  <td className="py-3 px-4">
                     <div className="font-semibold text-slate-900">{d.mataPelajaran}</div>
-                    <div className="text-slate-500">{d.kitabMateri}</div>
+                    <div className="text-xs text-slate-500">{d.kitabMateri}</div>
                   </td>
-                  <td className="py-2.5 px-3 text-right tabular-nums">
+                  <td className="py-3 px-3 text-right tabular-nums">
                     {d.kkm}
                   </td>
-                  <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">
+                  <td className="py-3 px-3 text-right font-bold text-slate-900 tabular-nums">
                     {d.nilai}
                   </td>
-                  <td className="py-2.5 px-3 font-semibold text-emerald-700">
+                  <td className="py-3 px-4 font-semibold text-emerald-700">
                     {d.predikat} · {d.nilai >= d.kkm ? 'Tuntas' : 'Perlu Bimbingan'}
                   </td>
                 </tr>
@@ -718,12 +718,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 className="font-display font-bold text-slate-900 text-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden min-w-0">
+          <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between gap-2">
+            <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
               Kompetensi Skill Digital
             </h3>
-            <span className="font-mono text-xs font-bold text-emerald-700 tabular-nums">
+            <span className="font-mono text-xs sm:text-sm font-bold text-emerald-700 tabular-nums shrink-0">
               Rata-rata: {digitalAvg}
             </span>
           </div>
@@ -733,14 +733,14 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             {activeDigitalSkills
               .filter((s) => s.nilaiAkhir > 0)
               .map((s) => (
-                <div key={s.no} className="p-4 space-y-2 text-xs">
+                <div key={s.no} className="p-4 space-y-2 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-slate-900">{s.materiSkill}</span>
                     <span className="font-mono font-bold text-emerald-700 tabular-nums">
                       {s.nilaiAkhir} ({s.predikat})
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl">
                     <div>
                       Pengetahuan:{' '}
                       <strong className="font-mono text-slate-900">{s.pengetahuan}</strong>
@@ -756,13 +756,13 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="text-white" style={{ backgroundColor: theme.darkPill }}>
-                <th className="py-2 px-3">Materi Skill</th>
-                <th className="py-2 px-3 text-right">Pengetahuan</th>
-                <th className="py-2 px-3 text-right">Keterampilan</th>
-                <th className="py-2 px-3 text-right">Akhir</th>
+              <tr className="text-white text-xs sm:text-sm" style={{ backgroundColor: theme.darkPill }}>
+                <th className="py-3 px-4">Materi Skill</th>
+                <th className="py-3 px-3 text-right">Pengetahuan</th>
+                <th className="py-3 px-3 text-right">Keterampilan</th>
+                <th className="py-3 px-4 text-right">Akhir</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -770,16 +770,16 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                 .filter((s) => s.nilaiAkhir > 0)
                 .map((s) => (
                   <tr key={s.no}>
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
+                    <td className="py-3 px-4 font-semibold text-slate-900">
                       {s.materiSkill}
                     </td>
-                    <td className="py-2.5 px-3 text-right tabular-nums">
+                    <td className="py-3 px-3 text-right tabular-nums">
                       {s.pengetahuan}
                     </td>
-                    <td className="py-2.5 px-3 text-right tabular-nums">
+                    <td className="py-3 px-3 text-right tabular-nums">
                       {s.keterampilan}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-emerald-700 tabular-nums">
+                    <td className="py-3 px-4 text-right font-bold text-emerald-700 tabular-nums">
                       {s.nilaiAkhir} ({s.predikat})
                     </td>
                   </tr>
@@ -792,18 +792,18 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
 
       {/* Catatan Wali Kelas */}
       <div id="sec-catatan" className="space-y-5 sm:space-y-6 scroll-mt-20 min-w-0">
-        <div className="min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm">
+        <div className="min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-3.5 text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-            <h3 className="font-display font-bold text-slate-900 text-base">
+            <h3 className="font-display font-bold text-slate-900 text-lg">
               Catatan Wali Kelas &amp; Kehadiran
             </h3>
-            <div className="font-mono text-slate-600 tabular-nums">
+            <div className="font-mono text-xs sm:text-sm text-slate-600 tabular-nums">
               Sakit: {currentReport.kehadiran.sakit} hr · Izin: {currentReport.kehadiran.izin} hr ·
               Alpa: {currentReport.kehadiran.alpa} hr
             </div>
           </div>
 
-          <div className="space-y-2 text-slate-700 leading-relaxed">
+          <div className="space-y-2.5 text-slate-700 leading-relaxed">
             <p>
               <strong className="text-slate-900">Perkembangan:</strong>{' '}
               {currentReport.catatanWali.perkembangan}
@@ -818,54 +818,54 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-950 italic">
+          <div className="p-3.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-950 italic leading-relaxed">
             “{currentReport.catatanWali.pesanSingkat}”
           </div>
         </div>
 
         {/* Perkembangan Karya & Kompetensi (Bahasa Orang Tua) + 2 Link & QR Code */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 min-w-0">
-          <div className="lg:col-span-7 min-w-0 bg-white border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3">
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2.5">
-                <div className="inline-flex items-center gap-1.5 text-emerald-800 font-display font-bold text-sm sm:text-base">
+          <div className="lg:col-span-7 min-w-0 bg-white border border-emerald-200 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-3.5">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-3">
+                <div className="inline-flex items-center gap-2 text-emerald-800 font-display font-bold text-base sm:text-lg">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Perkembangan Karya &amp; Kompetensi</span>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                   {currentReport.semester} {currentReport.tahunAkademik}
                 </span>
               </div>
-              <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">
+              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">
                 {effectivePortfolioSummary}
               </div>
             </div>
-            <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <div className="text-xs text-slate-500 pt-2.5 border-t border-slate-100">
               Rangkuman capaian praktik, proyek, dan kompetensi digital ananda selama 1 semester.
             </div>
           </div>
 
           <div
-            className="lg:col-span-5 min-w-0 text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
+            className="lg:col-span-5 min-w-0 text-white rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4"
             style={{ backgroundColor: theme.darkPill }}
           >
-            <div className="space-y-3 min-w-0">
+            <div className="space-y-3.5 min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="inline-flex items-center gap-1.5 text-[#1DF27A] text-xs font-semibold">
                     <Link2 className="w-4 h-4 shrink-0" />
                     <span>Akses Karya Online</span>
                   </div>
-                  <h3 className="font-display font-bold text-base break-words mt-1">
+                  <h3 className="font-display font-bold text-lg break-words mt-1">
                     {tpl.portalQrTitle}
                   </h3>
-                  <p className="text-xs text-slate-300 leading-relaxed mt-0.5 break-words">
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-1 break-words">
                     {tpl.portalQrDescription}
                   </p>
                 </div>
 
                 {qrTargetUrl && qrDataUrl && (
-                  <div className="shrink-0 flex flex-col items-center gap-1">
+                  <div className="shrink-0 flex flex-col items-center gap-1.5">
                     <div className="w-20 h-20 rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center">
                       <img
                         src={qrDataUrl}
@@ -873,23 +873,23 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                         className="w-full h-full object-contain"
                       />
                     </div>
-                    <span className="text-[9.5px] text-emerald-200 font-semibold text-center leading-tight max-w-[88px]">
+                    <span className="text-xs text-emerald-200 font-semibold text-center leading-tight max-w-[96px]">
                       Scan untuk lihat semua karya
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {/* Link 1: Portofolio Behance / Google Drive */}
                 {(() => {
                   const portfolioDownloadUrl = getGoogleDriveDownloadUrl(
                     portfolioLinks.behanceUrl
                   );
                   return (
-                    <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                    <div className="rounded-xl bg-white/10 border border-white/15 p-3 space-y-2 min-w-0">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#1DF27A]">
+                        <span className="text-xs font-bold uppercase tracking-wide text-[#1DF27A]">
                           1. Link Portofolio (Behance)
                         </span>
                         {portfolioLinks.behanceUrl && (
@@ -899,12 +899,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                               onClick={() =>
                                 void handleCopySpecificLink('link2', portfolioLinks.behanceUrl)
                               }
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                              className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold text-white"
                             >
                               {copiedKey === 'link2' ? (
-                                <Check className="w-3 h-3 text-[#1DF27A]" />
+                                <Check className="w-3.5 h-3.5 text-[#1DF27A]" />
                               ) : (
-                                <Copy className="w-3 h-3" />
+                                <Copy className="w-3.5 h-3.5" />
                               )}
                               <span>{copiedKey === 'link2' ? 'Disalin' : 'Salin'}</span>
                             </button>
@@ -912,19 +912,19 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                               href={portfolioLinks.behanceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#1DF27A] hover:bg-emerald-300 text-slate-950 text-[11px] font-bold transition-colors"
+                              className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1DF27A] hover:bg-emerald-300 text-slate-950 text-xs font-bold transition-colors"
                             >
                               <span>Buka</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                             {portfolioDownloadUrl && (
                               <a
                                 href={portfolioDownloadUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-emerald-50 text-slate-950 text-[11px] font-bold transition-colors"
+                                className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-slate-950 text-xs font-bold transition-colors"
                               >
-                                <Download className="w-3 h-3" />
+                                <Download className="w-3.5 h-3.5" />
                                 <span>Unduh</span>
                               </a>
                             )}
@@ -936,12 +936,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                           href={portfolioLinks.behanceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-[11px] font-mono text-emerald-100 break-all hover:underline"
+                          className="block text-xs font-mono text-emerald-100 break-all hover:underline"
                         >
                           {portfolioLinks.behanceUrl}
                         </a>
                       ) : (
-                        <div className="text-[11px] text-slate-400 italic">
+                        <div className="text-xs text-slate-400 italic">
                           Belum ada link Behance ditambahkan.
                         </div>
                       )}
@@ -955,14 +955,14 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                     portfolioLinks.pdfUrl
                   );
                   return (
-                    <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 space-y-1.5 min-w-0">
+                    <div className="rounded-xl bg-white/10 border border-white/15 p-3 space-y-2 min-w-0">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className="text-[10.5px] font-bold uppercase tracking-wide text-amber-300">
+                          <span className="text-xs font-bold uppercase tracking-wide text-amber-300">
                             2. Link Kumpulan Karya (PDF)
                           </span>
                           {portfolioLinks.pdfSubject && (
-                            <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-[10px] font-semibold text-amber-200">
+                            <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/30 text-xs font-semibold text-amber-200">
                               {portfolioLinks.pdfSubject}
                             </span>
                           )}
@@ -974,12 +974,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                               onClick={() =>
                                 void handleCopySpecificLink('link3', portfolioLinks.pdfUrl)
                               }
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 text-[11px] font-semibold text-white"
+                              className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold text-white"
                             >
                               {copiedKey === 'link3' ? (
-                                <Check className="w-3 h-3 text-[#1DF27A]" />
+                                <Check className="w-3.5 h-3.5 text-[#1DF27A]" />
                               ) : (
-                                <Copy className="w-3 h-3" />
+                                <Copy className="w-3.5 h-3.5" />
                               )}
                               <span>{copiedKey === 'link3' ? 'Disalin' : 'Salin'}</span>
                             </button>
@@ -987,19 +987,19 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                               href={portfolioLinks.pdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 hover:bg-amber-200 text-slate-950 text-[11px] font-bold transition-colors"
+                              className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-300 hover:bg-amber-200 text-slate-950 text-xs font-bold transition-colors"
                             >
                               <span>Buka</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                             {pdfDownloadUrl && (
                               <a
                                 href={pdfDownloadUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-amber-50 text-slate-950 text-[11px] font-bold transition-colors"
+                                className="min-h-[34px] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-slate-950 text-xs font-bold transition-colors"
                               >
-                                <Download className="w-3 h-3" />
+                                <Download className="w-3.5 h-3.5" />
                                 <span>Unduh</span>
                               </a>
                             )}
@@ -1011,12 +1011,12 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                           href={portfolioLinks.pdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-[11px] font-mono text-amber-100 break-all hover:underline"
+                          className="block text-xs font-mono text-amber-100 break-all hover:underline"
                         >
                           {portfolioLinks.pdfUrl}
                         </a>
                       ) : (
-                        <div className="text-[11px] text-slate-400 italic">
+                        <div className="text-xs text-slate-400 italic">
                           Belum ada link PDF kumpulan karya semester.
                         </div>
                       )}
@@ -1026,14 +1026,14 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2 border-t border-white/15">
+            <div className="flex items-center gap-2 pt-3 border-t border-white/15">
               <button
                 type="button"
                 onClick={() => onOpenPortfolio(student.id)}
-                className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#1DF27A] hover:bg-emerald-400 text-xs font-bold text-slate-950 transition-colors"
+                className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1DF27A] hover:bg-emerald-400 text-sm font-bold text-slate-950 transition-colors"
               >
                 <span>Buka Halaman Galeri Portofolio</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -1043,35 +1043,35 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
       {/* HASIL KARYA & PORTOFOLIO ANAK (Ditaruh di bagian akhir halaman rapor wali) */}
       <div
         id="sec-karya"
-        className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 scroll-mt-20"
+        className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div
-              className="inline-block text-slate-950 font-display font-extrabold text-[11px] px-3.5 py-1 rounded-full mb-1.5"
+              className="inline-block text-slate-950 font-display font-extrabold text-xs px-3.5 py-1 rounded-full mb-2"
               style={{ backgroundColor: theme.sectionSky }}
             >
               HASIL KARYA &amp; PORTOFOLIO ANAK
             </div>
-            <h2 className="font-display font-bold text-slate-900 text-base">
+            <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl">
               Galeri Karya {student.nama} ({studentProjects.length} Karya)
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-500 mt-0.5">
               {tpl.portalPortfolioSubtitle}
             </p>
           </div>
           <button
             type="button"
             onClick={() => onOpenPortfolio(student.id)}
-            className="min-h-[42px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 whitespace-nowrap self-start sm:self-auto"
+            className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 whitespace-nowrap self-start sm:self-auto"
           >
-            <FolderGit2 className="w-3.5 h-3.5" />
+            <FolderGit2 className="w-4 h-4" />
             <span>Lihat Halaman Portofolio Penuh</span>
           </button>
         </div>
 
         {studentProjects.length === 0 ? (
-          <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+          <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center text-sm text-slate-500">
             Belum ada karya portofolio yang diunggah untuk santri ini.
           </div>
         ) : (
@@ -1151,22 +1151,22 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                       </div>
                     )}
 
-                    <div className="p-3.5 space-y-1.5">
-                      <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">
+                    <div className="p-4 space-y-1.5">
+                      <div className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
                         {proj.jenis} · {proj.semester} {proj.tahunAkademik}
                       </div>
-                      <h3 className="font-display font-bold text-sm text-slate-900 leading-snug">
+                      <h3 className="font-display font-bold text-base text-slate-900 leading-snug">
                         {proj.judul}
                       </h3>
                       {proj.keteranganSingkat && (
-                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
                           {proj.keteranganSingkat}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="px-3.5 pb-3.5 pt-2 flex items-center gap-2 border-t border-slate-100">
+                  <div className="px-4 pb-4 pt-2.5 flex items-center gap-2 border-t border-slate-100">
                     {firstMedia && (
                       <button
                         type="button"
@@ -1177,9 +1177,9 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                             jenis: proj.jenis,
                           })
                         }
-                        className="flex-1 min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E2228] text-white hover:bg-slate-800 text-xs font-semibold"
+                        className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-[#0E2228] text-white hover:bg-slate-800 text-sm font-semibold"
                       >
-                        <Eye className="w-3.5 h-3.5 text-[#1DF27A]" />
+                        <Eye className="w-4 h-4 text-[#1DF27A]" />
                         <span>Lihat Karya</span>
                       </button>
                     )}
@@ -1188,10 +1188,10 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
                         href={proj.externalLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="min-h-[40px] inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700"
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700"
                       >
                         <span>Link</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     )}
                   </div>
@@ -1212,19 +1212,19 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             className="relative w-full max-w-3xl max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-2xl shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-2 px-4 sm:px-5 py-3.5 border-b border-slate-200">
+            <div className="flex items-start justify-between gap-2 px-4 sm:px-5 py-4 border-b border-slate-200">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-emerald-700 uppercase">
+                <div className="text-xs font-bold text-emerald-700 uppercase">
                   {previewMedia.jenis}
                 </div>
-                <div className="font-display font-bold text-sm text-slate-900 break-words">
+                <div className="font-display font-bold text-base text-slate-900 break-words">
                   {previewMedia.title}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>

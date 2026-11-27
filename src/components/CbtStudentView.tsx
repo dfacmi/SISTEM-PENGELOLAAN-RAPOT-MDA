@@ -504,8 +504,8 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   if (stage === 'result' && resultData && activeExam) {
     const att = resultData.attempt;
     return (
-      <div className="min-h-screen bg-[#E8FAF3] flex items-center justify-center p-3 sm:p-4 font-[Arial] max-w-full overflow-x-hidden">
-        <div className="max-w-lg w-full bg-white border border-emerald-200 rounded-3xl p-5 sm:p-8 shadow-sm space-y-5 text-center">
+      <div className="min-h-screen bg-[#E8FAF3] flex items-center justify-center p-4 font-[Arial] max-w-full overflow-x-hidden">
+        <div className="max-w-lg w-full bg-white border border-emerald-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5 text-center">
           <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto">
             <Award className="w-8 h-8 text-emerald-700" />
           </div>
@@ -513,10 +513,10 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
             <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
               Ujian Selesai &amp; Tersimpan Aman
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 break-words">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1.5 break-words">
               {activeExam.title}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               Peserta: <strong>{studentTitle}</strong> ({studentNisn})
             </p>
           </div>
@@ -524,31 +524,31 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           {resultData.showScoreAfterFinish && typeof att.score === 'number' ? (
             <div className="p-5 rounded-2xl bg-[#0E2228] text-white space-y-3">
               <div className="text-xs text-slate-300 uppercase tracking-wider">Nilai Akhir Ujian</div>
-              <div className="text-5xl font-bold text-[#1DF27A]">{att.score}</div>
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/15 text-xs">
+              <div className="text-5xl font-bold text-[#1DF27A] tabular-nums">{att.score}</div>
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/15 text-xs sm:text-sm">
                 <div>
                   <div className="text-slate-400">Benar</div>
-                  <div className="font-bold text-emerald-300 text-base">{att.benarCount ?? 0}</div>
+                  <div className="font-bold text-emerald-300 text-lg tabular-nums">{att.benarCount ?? 0}</div>
                 </div>
                 <div>
                   <div className="text-slate-400">Salah</div>
-                  <div className="font-bold text-rose-300 text-base">{att.salahCount ?? 0}</div>
+                  <div className="font-bold text-rose-300 text-lg tabular-nums">{att.salahCount ?? 0}</div>
                 </div>
                 <div>
                   <div className="text-slate-400">Total Soal</div>
-                  <div className="font-bold text-white text-base">{att.totalQuestions ?? 0}</div>
+                  <div className="font-bold text-white text-lg tabular-nums">{att.totalQuestions ?? 0}</div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900 leading-relaxed">
               Seluruh jawaban Anda telah berhasil dikumpulkan dan dikunci di server. Nilai akan diumumkan oleh Ustadz / Pengawas sesuai jadwal.
             </div>
           )}
 
           {resultData.syncedToRapor && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>Nilai otomatis tersinkron ke Rapor Semester</span>
             </div>
           )}
@@ -564,7 +564,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               setTokenInput('');
               void loadOverview();
             }}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+            className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold"
           >
             Kembali ke Daftar Mapel Ujian
           </button>
@@ -578,23 +578,23 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   // ==========================================
   if (stage === 'locked') {
     return (
-      <div className="min-h-screen bg-rose-950 flex items-center justify-center p-3 sm:p-4 font-[Arial] max-w-full overflow-x-hidden">
-        <div className="max-w-md w-full bg-white border border-rose-300 rounded-3xl p-5 sm:p-8 text-center space-y-4 shadow-xl">
+      <div className="min-h-screen bg-rose-950 flex items-center justify-center p-4 font-[Arial] max-w-full overflow-x-hidden">
+        <div className="max-w-md w-full bg-white border border-rose-300 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-xl">
           <div className="w-14 h-14 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center mx-auto">
             <Lock className="w-7 h-7 text-rose-700" />
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 break-words">
+          <h2 className="text-xl font-bold text-slate-900 break-words">
             Ujian Terkunci - Hubungi Pengawas
           </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Sistem Web Lockdown mendeteksi pelanggaran berulang ({activeAttempt?.violationCount ?? 0}{' '}
             kali) pada ujian <strong>{activeExam?.title || selectedExam?.title}</strong>. Jawaban Anda hingga detik terakhir telah tersimpan aman.
           </p>
-          <p className="text-xs text-rose-700 font-semibold">
+          <p className="text-sm text-rose-700 font-semibold leading-relaxed">
             Silakan lapor ke Pengawas Ruang Ujian agar akun Anda dibuka kuncinya untuk melanjutkan mengerjakan.
           </p>
 
-          <div className="flex flex-col gap-2 pt-2">
+          <div className="flex flex-col gap-2.5 pt-2">
             <button
               type="button"
               disabled={busy}
@@ -607,9 +607,9 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   await loadOverview();
                 }
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
               <span>Cek Status Buka Kunci dari Pengawas</span>
             </button>
             <button
@@ -618,7 +618,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                 setStage('list');
                 void loadOverview();
               }}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
             >
               Kembali ke Daftar Mapel
             </button>
@@ -634,9 +634,9 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   if (stage === 'exam' && activeExam && activeAttempt) {
     const watermarkText = `${studentTitle} • ${studentNisn} • ${clockLabel}`;
     const questionTextSize =
-      fontScale === 'sm' ? 'text-sm' : fontScale === 'lg' ? 'text-lg' : 'text-base';
+      fontScale === 'sm' ? 'text-sm' : fontScale === 'lg' ? 'text-xl' : 'text-base sm:text-[17px]';
     const optionTextSize =
-      fontScale === 'sm' ? 'text-xs' : fontScale === 'lg' ? 'text-base' : 'text-sm';
+      fontScale === 'sm' ? 'text-sm' : fontScale === 'lg' ? 'text-lg' : 'text-sm sm:text-base';
 
     return (
       <div
@@ -665,15 +665,15 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
 
         {/* Fullscreen Re-entry Blocker Overlay if student exits fullscreen mid-exam (desktop/Android) */}
         {supportsNativeFullscreen && !isFullscreen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-            <div className="max-w-md w-full max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-3xl p-5 sm:p-7 text-center space-y-4 shadow-2xl">
+          <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <div className="max-w-md w-full max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-3xl p-6 sm:p-7 text-center space-y-4 shadow-2xl">
               <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center mx-auto">
                 <Maximize2 className="w-6 h-6 text-amber-700" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 break-words">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 break-words">
                 Mode Layar Penuh (Fullscreen) Wajib Aktif
               </h3>
-              <p className="text-xs text-slate-600 leading-relaxed break-words">
+              <p className="text-sm text-slate-600 leading-relaxed break-words">
                 Demi ketertiban dan Web Lockdown ujian CBT, lembar soal hanya dapat dilihat dalam mode layar penuh. Pelanggaran tercatat:{' '}
                 <strong className="text-rose-700">
                   {activeAttempt.violationCount}/{activeExam.maxViolations}
@@ -683,7 +683,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               <button
                 type="button"
                 onClick={() => void requestFullscreenSafe()}
-                className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2"
               >
                 <Maximize2 className="w-4 h-4 shrink-0" />
                 <span>Masuk Kembali ke Fullscreen &amp; Lanjutkan Ujian</span>
@@ -693,17 +693,17 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
         )}
 
         {/* Top ATK/ANBK Exam Header */}
-        <header className="sticky top-0 z-20 bg-[#0E2228] text-white px-3 sm:px-6 py-2.5 sm:py-3 shadow-md">
-          <div className="max-w-[1360px] mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+        <header className="sticky top-0 z-20 bg-[#0E2228] text-white px-4 sm:px-6 py-3 shadow-md">
+          <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="bg-white rounded-xl px-2.5 py-1 shrink-0 hidden sm:block">
                 <MdaLogo size="sm" customLogoUrl={templateConfig.customLogoUrl} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] text-[#1DF27A] font-bold truncate">
+                <div className="text-xs sm:text-sm text-[#1DF27A] font-bold truncate">
                   {activeExam.title} · {studentTitle} ({studentNisn})
                 </div>
-                <div className="text-[11px] sm:text-xs text-slate-300 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                <div className="text-xs text-slate-300 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                   <span>
                     Soal {currentIndex + 1} / {questions.length}
                   </span>
@@ -716,7 +716,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                         : 'Tersimpan otomatis'}
                   </span>
                   {activeAttempt.violationCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-200 font-bold text-[10px]">
+                    <span className="px-2 py-0.5 rounded bg-rose-500/30 text-rose-200 font-bold text-xs">
                       Pelanggaran: {activeAttempt.violationCount}/{activeExam.maxViolations}
                     </span>
                   )}
@@ -724,15 +724,15 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Font Size Adjuster */}
-              <div className="inline-flex items-center rounded-lg bg-white/10 p-0.5 text-xs">
+              <div className="inline-flex items-center rounded-xl bg-white/10 p-1 text-xs">
                 {(['sm', 'md', 'lg'] as FontScale[]).map((sz, idx) => (
                   <button
                     key={sz}
                     type="button"
                     onClick={() => setFontScale(sz)}
-                    className={`px-1.5 sm:px-2 py-1 rounded-md font-bold transition-colors ${
+                    className={`min-h-[34px] px-2.5 py-1 rounded-lg font-bold transition-colors ${
                       fontScale === sz
                         ? 'bg-white text-slate-900'
                         : 'text-slate-200 hover:bg-white/10'
@@ -747,9 +747,9 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               <button
                 type="button"
                 onClick={() => setMobileGridOpen(true)}
-                className="lg:hidden inline-flex items-center gap-1 px-2.5 py-1.5 sm:py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold"
+                className="lg:hidden min-h-[40px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold"
               >
-                <Grid className="w-3.5 h-3.5 text-[#1DF27A]" />
+                <Grid className="w-4 h-4 text-[#1DF27A]" />
                 <span>
                   {answeredCount}/{questions.length}
                 </span>
@@ -757,13 +757,13 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
 
               {/* Countdown Timer */}
               <div
-                className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-mono font-bold text-sm sm:text-lg flex items-center gap-1.5 ${
+                className={`min-h-[40px] px-3 sm:px-4 py-2 rounded-xl font-mono font-bold text-sm sm:text-lg flex items-center gap-1.5 ${
                   remainingSeconds <= 300
                     ? 'bg-rose-600 text-white animate-pulse'
                     : 'bg-emerald-500/20 border border-emerald-400/40 text-[#1DF27A]'
                 }`}
               >
-                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <Clock className="w-4 h-4 shrink-0" />
                 <span>{formatTimer(remainingSeconds)}</span>
               </div>
             </div>
@@ -772,15 +772,15 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
 
         {/* Lockdown Toast Banner */}
         {lockdownWarning && (
-          <div className="bg-amber-50 border-b border-amber-300 px-3 sm:px-4 py-2 text-xs text-amber-900 flex items-center justify-between gap-2 z-20">
-            <span className="inline-flex items-start sm:items-center gap-1.5 font-semibold min-w-0 break-words">
+          <div className="bg-amber-50 border-b border-amber-300 px-4 py-2.5 text-xs sm:text-sm text-amber-900 flex items-center justify-between gap-2 z-20">
+            <span className="inline-flex items-start sm:items-center gap-2 font-semibold min-w-0 break-words">
               <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
               <span className="break-words">{lockdownWarning}</span>
             </span>
             <button
               type="button"
               onClick={() => setLockdownWarning(null)}
-              className="text-amber-700 hover:text-amber-950 shrink-0"
+              className="p-1 text-amber-700 hover:text-amber-950 shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -788,7 +788,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
         )}
 
         {errorMsg && (
-          <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 text-xs text-rose-800 font-semibold z-20">
+          <div className="bg-rose-50 border-b border-rose-200 px-4 py-2.5 text-xs sm:text-sm text-rose-800 font-semibold z-20">
             {errorMsg}
           </div>
         )}
@@ -835,7 +835,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                 )}
 
                 {/* Answer Options */}
-                <div className="space-y-2.5 pt-1">
+                <div className="space-y-3 pt-1">
                   {displayedOptions.map((opt) => {
                     const isSelected = answers[currentQuestion.id] === opt.canonicalKey;
                     const isArabicOpt = hasArabicText(opt.text);
@@ -844,14 +844,14 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                         key={opt.canonicalKey}
                         type="button"
                         onClick={() => selectAnswer(currentQuestion.id, opt.canonicalKey)}
-                        className={`w-full text-left p-3.5 sm:p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all ${
+                        className={`w-full min-h-[52px] text-left p-3.5 sm:p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all ${
                           isSelected
                             ? 'border-emerald-600 bg-emerald-50 shadow-xs'
                             : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-slate-50'
                         }`}
                       >
                         <span
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
                             isSelected
                               ? 'bg-emerald-600 text-white'
                               : 'bg-slate-100 text-slate-700'
@@ -875,7 +875,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
             )}
 
             {/* Bottom ATK/ANBK Navigation Bar */}
-            <div className="p-3 sm:px-7 sm:py-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2">
+            <div className="p-3.5 sm:px-7 sm:py-4 bg-slate-50 border-t border-slate-200 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2.5">
               <button
                 type="button"
                 disabled={currentIndex === 0}
@@ -884,7 +884,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   setCurrentIndex(nextIdx);
                   dirtyRef.current = true;
                 }}
-                className="order-1 min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold disabled:opacity-40"
+                className="order-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-bold disabled:opacity-40"
               >
                 <ArrowLeft className="w-4 h-4 shrink-0" />
                 <span>Sebelumnya</span>
@@ -894,7 +894,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                 <button
                   type="button"
                   onClick={() => toggleRagu(currentQuestion.id)}
-                  className={`col-span-2 sm:col-span-1 order-3 sm:order-2 min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                  className={`col-span-2 sm:col-span-1 order-3 sm:order-2 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                     raguSet.has(currentQuestion.id)
                       ? 'bg-amber-500 text-white shadow-xs'
                       : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
@@ -913,7 +913,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                     setCurrentIndex(nextIdx);
                     dirtyRef.current = true;
                   }}
-                  className="order-2 sm:order-3 min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold"
+                  className="order-2 sm:order-3 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold"
                 >
                   <span>Berikutnya</span>
                   <ArrowRight className="w-4 h-4 shrink-0" />
@@ -923,7 +923,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   type="button"
                   disabled={busy}
                   onClick={() => setShowSubmitConfirm(true)}
-                  className="order-2 sm:order-3 min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                  className="order-2 sm:order-3 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold"
                 >
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>Selesai &amp; Kumpulkan</span>
@@ -933,17 +933,17 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           </div>
 
           {/* Desktop Question Number Grid Panel */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 bg-white border border-slate-200 rounded-2xl p-4 space-y-4 sticky top-24 shadow-xs">
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 sticky top-24 shadow-xs">
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                 Daftar Nomor Soal
               </h4>
-              <span className="text-xs font-bold text-emerald-700">
+              <span className="text-sm font-bold text-emerald-700">
                 {answeredCount}/{questions.length}
               </span>
             </div>
 
-            <div className="grid grid-cols-5 gap-1.5 max-h-[55vh] overflow-y-auto pr-1">
+            <div className="grid grid-cols-5 gap-2 max-h-[55vh] overflow-y-auto pr-1">
               {questions.map((q, idx) => {
                 const isCurrent = idx === currentIndex;
                 const isRagu = raguSet.has(q.id);
@@ -956,7 +956,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                       setCurrentIndex(idx);
                       dirtyRef.current = true;
                     }}
-                    className={`h-9 rounded-lg text-xs font-bold transition-all ${
+                    className={`h-10 rounded-lg text-sm font-bold transition-all ${
                       isRagu
                         ? 'bg-amber-400 text-slate-950'
                         : isAnswered
@@ -970,7 +970,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               })}
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-slate-600 pt-2 border-t border-slate-100">
+            <div className="space-y-1.5 text-xs text-slate-600 pt-2.5 border-t border-slate-100">
               <div className="flex items-center gap-2">
                 <span className="w-3.5 h-3.5 rounded bg-emerald-600 inline-block" />
                 <span>Sudah Dijawab ({answeredCount})</span>
@@ -989,7 +989,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               type="button"
               disabled={busy}
               onClick={() => setShowSubmitConfirm(true)}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Selesai &amp; Kumpulkan</span>
@@ -1008,15 +1008,15 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between gap-2">
-                <h4 className="font-bold text-slate-900 text-sm min-w-0 break-words">
+                <h4 className="font-bold text-slate-900 text-base min-w-0 break-words">
                   Daftar Soal ({answeredCount}/{questions.length} Terjawab)
                 </h4>
                 <button
                   type="button"
                   onClick={() => setMobileGridOpen(false)}
-                  className="p-1.5 rounded-lg bg-slate-100 text-slate-700 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                  className="p-2 rounded-lg bg-slate-100 text-slate-700 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="grid grid-cols-5 gap-2">
@@ -1033,7 +1033,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                         dirtyRef.current = true;
                         setMobileGridOpen(false);
                       }}
-                      className={`h-10 rounded-xl text-xs font-bold ${
+                      className={`h-11 rounded-xl text-sm font-bold ${
                         isRagu
                           ? 'bg-amber-400 text-slate-950'
                           : isAnswered
@@ -1053,7 +1053,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   setMobileGridOpen(false);
                   setShowSubmitConfirm(true);
                 }}
-                className="w-full min-h-[44px] py-3 rounded-xl bg-emerald-600 text-white text-xs font-bold"
+                className="w-full min-h-[46px] py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold"
               >
                 Selesai &amp; Kumpulkan Ujian
               </button>
@@ -1066,14 +1066,14 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
             <div className="max-w-md w-full max-h-[90dvh] overflow-y-auto my-auto bg-white rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-5 h-5 text-amber-700" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-slate-900 text-base break-words leading-snug">
+                  <h3 className="font-bold text-slate-900 text-base sm:text-lg break-words leading-snug">
                     Kumpulkan Jawaban Ujian?
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words">
+                  <p className="text-sm text-slate-600 mt-1.5 leading-relaxed break-words">
                     Terjawab: <strong>{answeredCount}</strong> dari{' '}
                     <strong>{questions.length}</strong> soal.
                     {unansweredCount > 0 && (
@@ -1091,11 +1091,11 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowSubmitConfirm(false)}
-                  className="w-full sm:flex-1 min-h-[44px] sm:min-h-0 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50"
+                  className="w-full sm:flex-1 min-h-[44px] py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50"
                 >
                   Periksa Lagi
                 </button>
@@ -1103,7 +1103,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   type="button"
                   disabled={busy}
                   onClick={() => void handleFinalSubmit()}
-                  className="w-full sm:flex-1 min-h-[44px] sm:min-h-0 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                  className="w-full sm:flex-1 min-h-[44px] py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold"
                 >
                   {busy ? 'Mengumpulkan...' : 'Ya, Kumpulkan Sekarang'}
                 </button>
@@ -1130,50 +1130,50 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
               setStage('list');
               setErrorMsg(null);
             }}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+            className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             <span>Kembali ke Daftar Mapel</span>
           </button>
 
           <div>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold">
               {selectedExam.mapelCode || 'UJIAN CBT'}
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 break-words">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2.5 break-words">
               {selectedExam.title}
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm">
             <div className="min-w-0">
-              <div className="text-slate-500">Nama Peserta</div>
+              <div className="text-xs text-slate-500">Nama Peserta</div>
               <div className="font-bold text-slate-900 mt-0.5 break-words">{studentTitle}</div>
             </div>
             <div className="min-w-0">
-              <div className="text-slate-500">ID / NISN MDA</div>
+              <div className="text-xs text-slate-500">ID / NISN MDA</div>
               <div className="font-mono font-bold text-slate-900 mt-0.5 break-all">{studentNisn}</div>
             </div>
             <div className="min-w-0">
-              <div className="text-slate-500">Jumlah Soal</div>
+              <div className="text-xs text-slate-500">Jumlah Soal</div>
               <div className="font-bold text-slate-900 mt-0.5 break-words">
                 {selectedExam.questionCount} Butir Pilihan Ganda
               </div>
             </div>
             <div className="min-w-0">
-              <div className="text-slate-500">Durasi Ujian</div>
+              <div className="text-xs text-slate-500">Durasi Ujian</div>
               <div className="font-bold text-slate-900 mt-0.5">
                 {selectedExam.durationMinutes} Menit
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-950 space-y-2">
             <div className="font-bold flex items-center gap-1.5">
               <ShieldAlert className="w-4 h-4 text-amber-700" />
               <span>Peraturan Web Lockdown &amp; Anti-AI:</span>
             </div>
-            <ul className="list-disc pl-5 space-y-1 text-[11px]">
+            <ul className="list-disc pl-5 space-y-1 text-xs sm:text-sm leading-relaxed">
               <li>
                 {supportsNativeFullscreen
                   ? 'Ujian wajib berjalan dalam mode layar penuh (Fullscreen).'
@@ -1189,14 +1189,14 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-semibold">
               {errorMsg}
             </div>
           )}
 
           {!isResuming && (
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">
                 Token Ujian dari Pengawas
               </label>
               <div className="relative">
@@ -1206,7 +1206,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value.toUpperCase())}
                   placeholder="Masukkan 6 karakter token ujian..."
-                  className="w-full pl-10 pr-4 py-3 text-sm font-mono font-bold tracking-widest uppercase border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full min-h-[48px] pl-10 pr-4 py-3 text-base font-mono font-bold tracking-widest uppercase border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
             </div>
@@ -1216,7 +1216,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
             type="button"
             disabled={busy || (!isResuming && !tokenInput.trim())}
             onClick={() => void handleStartExam(selectedExam, existingAttempt)}
-            className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full min-h-[46px] py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <Maximize2 className="w-4 h-4" />
             <span>
@@ -1241,25 +1241,25 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
   // ==========================================
   return (
     <div className="min-h-screen bg-[#E8FAF3] flex flex-col font-[Arial] max-w-full overflow-x-hidden">
-      <header className="bg-white border-b border-emerald-200 px-3 sm:px-8 py-3 sticky top-0 z-20">
+      <header className="bg-white border-b border-emerald-200 px-3 sm:px-8 py-3.5 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <MdaLogo size="sm" customLogoUrl={templateConfig.customLogoUrl} />
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-emerald-700 uppercase">
+              <div className="text-xs font-bold text-emerald-700 uppercase">
                 Ruang Ujian CBT Santri
               </div>
-              <div className="text-sm font-bold text-slate-900 truncate">
-                {studentTitle} · <span className="font-mono text-xs">{studentNisn}</span>
+              <div className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                {studentTitle} · <span className="font-mono text-xs sm:text-sm">{studentNisn}</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               disabled={loading}
               onClick={() => void loadOverview()}
-              className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
+              className="min-h-[42px] min-w-[42px] p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 inline-flex items-center justify-center"
               title="Muat Ulang Daftar Ujian"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -1267,42 +1267,42 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
             <button
               type="button"
               onClick={() => void onLogout()}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold"
+              className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs sm:text-sm font-bold"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
               <span>Keluar</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-8 space-y-5 min-w-0">
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3.5 sm:p-8 space-y-5 min-w-0">
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold break-words">
+            <h1 className="text-xl sm:text-2xl font-bold break-words">
               Pilih Mata Pelajaran Ujian CBT
             </h1>
-            <p className="text-xs text-slate-300 mt-1 break-words">
+            <p className="text-xs sm:text-sm text-slate-300 mt-1.5 break-words leading-relaxed">
               Sesi ini khusus untuk pengerjaan Ujian CBT Pilihan Ganda dengan Web Lockdown. Akses Rapor &amp; Portofolio dinonaktifkan pada ruang ujian ini.
             </p>
           </div>
-          <div className="px-3 py-1.5 rounded-xl bg-white/10 text-[#1DF27A] text-xs font-bold shrink-0 self-start sm:self-auto">
+          <div className="px-3.5 py-2 rounded-xl bg-white/10 text-[#1DF27A] text-xs sm:text-sm font-bold shrink-0 self-start sm:self-auto">
             {exams.filter((e) => e.status === 'active').length} Mapel Aktif
           </div>
         </div>
 
         {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-semibold">
             {errorMsg}
           </div>
         )}
 
         {loading ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500">
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-sm text-slate-500">
             Memuat daftar mata pelajaran ujian CBT...
           </div>
         ) : exams.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500">
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-sm text-slate-500">
             Belum ada paket ujian yang tersedia dari Pengawas.
           </div>
         ) : (
@@ -1320,49 +1320,49 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                   key={exam.id}
                   className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-xs"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-slate-100 text-slate-600">
                         {exam.mapelCode || 'CBT'}
                       </span>
                       {isSubmitted ? (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
                           Selesai Dikerjakan
                         </span>
                       ) : isLocked ? (
-                        <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-800 text-xs font-bold">
                           Terkunci Pelanggaran
                         </span>
                       ) : isInProgress ? (
-                        <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-sky-100 text-sky-800 text-xs font-bold">
                           Sedang Dikerjakan
                         </span>
                       ) : exam.status === 'active' ? (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white text-xs font-bold">
                           Aktif · Siap Ujian
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
+                        <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-bold">
                           {exam.status === 'finished' ? 'Ditutup' : 'Draft / Belum Dibuka'}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900">{exam.title}</h3>
-                    <div className="text-xs text-slate-500">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">{exam.title}</h3>
+                    <div className="text-sm text-slate-500">
                       {exam.questionCount} Soal · {exam.durationMinutes} Menit
                     </div>
                   </div>
 
                   {isSubmitted ? (
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center justify-between">
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-sm flex items-center justify-between">
                       <span className="font-semibold text-emerald-900">
                         {exam.showScoreAfterFinish && typeof att?.score === 'number'
                           ? 'Nilai Akhir Anda'
                           : 'Jawaban Tersimpan'}
                       </span>
                       {exam.showScoreAfterFinish && typeof att?.score === 'number' && (
-                        <span className="text-lg font-bold text-emerald-700">{att.score}</span>
+                        <span className="text-xl font-bold text-emerald-700">{att.score}</span>
                       )}
                     </div>
                   ) : isLocked ? (
@@ -1374,9 +1374,9 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                         setActiveAttempt(att || null);
                         setStage('locked');
                       }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5"
                     >
-                      <Lock className="w-3.5 h-3.5" />
+                      <Lock className="w-4 h-4" />
                       <span>Terkunci · Hubungi Pengawas</span>
                     </button>
                   ) : canEnter ? (
@@ -1388,7 +1388,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                         setErrorMsg(null);
                         setStage('confirm');
                       }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold"
                     >
                       {isInProgress ? 'Lanjutkan Ujian' : 'Masuk & Masukkan Token'}
                     </button>
@@ -1396,7 +1396,7 @@ export const CbtStudentView: React.FC<CbtStudentViewProps> = ({
                     <button
                       type="button"
                       disabled
-                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed"
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-100 text-slate-400 text-sm font-bold cursor-not-allowed"
                     >
                       {exam.questionCount === 0
                         ? 'Soal Belum Tersedia'

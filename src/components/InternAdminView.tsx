@@ -492,40 +492,40 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       {/* Header & Sub-Tab Switcher */}
       <div className="bg-white border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+          <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
             Kontrol &amp; Pembinaan Santri Magang
           </div>
-          <h1 className="font-display font-bold text-lg sm:text-xl text-slate-900 mt-0.5">
+          <h1 className="font-display font-bold text-lg sm:text-2xl text-slate-900 mt-0.5">
             Magang &amp; Jurnal Harian
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed">
             Pantau jurnaling 5 blok jam, matriks mutabaah sholat berjamaah, amal kebersihan, catatan pembimbing, dan ekspor PDF.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl shrink-0">
+        <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-100 rounded-xl shrink-0">
           <button
             type="button"
             onClick={() => setSubTab('monitoring')}
-            className={`min-h-[40px] px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors ${
               subTab === 'monitoring'
                 ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <ClipboardList className="w-3.5 h-3.5 shrink-0" />
+            <ClipboardList className="w-4 h-4 shrink-0" />
             <span className="truncate">Kontrol &amp; Monitoring</span>
           </button>
           <button
             type="button"
             onClick={() => setSubTab('tracker_config')}
-            className={`min-h-[40px] px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 transition-colors ${
               subTab === 'tracker_config'
                 ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+            <SlidersHorizontal className="w-4 h-4 shrink-0" />
             <span className="truncate">Item Tracker Ibadah</span>
           </button>
         </div>
@@ -534,15 +534,15 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
       {subTab === 'monitoring' ? (
         <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-end">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
             <div className="lg:col-span-3">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Filter Kelas
               </label>
               <select
                 value={classFilter}
                 onChange={(e) => setClassFilter(e.target.value)}
-                className="w-full min-h-[40px] px-3 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
               >
                 <option value="ALL">Semua Kelas ({db.students.length} Santri)</option>
                 {dynamicClasses.map((cls) => (
@@ -554,20 +554,20 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
 
             <div className="lg:col-span-3">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Tanggal Monitoring
               </label>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="flex-1 min-w-0 min-h-[40px] px-3 py-1.5 text-xs font-mono font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="flex-1 min-w-0 h-11 px-3 py-2 text-base sm:text-sm font-mono font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
                 />
                 <button
                   type="button"
                   onClick={() => setSelectedDate(getTodayIsoDateLocal())}
-                  className="min-h-[40px] px-2.5 py-1.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-900 text-xs font-bold shrink-0"
+                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold shrink-0"
                 >
                   Hari Ini
                 </button>
@@ -575,13 +575,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
 
             <div className="lg:col-span-3">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Status Pengisian
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as 'all' | 'filled' | 'missing')}
-                className="w-full min-h-[40px] px-3 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
               >
                 <option value="all">Semua Status</option>
                 <option value="filled">Sudah Mengisi Tanggal Ini</option>
@@ -590,17 +590,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             </div>
 
             <div className="lg:col-span-3">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Cari Santri / Tempat Magang
               </label>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Nama, ID, atau tempat magang..."
-                  className="w-full min-h-[40px] pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full h-11 pl-10 pr-3.5 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
             </div>
@@ -608,46 +608,46 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
           {/* Summary KPI Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-white border border-emerald-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-semibold text-emerald-700">
+            <div className="bg-white border border-emerald-200 rounded-2xl p-4">
+              <div className="text-xs font-semibold text-emerald-700">
                 Sudah Mengisi ({formatTanggalShort(selectedDate)})
               </div>
-              <div className="text-xl sm:text-2xl font-display font-extrabold text-emerald-800 mt-1 tabular-nums">
+              <div className="text-2xl sm:text-3xl font-display font-extrabold text-emerald-800 mt-1 tabular-nums">
                 {summaryStats.filledCount}
-                <span className="text-xs font-normal text-slate-500 ml-1">
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">
                   / {summaryStats.totalStudentsInScope} santri
                 </span>
               </div>
             </div>
 
-            <div className="bg-white border border-amber-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-semibold text-amber-700">Belum Mengisi</div>
-              <div className="text-xl sm:text-2xl font-display font-extrabold text-amber-800 mt-1 tabular-nums">
+            <div className="bg-white border border-amber-200 rounded-2xl p-4">
+              <div className="text-xs font-semibold text-amber-700">Belum Mengisi</div>
+              <div className="text-2xl sm:text-3xl font-display font-extrabold text-amber-800 mt-1 tabular-nums">
                 {summaryStats.missingCount}
-                <span className="text-xs font-normal text-slate-500 ml-1">santri</span>
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">santri</span>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-semibold text-slate-500">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="text-xs font-semibold text-slate-500">
                 Sholat Berjamaah ✓ (Tanggal Ini)
               </div>
-              <div className="text-xl sm:text-2xl font-display font-extrabold text-slate-900 mt-1 tabular-nums">
+              <div className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1 tabular-nums">
                 {summaryStats.trackerStatsOnDate.sholatPct}%
-                <span className="text-xs font-normal text-slate-500 ml-1.5">
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1.5">
                   ({summaryStats.trackerStatsOnDate.sholatYesTotal}/
                   {summaryStats.trackerStatsOnDate.sholatAnsweredTotal})
                 </span>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-semibold text-slate-500">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="text-xs font-semibold text-slate-500">
                 Tilawah &amp; Kebersihan ✓
               </div>
-              <div className="text-xl sm:text-2xl font-display font-extrabold text-slate-900 mt-1 tabular-nums">
+              <div className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1 tabular-nums">
                 {summaryStats.trackerStatsOnDate.otherPct}%
-                <span className="text-xs font-normal text-slate-500 ml-1.5">
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1.5">
                   ({summaryStats.trackerStatsOnDate.otherYesTotal}/
                   {summaryStats.trackerStatsOnDate.otherAnsweredTotal})
                 </span>
@@ -665,25 +665,25 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               />
             </div>
 
-            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-2.5 flex flex-col justify-between">
-              <div className="text-xs font-bold text-slate-900 flex flex-wrap items-center justify-between gap-2">
+            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 flex flex-col justify-between">
+              <div className="text-sm font-bold text-slate-900 flex flex-wrap items-center justify-between gap-2">
                 <span>
                   Rekapitulasi ✓ vs ✗ Per Item ({formatTanggalShort(selectedDate)})
                 </span>
-                <span className="text-[11px] font-normal text-slate-500 tabular-nums">
+                <span className="text-xs font-normal text-slate-500 tabular-nums">
                   Dari {summaryStats.filledCount} santri yang mengisi
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {summaryStats.trackerStatsOnDate.itemStats.map((st) => (
                   <div
                     key={st.item.id}
-                    className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1"
+                    className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1"
                   >
-                    <div className="text-[11px] font-bold text-slate-800 truncate">
+                    <div className="text-xs font-bold text-slate-800 truncate">
                       {st.item.label}
                     </div>
-                    <div className="flex items-center justify-between text-[11px] tabular-nums">
+                    <div className="flex items-center justify-between text-xs tabular-nums">
                       <span className="font-bold text-emerald-700">✓ {st.yesCount}</span>
                       <span className="font-bold text-rose-600">✗ {st.noCount}</span>
                       <span className="font-semibold text-slate-600">{st.yesPct}%</span>
@@ -696,7 +696,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
           {/* Daftar Monitoring Santri */}
           {filteredStudents.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-xs text-slate-500">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-500">
               Tidak ada santri yang sesuai dengan filter kelas/tanggal/pencarian.
             </div>
           ) : (
@@ -704,15 +704,15 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               {/* Desktop Table */}
               <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase">
-                        <th className="py-3 px-4">Santri &amp; Kelas</th>
-                        <th className="py-3 px-3">Profil Magang &amp; Income</th>
-                        <th className="py-3 px-3">Status ({formatTanggalShort(selectedDate)})</th>
-                        <th className="py-3 px-3">Sholat 5 Waktu</th>
-                        <th className="py-3 px-3">Tilawah &amp; Amal</th>
-                        <th className="py-3 px-4 text-right">Aksi</th>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase">
+                        <th className="py-3.5 px-4">Santri &amp; Kelas</th>
+                        <th className="py-3.5 px-3">Profil Magang &amp; Income</th>
+                        <th className="py-3.5 px-3">Status ({formatTanggalShort(selectedDate)})</th>
+                        <th className="py-3.5 px-3">Sholat 5 Waktu</th>
+                        <th className="py-3.5 px-3">Tilawah &amp; Amal</th>
+                        <th className="py-3.5 px-4 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -732,17 +732,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
                         return (
                           <tr key={st.id} className="hover:bg-slate-50/70">
-                            <td className="py-3 px-4 align-top">
+                            <td className="py-3.5 px-4 align-top">
                               <div className="font-bold text-slate-900">{st.nama}</div>
-                              <div className="text-[11px] text-slate-500 mt-0.5">
+                              <div className="text-xs text-slate-500 mt-0.5">
                                 <span className="font-mono">{st.nisnMda}</span> · {st.kelas}
                               </div>
-                              <div className="text-[11px] text-emerald-700 font-semibold mt-0.5 tabular-nums">
+                              <div className="text-xs text-emerald-700 font-semibold mt-0.5 tabular-nums">
                                 {totalLogsCount} total hari log
                               </div>
                             </td>
 
-                            <td className="py-3 px-3 align-top">
+                            <td className="py-3.5 px-3 align-top">
                               <div className="font-semibold text-slate-800">
                                 {prof?.tempatMagang || (
                                   <span className="text-slate-400 italic">Belum diisi</span>
@@ -754,7 +754,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                 prof?.jamKerjaHarian,
                                 prof?.waktuMagang
                               ) && (
-                                <div className="text-[11px] text-slate-500 truncate max-w-[210px]">
+                                <div className="text-xs text-slate-500 truncate max-w-[220px] mt-0.5">
                                   {formatMagangPeriodRange(
                                     prof?.mulaiTanggal,
                                     prof?.selesaiTanggal,
@@ -763,34 +763,34 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                   )}
                                 </div>
                               )}
-                              <div className="text-[11px] font-bold text-emerald-800 mt-0.5 tabular-nums">
+                              <div className="text-xs font-bold text-emerald-800 mt-0.5 tabular-nums">
                                 Income: {formatRupiah(prof?.incomeMagangRp || 0)}
                               </div>
                             </td>
 
-                            <td className="py-3 px-3 align-top">
+                            <td className="py-3.5 px-3 align-top">
                               {log ? (
                                 <div className="space-y-1">
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]">
-                                    <Check className="w-3 h-3" />
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs">
+                                    <Check className="w-3.5 h-3.5" />
                                     <span>Sudah Mengisi</span>
                                   </span>
                                   {resolveLogTilawahHalaman(log) > 0 && (
-                                    <div className="text-[10px] font-semibold text-emerald-700 tabular-nums">
+                                    <div className="text-xs font-semibold text-emerald-700 tabular-nums">
                                       Tilawah: {resolveLogTilawahHalaman(log)} Hal
                                     </div>
                                   )}
                                 </div>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-bold text-[11px]">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs">
                                   Belum Mengisi
                                 </span>
                               )}
                             </td>
 
-                            <td className="py-3 px-3 align-top">
+                            <td className="py-3.5 px-3 align-top">
                               {log ? (
-                                <div className="space-y-1">
+                                <div className="space-y-1.5">
                                   <div className="flex items-center gap-1">
                                     {sholatItems.map((it) => {
                                       const val = log.trackerResults?.[it.id];
@@ -800,7 +800,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                           title={`${it.label}: ${
                                             val === 'yes' ? 'Berjamaah' : val === 'no' ? 'Tidak Jamaah' : '-'
                                           }`}
-                                          className={`w-6 h-6 rounded-md text-[10px] font-bold inline-flex items-center justify-center border ${
+                                          className={`w-7 h-7 rounded-md text-xs font-bold inline-flex items-center justify-center border ${
                                             val === 'yes'
                                               ? 'bg-emerald-600 border-emerald-700 text-white'
                                               : val === 'no'
@@ -813,55 +813,55 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                       );
                                     })}
                                   </div>
-                                  <div className="text-[11px] text-slate-600 tabular-nums">
+                                  <div className="text-xs text-slate-600 tabular-nums">
                                     ✓ {sholatYes}/{sholatItems.length} Jamaah
                                   </div>
                                 </div>
                               ) : (
-                                <span className="text-slate-400 text-[11px]">—</span>
+                                <span className="text-slate-400 text-xs">—</span>
                               )}
                             </td>
 
-                            <td className="py-3 px-3 align-top tabular-nums">
+                            <td className="py-3.5 px-3 align-top tabular-nums">
                               {log ? (
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                   <span className="font-bold text-emerald-700">
                                     ✓ {otherYes}/{nonSholatItems.length}
                                   </span>
                                   {(log.fotoUrls?.filter(Boolean).length || 0) > 0 && (
-                                    <div className="text-[10px] text-sky-700 font-semibold inline-flex items-center gap-1">
-                                      <Camera className="w-3 h-3" />
+                                    <div className="text-xs text-sky-700 font-semibold inline-flex items-center gap-1">
+                                      <Camera className="w-3.5 h-3.5" />
                                       <span>{log.fotoUrls?.filter(Boolean).length} Foto</span>
                                     </div>
                                   )}
                                   {normalizeExternalMediaUrl(log.videoUrl) && (
-                                    <div className="text-[10px] text-indigo-700 font-semibold flex items-center gap-1">
-                                      <Video className="w-3 h-3" />
+                                    <div className="text-xs text-indigo-700 font-semibold flex items-center gap-1">
+                                      <Video className="w-3.5 h-3.5" />
                                       <span>Ada Link Video</span>
                                     </div>
                                   )}
                                   {(log.kejadianPenting || '').trim() && (
-                                    <div className="text-[10px] text-amber-800 font-semibold">
+                                    <div className="text-xs text-amber-800 font-semibold">
                                       Ada kejadian penting
                                     </div>
                                   )}
                                   {(log.catatanPembimbing || '').trim() && (
-                                    <div className="text-[10px] text-emerald-800 font-semibold">
+                                    <div className="text-xs text-emerald-800 font-semibold">
                                       Ada catatan pembimbing
                                     </div>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-400 text-[11px]">—</span>
+                                <span className="text-slate-400 text-xs">—</span>
                               )}
                             </td>
 
-                            <td className="py-3 px-4 align-top text-right">
-                              <div className="inline-flex items-center gap-1.5">
+                            <td className="py-3.5 px-4 align-top text-right">
+                              <div className="inline-flex items-center gap-2">
                                 <button
                                   type="button"
                                   onClick={() => openStudentDetail(st.id)}
-                                  className="px-3 py-1.5 rounded-lg bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 font-bold inline-flex items-center gap-1"
+                                  className="min-h-[38px] px-3 py-1.5 rounded-lg bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                   <span>Detail &amp; Edit</span>
@@ -869,7 +869,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => onOpenPrintInternReport(st.id)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-[#0E2228] hover:bg-slate-800 text-white font-bold inline-flex items-center gap-1"
+                                  className="min-h-[38px] px-3 py-1.5 rounded-lg bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5"
                                   title="Unduh PDF Laporan Magang"
                                 >
                                   <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
@@ -900,31 +900,31 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   return (
                     <div
                       key={st.id}
-                      className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-3"
+                      className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-bold text-sm text-slate-900 truncate">{st.nama}</div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="font-bold text-base text-slate-900 truncate">{st.nama}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">
                             {st.nisnMda} · {st.kelas} · {totalLogsCount} log
                           </div>
                         </div>
                         {log ? (
-                          <span className="shrink-0 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                          <span className="shrink-0 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
                             ✓ Mengisi
                           </span>
                         ) : (
-                          <span className="shrink-0 px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">
+                          <span className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
                             Belum
                           </span>
                         )}
                       </div>
 
-                      <div className="text-xs text-slate-700 bg-slate-50 rounded-xl p-2.5 space-y-1">
+                      <div className="text-xs sm:text-sm text-slate-700 bg-slate-50 rounded-xl p-3 space-y-1.5">
                         <div className="font-semibold">
                           {prof?.tempatMagang || 'Tempat magang belum diisi'}
                         </div>
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 tabular-nums">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 tabular-nums">
                           <span>Income: {formatRupiah(prof?.incomeMagangRp || 0)}</span>
                           {log && (
                             <span className="font-bold text-emerald-700">
@@ -938,16 +938,16 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         {log &&
                           ((log.fotoUrls?.filter(Boolean).length || 0) > 0 ||
                             normalizeExternalMediaUrl(log.videoUrl)) && (
-                            <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px] font-bold">
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs font-bold">
                               {(log.fotoUrls?.filter(Boolean).length || 0) > 0 && (
                                 <span className="text-sky-700 inline-flex items-center gap-1">
-                                  <Camera className="w-3 h-3" />
+                                  <Camera className="w-3.5 h-3.5" />
                                   <span>{log.fotoUrls?.filter(Boolean).length} Foto</span>
                                 </span>
                               )}
                               {normalizeExternalMediaUrl(log.videoUrl) && (
                                 <span className="text-indigo-700 inline-flex items-center gap-1">
-                                  <Video className="w-3 h-3" />
+                                  <Video className="w-3.5 h-3.5" />
                                   <span>Video</span>
                                 </span>
                               )}
@@ -959,17 +959,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         <button
                           type="button"
                           onClick={() => openStudentDetail(st.id)}
-                          className="min-h-[42px] px-3 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                          className="min-h-[44px] px-3 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5"
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-4 h-4" />
                           <span>Detail &amp; Edit</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onOpenPrintInternReport(st.id)}
-                          className="min-h-[42px] px-3 py-2 rounded-xl bg-[#0E2228] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                          className="min-h-[44px] px-3 py-2 rounded-xl bg-[#0E2228] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5"
                         >
-                          <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                          <Printer className="w-4 h-4 text-[#1DF27A]" />
                           <span>Unduh PDF</span>
                         </button>
                       </div>
@@ -982,13 +982,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
           {/* Matriks Mutabaah Ibadah Per Tanggal (Ala Excel) Untuk Santri Terpilih */}
           {activeMatrixStudent && (
-            <div className="space-y-2.5">
-              <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="space-y-3">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-900">
+                  <div className="text-sm font-bold text-slate-900">
                     Pantau Matriks Mutabaah Ibadah Per Tanggal (1–15 / 16–31)
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
+                  <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                     Pilih santri untuk melihat bolong tidaknya ibadah dalam satu tampilan tabel bulanan. Ketuk tanggal untuk koreksi jurnal &amp; catatan.
                   </div>
                 </div>
@@ -997,7 +997,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                     value={activeMatrixStudent.id}
                     onChange={(e) => setMatrixStudentId(e.target.value)}
                     aria-label="Pilih Santri untuk Matriks Mutabaah"
-                    className="min-h-[40px] px-3 py-1.5 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl text-slate-900 max-w-[260px]"
+                    className="h-11 px-3.5 py-2 text-base sm:text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl text-slate-900 max-w-[280px]"
                   >
                     {(filteredStudents.length > 0 ? filteredStudents : db.students).map((st) => (
                       <option key={st.id} value={st.id}>
@@ -1008,17 +1008,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   <button
                     type="button"
                     onClick={() => openStudentDetail(activeMatrixStudent.id)}
-                    className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5"
+                    className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center gap-1.5"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-4 h-4" />
                     <span>Edit Santri</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenPrintInternReport(activeMatrixStudent.id)}
-                    className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5"
+                    className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5"
                   >
-                    <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                    <Printer className="w-4 h-4 text-[#1DF27A]" />
                     <span>PDF</span>
                   </button>
                 </div>
@@ -1038,13 +1038,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
         </div>
       ) : (
         /* Sub-Tab 2: Pengaturan Item Tracker Ibadah & Amal */
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <h2 className="font-display font-bold text-base text-slate-900">
+              <h2 className="font-display font-bold text-base sm:text-lg text-slate-900">
                 Pengaturan Item Tracker Ibadah &amp; Amal
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed">
                 Daftar ini tampil otomatis di akun seluruh santri sebagai pilihan ✓ / ✗ yang tidak dapat diubah oleh santri.
               </p>
             </div>
@@ -1052,16 +1052,16 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               <button
                 type="button"
                 onClick={() => setDraftItems(DEFAULT_INTERN_TRACKER_ITEMS)}
-                className="min-h-[40px] px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 self-start sm:self-auto"
+                className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 self-start sm:self-auto"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-4 h-4" />
                 <span>Reset Default (9 Item)</span>
               </button>
             )}
           </div>
 
           {!canManageTrackerItems && (
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-center gap-2">
               <Lock className="w-4 h-4 shrink-0" />
               <span>
                 Hanya Admin MDA yang dapat menambah, mengubah, atau menghapus item checklist tracker ibadah santri.
@@ -1070,17 +1070,17 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
           )}
 
           {/* Konversi Halaman ke Juz (Target 30 Juz) */}
-          <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-xs font-bold text-slate-900">
+              <div className="text-sm font-bold text-slate-900">
                 Pengaturan Konversi Tilawah (Target 30 Juz)
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
+              <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 Dipakai menghitung persentase diagram lingkaran 30 Juz di dashboard Admin, Santri, &amp; PDF Magang.
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-semibold text-slate-700">1 Juz =</span>
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">1 Juz =</span>
               <input
                 type="number"
                 min={1}
@@ -1092,9 +1092,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                     Math.max(1, Math.min(200, Math.round(Number(e.target.value) || 20)))
                   )
                 }
-                className="w-20 min-h-[38px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl text-center disabled:bg-slate-100"
+                className="w-20 h-11 px-2.5 py-1.5 text-base sm:text-sm font-mono font-bold bg-white border border-slate-200 rounded-xl text-center disabled:bg-slate-100"
               />
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 Halaman (30 Juz = {draftHalamanPerJuz * 30} Hal)
               </span>
             </div>
@@ -1104,10 +1104,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
           {canManageTrackerItems && (
             <form
               onSubmit={handleAddTrackerItem}
-              className="p-3.5 rounded-2xl bg-[#E8FAF3]/60 border border-emerald-200 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
+              className="p-4 rounded-2xl bg-[#E8FAF3]/60 border border-emerald-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
             >
               <div className="sm:col-span-4">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Nama Item Ibadah / Amal Baru
                 </label>
                 <input
@@ -1115,15 +1115,15 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Contoh: Sholat Dhuha / Kebersihan Meja Kerja"
-                  className="w-full min-h-[40px] px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
+                  className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                 />
               </div>
               <div className="sm:col-span-3">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Kelompok</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Kelompok</label>
                 <select
                   value={newGroup}
                   onChange={(e) => setNewGroup(e.target.value as InternTrackerGroup)}
-                  className="w-full min-h-[40px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
+                  className="w-full h-11 px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                 >
                   <option value="sholat">Sholat 5 Waktu</option>
                   <option value="tilawah">Tilawah Al-Qur’an</option>
@@ -1132,11 +1132,11 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </select>
               </div>
               <div className="sm:col-span-3">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Label ✓ / ✗</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Label ✓ / ✗</label>
                 <select
                   value={newMode}
                   onChange={(e) => setNewMode(e.target.value as InternTrackerMode)}
-                  className="w-full min-h-[40px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
+                  className="w-full h-11 px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                 >
                   <option value="terlaksana">✓ Terlaksana / ✗ Tidak</option>
                   <option value="jamaah">✓ Berjamaah / ✗ Tidak Jamaah</option>
@@ -1145,7 +1145,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Tambah</span>
@@ -1155,14 +1155,14 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
           )}
 
           {/* Items List */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {draftItems.map((item, idx) => (
               <div
                 key={item.id}
-                className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center"
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center"
               >
                 <div className="md:col-span-4">
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 md:hidden">
                     Nama Item Tracker
                   </label>
                   <input
@@ -1174,12 +1174,12 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         prev.map((p, i) => (i === idx ? { ...p, label: e.target.value } : p))
                       )
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-semibold bg-white border border-slate-200 rounded-xl disabled:bg-slate-100"
                   />
                 </div>
 
                 <div className="md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 md:hidden">
                     Kelompok
                   </label>
                   <select
@@ -1194,7 +1194,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         )
                       )
                     }
-                    className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                    className="w-full h-11 px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl disabled:bg-slate-100"
                   >
                     <option value="sholat">{getTrackerGroupLabel('sholat')}</option>
                     <option value="tilawah">{getTrackerGroupLabel('tilawah')}</option>
@@ -1204,7 +1204,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
 
                 <div className="md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 mb-1 md:hidden">
+                  <label className="block text-xs font-bold text-slate-500 mb-1 md:hidden">
                     Label Pilihan ✓ / ✗
                   </label>
                   <select
@@ -1217,33 +1217,33 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         )
                       )
                     }
-                    className="w-full min-h-[38px] px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg disabled:bg-slate-100"
+                    className="w-full h-11 px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl disabled:bg-slate-100"
                   >
                     <option value="jamaah">✓ Berjamaah / ✗ Tidak Jamaah</option>
                     <option value="terlaksana">✓ Terlaksana / ✗ Tidak</option>
                   </select>
                 </div>
 
-                <div className="md:col-span-2 flex items-center justify-end gap-1">
+                <div className="md:col-span-2 flex items-center justify-end gap-1.5">
                   {canManageTrackerItems && (
                     <>
                       <button
                         type="button"
                         disabled={idx === 0}
                         onClick={() => handleMoveTrackerItem(idx, -1)}
-                        className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
+                        className="min-w-[40px] min-h-[40px] p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35 inline-flex items-center justify-center"
                         title="Naikkan"
                       >
-                        <ArrowUp className="w-3.5 h-3.5" />
+                        <ArrowUp className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         disabled={idx === draftItems.length - 1}
                         onClick={() => handleMoveTrackerItem(idx, 1)}
-                        className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35"
+                        className="min-w-[40px] min-h-[40px] p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-35 inline-flex items-center justify-center"
                         title="Turunkan"
                       >
-                        <ArrowDown className="w-3.5 h-3.5" />
+                        <ArrowDown className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
@@ -1251,10 +1251,10 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         onClick={() =>
                           setDraftItems((prev) => prev.filter((_, i) => i !== idx))
                         }
-                        className="p-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-35"
+                        className="min-w-[40px] min-h-[40px] p-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 disabled:opacity-35 inline-flex items-center justify-center"
                         title="Hapus Item"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </>
                   )}
@@ -1269,7 +1269,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 type="button"
                 disabled={savingTrackerConfig || isBusy}
                 onClick={() => void handleSaveTrackerConfig()}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Save className="w-4 h-4 text-[#1DF27A]" />
                 <span>
@@ -1294,31 +1294,31 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
               <div className="min-w-0">
-                <div className="text-[11px] font-bold text-emerald-700 uppercase">
+                <div className="text-xs font-bold text-emerald-700 uppercase">
                   Detail Magang &amp; Pembinaan Santri
                 </div>
-                <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 truncate">
+                <h3 className="font-display font-bold text-lg sm:text-xl text-slate-900 mt-0.5 truncate">
                   {inspectedStudent.nama}
                 </h3>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs sm:text-sm text-slate-500">
                   {inspectedStudent.nisnMda} · {inspectedStudent.kelas}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => onOpenPrintInternReport(inspectedStudent.id)}
-                  className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#0E2228] text-white text-xs font-bold inline-flex items-center gap-1.5"
+                  className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#0E2228] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5"
                 >
-                  <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                  <Printer className="w-4 h-4 text-[#1DF27A]" />
                   <span>PDF</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setInspectedStudentId(null)}
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
+                  className="min-w-[40px] min-h-[40px] p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 inline-flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1335,39 +1335,39 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             {/* Edit Profil Magang oleh Admin / Guru */}
             <form
               onSubmit={handleSaveModalProfile}
-              className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3"
+              className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3.5"
             >
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-emerald-700" />
+              <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-emerald-700" />
                 <span>Edit Profil Magang Santri</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="space-y-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                <div className="space-y-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                       Tempat Magang
                     </label>
                     <input
                       type="text"
                       value={editTempat}
                       onChange={(e) => setEditTempat(e.target.value)}
-                      className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                      className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                       Kompetensi Magang
                     </label>
                     <input
                       type="text"
                       value={editKompetensi}
                       onChange={(e) => setEditKompetensi(e.target.value)}
-                      className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                      className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                         Income (Rp)
                       </label>
                       <input
@@ -1375,18 +1375,18 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         inputMode="numeric"
                         value={editIncome}
                         onChange={(e) => setEditIncome(e.target.value.replace(/[^\d]/g, ''))}
-                        className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl font-mono"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                         Pembimbing
                       </label>
                       <input
                         type="text"
                         value={editPembimbing}
                         onChange={(e) => setEditPembimbing(e.target.value)}
-                        className="w-full min-h-[40px] px-3 py-2 bg-white border border-slate-200 rounded-xl"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                       />
                     </div>
                   </div>
@@ -1408,19 +1408,19 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 <button
                   type="submit"
                   disabled={savingModalProfile || isBusy}
-                  className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="w-4 h-4" />
                   <span>{savingModalProfile ? 'Menyimpan...' : 'Simpan Profil Magang'}</span>
                 </button>
               </div>
             </form>
 
             {/* Date Selector & Full Admin/Guru Daily Journal Editor */}
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+            <div className="space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-emerald-700" />
                   <span>
                     Koreksi / Isi Jurnal Tanggal: {formatTanggalIndonesia(modalDate)}
                   </span>
@@ -1430,13 +1430,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                     type="date"
                     value={modalDate}
                     onChange={(e) => setModalDate(e.target.value)}
-                    className="px-2.5 py-1.5 text-xs font-mono border border-slate-200 rounded-lg bg-slate-50"
+                    className="h-10 px-3 py-1.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl bg-slate-50"
                   />
                   {inspectedStudentLogs.length > 0 && (
                     <select
                       value={modalDate}
                       onChange={(e) => setModalDate(e.target.value)}
-                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                      className="h-10 px-3 py-1.5 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                     >
                       <option value={modalDate}>
                         Riwayat ({inspectedStudentLogs.length} hari)
@@ -1452,36 +1452,36 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
               </div>
 
               {!activeModalLog && (
-                <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+                <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
                   Santri belum mengisi jurnal pada {formatTanggalShort(modalDate)}. Admin / Guru tetap dapat mengisikan atau mengoreksi tracker &amp; jurnal di bawah ini lalu klik Simpan.
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {/* Editable Tracker Results (✓ / ✗) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {trackerItems.map((it) => {
                     const val = modalTrackerDraft[it.id];
                     const labels = getTrackerButtonLabels(it.mode);
                     return (
                       <div
                         key={it.id}
-                        className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 text-xs"
+                        className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2 text-xs sm:text-sm"
                       >
                         <div className="font-bold text-slate-900">{it.label}</div>
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() =>
                               setModalTrackerDraft((prev) => ({ ...prev, [it.id]: 'yes' }))
                             }
-                            className={`min-h-[34px] px-2 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center justify-center gap-1 ${
+                            className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs font-bold inline-flex items-center justify-center gap-1 ${
                               val === 'yes'
                                 ? 'bg-emerald-600 border-emerald-700 text-white'
                                 : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50'
                             }`}
                           >
-                            <Check className="w-3 h-3 shrink-0" />
+                            <Check className="w-3.5 h-3.5 shrink-0" />
                             <span className="truncate">{labels.yesLabel}</span>
                           </button>
                           <button
@@ -1489,13 +1489,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                             onClick={() =>
                               setModalTrackerDraft((prev) => ({ ...prev, [it.id]: 'no' }))
                             }
-                            className={`min-h-[34px] px-2 py-1 rounded-lg border text-[11px] font-bold inline-flex items-center justify-center gap-1 ${
+                            className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs font-bold inline-flex items-center justify-center gap-1 ${
                               val === 'no'
                                 ? 'bg-rose-600 border-rose-700 text-white'
                                 : 'bg-white border-slate-200 text-slate-700 hover:bg-rose-50'
                             }`}
                           >
-                            <X className="w-3 h-3 shrink-0" />
+                            <X className="w-3.5 h-3.5 shrink-0" />
                             <span className="truncate">{labels.noLabel}</span>
                           </button>
                         </div>
@@ -1505,16 +1505,16 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
 
                 {/* Editable Tilawah Halaman */}
-                <div className="p-3 rounded-xl border border-emerald-200 bg-[#E8FAF3]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="p-3.5 rounded-xl border border-emerald-200 bg-[#E8FAF3]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs sm:text-sm">
                   <div>
                     <div className="font-bold text-emerald-950">
                       Halaman Tilawah Hari Ini (Opsional)
                     </div>
-                    <div className="text-[11px] text-slate-600">
+                    <div className="text-xs text-slate-600">
                       1 Juz = {halamanPerJuzConfig} Halaman
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="number"
                       min={0}
@@ -1523,9 +1523,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                       value={modalTilawahHalaman}
                       onChange={(e) => setModalTilawahHalaman(e.target.value)}
                       placeholder="0"
-                      className="w-24 min-h-[36px] px-2.5 py-1 text-xs font-mono font-bold bg-white border border-emerald-200 rounded-lg"
+                      className="w-24 h-10 px-3 py-1.5 text-base sm:text-sm font-mono font-bold bg-white border border-emerald-200 rounded-xl"
                     />
-                    <span className="text-xs font-semibold text-slate-700">Hal</span>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Hal</span>
                     {[1, 2, 5, 10, 20].map((inc) => (
                       <button
                         key={inc}
@@ -1535,7 +1535,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                             String(Math.min(2000, (Number(prev) || 0) + inc))
                           )
                         }
-                        className="min-h-[34px] px-2 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-[11px] font-bold tabular-nums"
+                        className="min-h-[38px] px-2.5 py-1 rounded-lg bg-white border border-emerald-300 text-emerald-900 text-xs font-bold tabular-nums"
                       >
                         +{inc} Hal
                       </button>
@@ -1544,13 +1544,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
 
                 {/* Editable 5 Blok Jam */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {INTERN_HOURLY_BLOCK_DEFS.map((def) => (
                     <div
                       key={def.key}
-                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs space-y-1"
+                      className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm space-y-1.5"
                     >
-                      <div className="font-bold font-mono text-emerald-800 text-[11px]">
+                      <div className="font-bold font-mono text-emerald-800 text-xs">
                         {def.timeRange} · {def.shortLabel}
                       </div>
                       <textarea
@@ -1563,14 +1563,14 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                           }))
                         }
                         placeholder={def.hint}
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        className="w-full px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl leading-relaxed"
                       />
                     </div>
                   ))}
                 </div>
 
                 {/* Editable Kejadian Penting */}
-                <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5 text-xs">
+                <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1.5 text-xs sm:text-sm">
                   <label className="block font-bold text-amber-950">
                     Kejadian Penting Hari Ini
                   </label>
@@ -1579,24 +1579,24 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                     value={modalKejadianPenting}
                     onChange={(e) => setModalKejadianPenting(e.target.value)}
                     placeholder="Catat momen penting, kendala, atau pencapaian hari ini..."
-                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-amber-200 rounded-lg"
+                    className="w-full px-3 py-2 text-base sm:text-sm bg-white border border-amber-200 rounded-xl leading-relaxed"
                   />
                 </div>
 
                 {/* Dokumentasi Foto & Link Video Kegiatan */}
-                <div className="p-3.5 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3 text-xs">
+                <div className="p-4 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3 text-xs sm:text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                      <Camera className="w-4 h-4 text-emerald-700" />
                       <span>Dokumentasi Foto &amp; Video Kegiatan</span>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-800 tabular-nums">
+                    <span className="text-xs font-bold text-emerald-800 tabular-nums">
                       {modalFotoUrls.length} / 2 Foto
                     </span>
                   </div>
 
                   {modalFotoUrls.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {modalFotoUrls.map((url, idx) => (
                         <div
                           key={`modal-foto-${idx}`}
@@ -1612,13 +1612,13 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                               alt={`Dokumentasi ${idx + 1}`}
                               className="w-full h-full object-cover"
                             />
-                            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/75 text-white text-[10px] font-bold inline-flex items-center gap-1">
-                              <ZoomIn className="w-2.5 h-2.5" />
+                            <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded bg-slate-950/75 text-white text-xs font-bold inline-flex items-center gap-1">
+                              <ZoomIn className="w-3 h-3" />
                               <span>Perbesar</span>
                             </span>
                           </button>
-                          <div className="px-2.5 py-1.5 flex items-center justify-between gap-2 border-t border-slate-100">
-                            <span className="text-[11px] font-bold text-slate-700">
+                          <div className="px-3 py-2 flex items-center justify-between gap-2 border-t border-slate-100">
+                            <span className="text-xs font-bold text-slate-700">
                               Foto Kegiatan {idx + 1}
                             </span>
                             <button
@@ -1626,9 +1626,9 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                               onClick={() =>
                                 setModalFotoUrls((prev) => prev.filter((_, i) => i !== idx))
                               }
-                              className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold inline-flex items-center gap-1"
+                              className="min-h-[34px] px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold inline-flex items-center gap-1"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                               <span>Hapus</span>
                             </button>
                           </div>
@@ -1639,15 +1639,15 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
 
                   {modalFotoUrls.length < 2 && (
                     <div>
-                      <label className="min-h-[38px] px-3 py-1.5 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                      <label className="min-h-[42px] px-3.5 py-2 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 cursor-pointer">
                         {uploadingModalFoto ? (
                           <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
                             <span>Mengompres Foto...</span>
                           </>
                         ) : (
                           <>
-                            <ImagePlus className="w-3.5 h-3.5 text-emerald-700" />
+                            <ImagePlus className="w-4 h-4 text-emerald-700" />
                             <span>
                               {modalFotoUrls.length === 0
                                 ? '+ Tambah Foto Kegiatan (Maks. 2)'
@@ -1671,12 +1671,12 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                   )}
 
                   {modalPhotoError && (
-                    <div className="text-[11px] font-semibold text-rose-700">{modalPhotoError}</div>
+                    <div className="text-xs font-semibold text-rose-700">{modalPhotoError}</div>
                   )}
 
-                  <div className="pt-1 border-t border-emerald-200/70 space-y-1.5">
-                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <Video className="w-3.5 h-3.5 text-emerald-700" />
+                  <div className="pt-2 border-t border-emerald-200/70 space-y-2">
+                    <label className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <Video className="w-4 h-4 text-emerald-700" />
                       <span>Link Video Kegiatan (Google Drive / YouTube / Sosmed)</span>
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -1685,18 +1685,18 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                         value={modalVideoUrl}
                         onChange={(e) => setModalVideoUrl(e.target.value)}
                         placeholder="https://drive.google.com/... atau https://youtu.be/..."
-                        className="flex-1 min-w-0 min-h-[38px] px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl"
+                        className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                       />
                       {normalizeExternalMediaUrl(modalVideoUrl) && (
                         <a
                           href={normalizeExternalMediaUrl(modalVideoUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
+                          className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
                         >
-                          <PlayCircle className="w-3.5 h-3.5 text-[#1DF27A]" />
+                          <PlayCircle className="w-4 h-4 text-[#1DF27A]" />
                           <span>Putar / Buka Video ↗</span>
-                          <ExternalLink className="w-3 h-3 opacity-80" />
+                          <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                         </a>
                       )}
                     </div>
@@ -1704,8 +1704,8 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                 </div>
 
                 {/* Catatan Pembimbing */}
-                <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-200 space-y-2">
-                  <label className="block text-xs font-bold text-emerald-950">
+                <div className="p-4 rounded-2xl bg-[#E8FAF3] border border-emerald-200 space-y-2.5">
+                  <label className="block text-xs sm:text-sm font-bold text-emerald-950">
                     Catatan Pembimbing untuk Tanggal {formatTanggalShort(modalDate)}
                   </label>
                   <textarea
@@ -1713,16 +1713,16 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
                     value={noteDraft}
                     onChange={(e) => setNoteDraft(e.target.value)}
                     placeholder="Tulis apresiasi, evaluasi ibadah, atau arahan magang untuk santri..."
-                    className="w-full px-3 py-2 text-xs bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 leading-relaxed"
                   />
                   <div className="flex justify-end">
                     <button
                       type="button"
                       disabled={savingNote || isBusy || uploadingModalFoto}
                       onClick={() => void handleSaveModalDailyLog()}
-                      className="min-h-[40px] px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50"
+                      className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center gap-2 disabled:opacity-50"
                     >
-                      <Save className="w-3.5 h-3.5 text-[#1DF27A]" />
+                      <Save className="w-4 h-4 text-[#1DF27A]" />
                       <span>
                         {savingNote
                           ? 'Menyimpan...'
@@ -1755,7 +1755,7 @@ export const InternAdminView: React.FC<InternAdminViewProps> = ({
             <button
               type="button"
               onClick={() => setLightboxPhoto(null)}
-              className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-bold inline-flex items-center gap-1.5 shadow-lg"
+              className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-slate-900 text-sm font-bold inline-flex items-center gap-1.5 shadow-lg"
             >
               <X className="w-4 h-4" />
               <span>Tutup Foto</span>

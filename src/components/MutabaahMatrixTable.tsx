@@ -96,7 +96,7 @@ export const MutabaahMatrixTable: React.FC<MutabaahMatrixTableProps> = ({
               </span>
             )}
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">{subtitle}</p>
+          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{subtitle}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -104,7 +104,7 @@ export const MutabaahMatrixTable: React.FC<MutabaahMatrixTableProps> = ({
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
             aria-label="Filter Bulan Matriks Mutabaah"
-            className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+            className="min-h-[42px] px-3 py-2 text-base sm:text-sm font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
           >
             {availableMonths.map((ym) => (
               <option key={ym} value={ym}>
@@ -123,7 +123,7 @@ export const MutabaahMatrixTable: React.FC<MutabaahMatrixTableProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => setRangeMode(opt.id)}
-                className={`min-h-[32px] px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors ${
+                className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${
                   rangeMode === opt.id
                     ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -137,7 +137,7 @@ export const MutabaahMatrixTable: React.FC<MutabaahMatrixTableProps> = ({
       </div>
 
       {/* Legend & Month Counter */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex flex-wrap items-center gap-3 text-slate-600">
           <span className="inline-flex items-center gap-1 font-semibold">
             <span className="w-5 h-5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold inline-flex items-center justify-center">

@@ -108,10 +108,10 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
             <Palette className="w-5 h-5 text-emerald-700" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-display font-bold text-slate-900 text-base break-words">
+            <h2 className="font-display font-bold text-slate-900 text-base sm:text-lg break-words">
               Pengaturan Tampilan, Narasi Dashboard &amp; Template Rapor
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5 break-words">
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5 break-words leading-relaxed">
               Rapikan susunan kalimat di halaman masuk, dashboard admin, portal wali, serta ubah tema &amp; identitas rapor PDF.
             </p>
           </div>
@@ -121,17 +121,17 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setDraft({ ...DEFAULT_TEMPLATE_CONFIG })}
-            className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold"
+            className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-4 h-4" />
             <span>Reset Default</span>
           </button>
           <button
             type="button"
             onClick={() => onSaveConfig(draft)}
-            className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold"
+            className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold"
           >
-            <Save className="w-3.5 h-3.5" />
+            <Save className="w-4 h-4" />
             <span>Simpan Perubahan</span>
           </button>
         </div>
@@ -142,37 +142,37 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('narasi')}
-          className={`shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+          className={`shrink-0 min-h-[42px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'narasi'
               ? 'bg-emerald-600 text-white'
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
+          <FileText className="w-4 h-4" />
           <span>Narasi &amp; Kalimat Dashboard</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('rapor')}
-          className={`shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+          className={`shrink-0 min-h-[42px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'rapor'
               ? 'bg-emerald-600 text-white'
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }`}
         >
-          <LayoutTemplate className="w-3.5 h-3.5" />
+          <LayoutTemplate className="w-4 h-4" />
           <span>Identitas Lembaga &amp; Teks Rapor PDF</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('tampilan')}
-          className={`shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+          className={`shrink-0 min-h-[42px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
             activeTab === 'tampilan'
               ? 'bg-emerald-600 text-white'
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }`}
         >
-          <Palette className="w-3.5 h-3.5" />
+          <Palette className="w-4 h-4" />
           <span>Tema Warna, Logo &amp; Foto Cover</span>
         </button>
       </div>
@@ -193,80 +193,80 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Banner Atas Dashboard (Competence Header)
                 </label>
                 <input
                   type="text"
                   value={draft.subjudulCompetence}
                   onChange={(e) => updateField('subjudulCompetence', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Kartu Grafik Radar 5 Pilar
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardRadarTitle}
                   onChange={(e) => updateField('dashboardRadarTitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Kartu Kalkulasi 5 Pilar Utama
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardPillarTitle}
                   onChange={(e) => updateField('dashboardPillarTitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Subjudul Kartu Kalkulasi 5 Pilar Utama
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardPillarSubtitle}
                   onChange={(e) => updateField('dashboardPillarSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Catatan Kaki Kartu 5 Pilar (Dasar Penilaian)
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardPillarNote}
                   onChange={(e) => updateField('dashboardPillarNote', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Tabel Daftar Rapor Santri
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardTableTitle}
                   onChange={(e) => updateField('dashboardTableTitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Kalimat Keterangan Tabel Daftar Rapor Santri
                 </label>
                 <input
                   type="text"
                   value={draft.dashboardTableSubtitle}
                   onChange={(e) => updateField('dashboardTableSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
             </div>
@@ -285,58 +285,58 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Grafik Perkembangan Kompetensi
                 </label>
                 <input
                   type="text"
                   value={draft.portalTrendTitle}
                   onChange={(e) => updateField('portalTrendTitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Subjudul Grafik Perkembangan Kompetensi
                 </label>
                 <input
                   type="text"
                   value={draft.portalTrendSubtitle}
                   onChange={(e) => updateField('portalTrendSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Subjudul Galeri Hasil Karya &amp; Portofolio Anak
                 </label>
                 <input
                   type="text"
                   value={draft.portalPortfolioSubtitle}
                   onChange={(e) => updateField('portalPortfolioSubtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Kartu Link Portofolio Online
                 </label>
                 <input
                   type="text"
                   value={draft.portalQrTitle}
                   onChange={(e) => updateField('portalQrTitle', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Deskripsi Kartu Link Portofolio Online
                 </label>
                 <textarea
                   rows={2}
                   value={draft.portalQrDescription}
                   onChange={(e) => updateField('portalQrDescription', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
             </div>
@@ -355,47 +355,47 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Judul Utama Halaman Masuk
                 </label>
                 <input
                   type="text"
                   value={draft.loginHeadline}
                   onChange={(e) => updateField('loginHeadline', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Paragraf Deskripsi Utama Halaman Masuk
                 </label>
                 <textarea
                   rows={3}
                   value={draft.loginDescription}
                   onChange={(e) => updateField('loginDescription', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Keterangan Kolom Admin &amp; Guru
                 </label>
                 <textarea
                   rows={2}
                   value={draft.loginAdminInfo}
                   onChange={(e) => updateField('loginAdminInfo', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Keterangan Kolom Orang Tua &amp; Santri
                 </label>
                 <textarea
                   rows={2}
                   value={draft.loginParentInfo}
                   onChange={(e) => updateField('loginParentInfo', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
                 />
               </div>
             </div>
@@ -417,157 +417,157 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Nama Program / Lembaga
               </label>
               <input
                 type="text"
                 value={draft.namaLembaga}
                 onChange={(e) => updateField('namaLembaga', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Nama Pondok Pesantren
               </label>
               <input
                 type="text"
                 value={draft.namaPesantren}
                 onChange={(e) => updateField('namaPesantren', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Judul Utama Rapor
               </label>
               <input
                 type="text"
                 value={draft.judulRapor}
                 onChange={(e) => updateField('judulRapor', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Header Lampiran Portofolio &amp; Sidang Karya (Halaman 5)
               </label>
               <input
                 type="text"
                 value={draft.labelCoverPortfolio}
                 onChange={(e) => updateField('labelCoverPortfolio', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Narasi Ringkas Sampul PDF (Halaman 1)
               </label>
               <textarea
                 rows={2}
                 value={draft.coverTagline}
                 onChange={(e) => updateField('coverTagline', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Motto Footer Halaman 2
               </label>
               <input
                 type="text"
                 value={draft.pesanPenutupHalaman2}
                 onChange={(e) => updateField('pesanPenutupHalaman2', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Doa Penutup Footer Halaman 1 &amp; 5
               </label>
               <input
                 type="text"
                 value={draft.pesanPenutupHalaman6}
                 onChange={(e) => updateField('pesanPenutupHalaman6', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Judul Blok Link Portofolio (Halaman 5)
               </label>
               <input
                 type="text"
                 value={draft.qrBannerTitle}
                 onChange={(e) => updateField('qrBannerTitle', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Kota Pengesahan Tanda Tangan
               </label>
               <input
                 type="text"
                 value={draft.kotaTanggal}
                 onChange={(e) => updateField('kotaTanggal', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Kalimat Penjelasan Blok Link Portofolio (Halaman 5)
               </label>
               <textarea
                 rows={2}
                 value={draft.qrBannerDescription}
                 onChange={(e) => updateField('qrBannerDescription', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Nomor WhatsApp Resmi
               </label>
               <input
                 type="text"
                 value={draft.whatsapp}
                 onChange={(e) => updateField('whatsapp', e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Instagram Resmi
               </label>
               <input
                 type="text"
                 value={draft.instagram}
                 onChange={(e) => updateField('instagram', e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Email Resmi
               </label>
               <input
                 type="email"
                 value={draft.email}
                 onChange={(e) => updateField('email', e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                 Alamat Lengkap Lembaga
               </label>
               <input
                 type="text"
                 value={draft.alamat}
                 onChange={(e) => updateField('alamat', e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl"
               />
             </div>
           </div>
@@ -597,7 +597,7 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                 <div className="inline-flex items-center justify-center bg-white rounded-xl px-3.5 py-2 shadow-sm">
                   <MdaLogo size="sm" customLogoUrl={draft.customLogoUrl} />
                 </div>
-                <div className="bg-[#1DF27A] text-slate-950 font-display font-bold text-[10px] px-3 py-1 rounded-full">
+                <div className="bg-[#1DF27A] text-slate-950 font-display font-bold text-xs px-3 py-1 rounded-full">
                   SEMESTER GASAL
                 </div>
               </div>
@@ -606,15 +606,15 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                 <div className="font-display font-extrabold text-xl leading-tight">
                   {draft.judulRapor}
                 </div>
-                <div className="text-xs text-emerald-100 font-medium">
+                <div className="text-xs sm:text-sm text-emerald-100 font-medium">
                   {draft.namaLembaga} · {draft.namaPesantren}
                 </div>
-                <div className="text-[11px] text-white/80 italic pt-1">
+                <div className="text-xs text-white/85 italic pt-1">
                   {draft.subjudulCompetence}
                 </div>
               </div>
 
-              <div className="relative z-10 bg-white/95 text-slate-900 rounded-lg px-3 py-2 text-[11px] font-medium flex flex-col gap-0.5">
+              <div className="relative z-10 bg-white/95 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-medium flex flex-col gap-0.5">
                 <div className="font-bold text-emerald-800">
                   {draft.whatsapp} · {draft.instagram}
                 </div>
@@ -623,9 +623,9 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-5">
+          <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5">
             <div>
-              <h3 className="font-display font-bold text-slate-900 text-sm mb-3">
+              <h3 className="font-display font-bold text-slate-900 text-base mb-3">
                 Tema Warna Aksen Dashboard &amp; Rapor
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -636,18 +636,18 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                       key={t.id}
                       type="button"
                       onClick={() => setDraft({ ...draft, accentTheme: t.id })}
-                      className={`text-left p-3 rounded-xl border transition-all ${
+                      className={`text-left p-3.5 rounded-xl border transition-all ${
                         active
                           ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
                       <div
-                        className="h-8 w-full rounded-lg mb-2"
+                        className="h-8 w-full rounded-lg mb-2.5"
                         style={{ background: t.gradient }}
                       />
-                      <div className="text-xs font-bold text-slate-900">{t.name}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      <div className="text-sm font-bold text-slate-900">{t.name}</div>
+                      <div className="text-xs text-slate-500 mt-1 leading-relaxed">
                         {t.desc}
                       </div>
                     </button>
@@ -658,7 +658,7 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                   Foto Latar Cover PDF (Halaman 1)
                 </label>
                 <div className="flex items-center gap-2 min-w-0">
@@ -667,10 +667,10 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                     value={draft.coverPhotoUrl}
                     onChange={(e) => updateField('coverPhotoUrl', e.target.value)}
                     placeholder="URL foto kegiatan santri..."
-                    className="flex-1 min-w-0 px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
-                  <label className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 cursor-pointer shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
+                  <label className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-sm font-semibold text-slate-700 cursor-pointer shrink-0">
+                    <Upload className="w-4 h-4" />
                     <span>{uploadingField === 'cover' ? '...' : 'Unggah'}</span>
                     <input
                       type="file"
@@ -683,15 +683,15 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
               </div>
 
               <div>
-                <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
-                  <label className="block text-xs font-semibold text-slate-700">
+                <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700">
                     Logo Lembaga Kustom (Opsional)
                   </label>
                   {draft.customLogoUrl && (
                     <button
                       type="button"
                       onClick={() => updateField('customLogoUrl', '')}
-                      className="text-[11px] font-semibold text-emerald-700 hover:underline"
+                      className="text-xs font-semibold text-emerald-700 hover:underline"
                     >
                       Reset ke Logo Asli MDA
                     </button>
@@ -703,10 +703,10 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                     value={draft.customLogoUrl}
                     onChange={(e) => updateField('customLogoUrl', e.target.value)}
                     placeholder="Kosongkan untuk logo asli MDA permanen"
-                    className="flex-1 min-w-0 px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
-                  <label className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 cursor-pointer shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
+                  <label className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-sm font-semibold text-slate-700 cursor-pointer shrink-0">
+                    <Upload className="w-4 h-4" />
                     <span>{uploadingField === 'logo' ? '...' : 'Unggah'}</span>
                     <input
                       type="file"
@@ -716,7 +716,7 @@ export const TemplateSettingsView: React.FC<TemplateSettingsViewProps> = ({
                     />
                   </label>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
                   Logo resmi MDA sudah tertanam permanen. Kosongkan kolom ini agar logo asli tampil konsisten di semua tautan &amp; perangkat.
                 </p>
               </div>

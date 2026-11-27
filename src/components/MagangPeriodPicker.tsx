@@ -65,23 +65,23 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
       {/* Mulai Magang */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <label className="text-xs font-semibold text-slate-700">Mulai Magang</label>
+          <label className="text-xs sm:text-sm font-semibold text-slate-700">Mulai Magang</label>
           {mulaiTanggal && (
             <button
               type="button"
               onClick={() => onChangeMulai('')}
-              className="text-[10px] font-semibold text-slate-500 hover:text-rose-600"
+              className="text-xs font-semibold text-slate-500 hover:text-rose-600"
             >
               Reset
             </button>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-2">
           <select
             aria-label="Tanggal Mulai Magang"
             value={startParts.day}
             onChange={(e) => handleDatePartChange(startParts, 'day', e.target.value, onChangeMulai)}
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Tgl</option>
             {DAY_OPTIONS.map((d) => (
@@ -97,7 +97,7 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
             onChange={(e) =>
               handleDatePartChange(startParts, 'month', e.target.value, onChangeMulai)
             }
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Bulan</option>
             {INDONESIAN_MONTHS_SHORT.map((m) => (
@@ -113,7 +113,7 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
             onChange={(e) =>
               handleDatePartChange(startParts, 'year', e.target.value, onChangeMulai)
             }
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Tahun</option>
             {yearOptions.map((y) => (
@@ -128,23 +128,23 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
       {/* Selesai Magang */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <label className="text-xs font-semibold text-slate-700">Selesai Magang</label>
+          <label className="text-xs sm:text-sm font-semibold text-slate-700">Selesai Magang</label>
           {selesaiTanggal && (
             <button
               type="button"
               onClick={() => onChangeSelesai('')}
-              className="text-[10px] font-semibold text-slate-500 hover:text-rose-600"
+              className="text-xs font-semibold text-slate-500 hover:text-rose-600"
             >
               Reset
             </button>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-2">
           <select
             aria-label="Tanggal Selesai Magang"
             value={endParts.day}
             onChange={(e) => handleDatePartChange(endParts, 'day', e.target.value, onChangeSelesai)}
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Tgl</option>
             {DAY_OPTIONS.map((d) => (
@@ -160,7 +160,7 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
             onChange={(e) =>
               handleDatePartChange(endParts, 'month', e.target.value, onChangeSelesai)
             }
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Bulan</option>
             {INDONESIAN_MONTHS_SHORT.map((m) => (
@@ -174,7 +174,7 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
             aria-label="Tahun Selesai Magang"
             value={endParts.year}
             onChange={(e) => handleDatePartChange(endParts, 'year', e.target.value, onChangeSelesai)}
-            className="w-full min-h-[40px] px-2 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full h-11 px-2.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
             <option value="">Tahun</option>
             {yearOptions.map((y) => (
@@ -188,7 +188,7 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
 
       {/* Jam Kerja Harian Opsional */}
       <div>
-        <label className="block text-xs font-semibold text-slate-700 mb-1">
+        <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">
           Jadwal / Jam Kerja Harian (Opsional)
         </label>
         <input
@@ -196,13 +196,13 @@ export const MagangPeriodPicker: React.FC<MagangPeriodPickerProps> = ({
           value={jamKerjaHarian}
           onChange={(e) => onChangeJamKerja(e.target.value)}
           placeholder="Contoh: Senin–Sabtu, 08.00–17.00"
-          className="w-full min-h-[40px] px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
         />
       </div>
 
       {/* Ringkasan Periode */}
       {formattedSummary && (
-        <div className="px-3 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-[11px] text-emerald-950 font-semibold leading-snug">
+        <div className="px-3.5 py-2.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs text-emerald-950 font-semibold leading-snug">
           Periode: {formattedSummary}
           {mulaiTanggal && selesaiTanggal && totalDays === 0 && (
             <span className="block text-rose-700 mt-0.5">

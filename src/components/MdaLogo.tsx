@@ -78,7 +78,7 @@ export const PortfolioArtwork: React.FC<{
       <div
         className={`w-full h-full min-h-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 p-3 flex flex-col justify-between gap-1.5 text-white select-none ${className}`}
       >
-        <div className="flex items-center justify-between text-[9px] text-emerald-300 font-mono shrink-0">
+        <div className="flex items-center justify-between text-xs text-emerald-300 font-mono shrink-0">
           <span>MDA UI/UX</span>
           <span>FIGMA</span>
         </div>
@@ -93,7 +93,7 @@ export const PortfolioArtwork: React.FC<{
             <div className="h-4 rounded bg-white/10" />
           </div>
         </div>
-        <div className="text-[10px] font-medium text-slate-200 truncate shrink-0">{title}</div>
+        <div className="text-xs font-medium text-slate-200 truncate shrink-0">{title}</div>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export const PortfolioArtwork: React.FC<{
       <div
         className={`w-full h-full min-h-0 overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-sky-950 p-3 flex flex-col justify-between gap-1.5 text-white select-none ${className}`}
       >
-        <div className="flex items-center justify-between text-[9px] text-sky-300 font-mono shrink-0">
+        <div className="flex items-center justify-between text-xs text-sky-300 font-mono shrink-0">
           <span>REC 4K</span>
           <span>24 FPS</span>
         </div>
@@ -115,7 +115,7 @@ export const PortfolioArtwork: React.FC<{
             <div className="w-2/3 h-full bg-gradient-to-r from-emerald-400 to-sky-400" />
           </div>
         </div>
-        <div className="text-[10px] font-medium text-slate-200 truncate shrink-0">{title}</div>
+        <div className="text-xs font-medium text-slate-200 truncate shrink-0">{title}</div>
       </div>
     );
   }
@@ -125,14 +125,14 @@ export const PortfolioArtwork: React.FC<{
       <div
         className={`w-full h-full min-h-0 overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-100 p-3 flex flex-col justify-between gap-1.5 text-slate-800 select-none ${className}`}
       >
-        <div className="flex items-center justify-between text-[9px] text-teal-700 font-mono shrink-0">
+        <div className="flex items-center justify-between text-xs text-teal-700 font-mono shrink-0">
           <span>ISO 200</span>
           <span>f/2.8 · 50mm</span>
         </div>
         <div className="my-auto mx-auto w-14 h-14 rounded-xl border-2 border-dashed border-teal-500/50 bg-white/80 flex items-center justify-center shrink-0">
           <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-sky-500 opacity-85" />
         </div>
-        <div className="text-[10px] font-semibold text-slate-700 truncate shrink-0">{title}</div>
+        <div className="text-xs font-semibold text-slate-700 truncate shrink-0">{title}</div>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export const PortfolioArtwork: React.FC<{
     <div
       className={`w-full h-full min-h-0 overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-sky-600 p-3.5 flex flex-col justify-between gap-1.5 text-white select-none ${className}`}
     >
-      <div className="flex items-center justify-between text-[9px] font-mono text-emerald-100 shrink-0">
+      <div className="flex items-center justify-between text-xs font-mono text-emerald-100 shrink-0">
         <span>MDA STUDIO</span>
         <span>VISUAL DESIGN</span>
       </div>
@@ -150,7 +150,7 @@ export const PortfolioArtwork: React.FC<{
         <div className="font-display font-bold text-sm leading-snug line-clamp-2">
           {title}
         </div>
-        <div className="text-[10px] text-emerald-50/90 truncate">
+        <div className="text-xs text-emerald-50/90 truncate">
           Muslim Digital Academy · Darul Fithrah
         </div>
       </div>

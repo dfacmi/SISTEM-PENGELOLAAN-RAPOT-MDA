@@ -413,13 +413,13 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
       {/* Compact Header Banner */}
       <div className="bg-white border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+          <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
             Magang &amp; Jurnal Harian Santri
           </div>
-          <h1 className="font-bold text-lg sm:text-xl text-slate-900 mt-0.5 truncate">
+          <h1 className="font-bold text-lg sm:text-2xl text-slate-900 mt-0.5 truncate">
             {student.nama}
           </h1>
-          <div className="text-xs text-slate-600 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums">
+          <div className="text-xs sm:text-sm text-slate-600 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums">
             <span className="font-bold text-slate-800">{student.nisnMda}</span>
             <span>·</span>
             <span>{student.kelas}</span>
@@ -437,7 +437,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         <button
           type="button"
           onClick={() => onOpenPrintInternReport(student.id)}
-          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold shrink-0 transition-colors"
+          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold shrink-0 transition-colors"
         >
           <Printer className="w-4 h-4 text-[#1DF27A]" />
           <span>Unduh PDF / Cetak Laporan</span>
@@ -455,13 +455,13 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`min-h-[44px] px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                className={`min-h-[44px] px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
                   isActive
                     ? 'bg-[#0E2228] text-[#1DF27A] shadow-sm'
                     : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5 shrink-0 hidden min-[380px]:block" />
+                <Icon className="w-4 h-4 shrink-0 hidden min-[380px]:block" />
                 <span className="truncate">
                   <span className="hidden sm:inline">{idx + 1}. </span>
                   {tab.label}
@@ -477,7 +477,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         <section className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5">
           {/* Status Kelengkapan Profil */}
           {isProfileComplete ? (
-            <div className="p-3.5 rounded-xl bg-[#E8FAF3] border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="p-4 rounded-xl bg-[#E8FAF3] border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs sm:text-sm">
               <div className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                 <div>
@@ -491,32 +491,32 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('isi')}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold shrink-0 self-start sm:self-auto"
+                className="min-h-[42px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shrink-0 self-start sm:self-auto"
               >
                 Lanjut Isi Hari Ini →
               </button>
             </div>
           ) : (
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-2.5 text-xs text-amber-950">
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-2.5 text-xs sm:text-sm text-amber-950">
               <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
               <div>
                 <div className="font-bold">Profil Magang Belum Dilengkapi</div>
-                <div className="text-amber-900 mt-0.5">
+                <div className="text-amber-900 mt-0.5 leading-relaxed">
                   Lengkapi nama tempat mitra magang serta jadwal tanggal mulai dan selesai magang di bawah ini.
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex items-start gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-              <Briefcase className="w-4 h-4 text-emerald-700" />
+          <div className="flex items-start gap-3 border-b border-slate-100 pb-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+              <Briefcase className="w-5 h-5 text-emerald-700" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-bold text-sm sm:text-base text-slate-900">
+              <h2 className="font-bold text-base sm:text-lg text-slate-900">
                 Profil Tempat &amp; Jadwal Magang
               </h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed">
                 Data ini otomatis tampil di kop identitas Laporan PDF Magang Anda.
               </p>
             </div>
@@ -524,9 +524,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
           <form onSubmit={handleSubmitProfile} className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-3.5">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
                     Tempat Magang / Mitra Industri <span className="text-rose-600">*</span>
                   </label>
                   <input
@@ -534,12 +534,12 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     value={tempatMagang}
                     onChange={(e) => setTempatMagang(e.target.value)}
                     placeholder="Contoh: Studio Kreatif Nusantara / PT Digital Media"
-                    className="w-full min-h-[42px] px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
                     Kompetensi Magang
                   </label>
                   <textarea
@@ -547,13 +547,13 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     value={kompetensiMagang}
                     onChange={(e) => setKompetensiMagang(e.target.value)}
                     placeholder="Contoh: UI/UX Design, Video Editing, Konten Sosmed, Web Development"
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 leading-relaxed"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
                       Income Saat Magang (Rupiah)
                     </label>
                     <input
@@ -562,15 +562,15 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       value={incomeInput}
                       onChange={(e) => setIncomeInput(e.target.value.replace(/[^\d]/g, ''))}
                       placeholder="0"
-                      className="w-full min-h-[42px] px-3 py-2 text-xs font-bold tabular-nums border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-bold tabular-nums border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
-                    <div className="text-[11px] text-emerald-700 font-bold mt-1 tabular-nums">
+                    <div className="text-xs text-emerald-700 font-bold mt-1.5 tabular-nums">
                       Terbaca: {formatRupiah(Number(incomeInput || 0))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1.5">
                       Nama Pembimbing Magang (Opsional)
                     </label>
                     <input
@@ -578,7 +578,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       value={pembimbingNama}
                       onChange={(e) => setPembimbingNama(e.target.value)}
                       placeholder="Contoh: Ust. Ahmad / Mentor Lapangan"
-                      className="w-full min-h-[42px] px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
                   </div>
                 </div>
@@ -598,7 +598,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             </div>
 
             {profileError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs sm:text-sm text-rose-800 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{profileError}</span>
               </div>
@@ -608,7 +608,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               <button
                 type="submit"
                 disabled={savingProfile || isBusy}
-                className="w-full sm:w-auto min-h-[44px] py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[44px] py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 <span>{savingProfile ? 'Menyimpan...' : 'Simpan Profil Magang'}</span>
@@ -623,37 +623,37 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
         <div className="space-y-4">
           {/* KPI Summary Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-bold text-slate-500">Total Hari Jurnal</div>
-              <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1 tabular-nums">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="text-xs font-bold text-slate-500">Total Hari Jurnal</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tabular-nums">
                 {stats.totalDays}
-                <span className="text-xs font-normal text-slate-500 ml-1">hari</span>
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">hari</span>
               </div>
             </div>
-            <div className="bg-white border border-emerald-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-bold text-emerald-700">Sholat Berjamaah ✓</div>
-              <div className="text-xl sm:text-2xl font-extrabold text-emerald-800 mt-1 tabular-nums">
+            <div className="bg-white border border-emerald-200 rounded-2xl p-4">
+              <div className="text-xs font-bold text-emerald-700">Sholat Berjamaah ✓</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-800 mt-1 tabular-nums">
                 {stats.sholatPct}%
-                <span className="text-xs font-normal text-slate-500 ml-1.5">
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1.5">
                   ({stats.sholatYesTotal}/{stats.sholatAnsweredTotal})
                 </span>
               </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-bold text-slate-500">Amal &amp; Kebersihan ✓</div>
-              <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1 tabular-nums">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="text-xs font-bold text-slate-500">Amal &amp; Kebersihan ✓</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tabular-nums">
                 {stats.otherPct}%
-                <span className="text-xs font-normal text-slate-500 ml-1.5">
+                <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1.5">
                   ({stats.otherYesTotal}/{stats.otherAnsweredTotal})
                 </span>
               </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5">
-              <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                <Wallet className="w-3.5 h-3.5 text-emerald-700" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-4">
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                <Wallet className="w-4 h-4 text-emerald-700" />
                 <span>Income Magang</span>
               </div>
-              <div className="text-base sm:text-lg font-extrabold text-emerald-800 mt-1.5 tabular-nums truncate">
+              <div className="text-lg sm:text-xl font-extrabold text-emerald-800 mt-1.5 tabular-nums truncate">
                 {formatRupiah(existingProfile?.incomeMagangRp || 0)}
               </div>
             </div>
@@ -668,19 +668,19 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                 subtitle="Akumulasi halaman tilawah harian yang tercatat pada jurnal magang Anda."
               />
             </div>
-            <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-3">
+            <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
                   Tempat &amp; Periode Magang
                 </div>
-                <div className="text-sm font-bold text-slate-900 mt-1">
+                <div className="text-base font-bold text-slate-900 mt-1">
                   {existingProfile?.tempatMagang || 'Belum dilengkapi'}
                 </div>
-                <div className="text-xs text-slate-600 mt-1">
+                <div className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
                   {formattedMagangPeriod || 'Lengkapi di Tab 1: Profil Tempat Magang.'}
                 </div>
                 {existingProfile?.pembimbingNama && (
-                  <div className="text-[11px] text-slate-500 mt-1.5">
+                  <div className="text-xs text-slate-500 mt-2">
                     Pembimbing:{' '}
                     <span className="font-bold text-slate-800">
                       {existingProfile.pembimbingNama}
@@ -692,7 +692,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenPrintInternReport(student.id)}
-                className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2"
               >
                 <Printer className="w-4 h-4 text-[#1DF27A]" />
                 <span>Unduh PDF / Cetak Laporan Magang</span>
@@ -710,37 +710,37 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
           {/* Riwayat Jurnaling Harian (5 Blok Jam & Kejadian Penting) */}
           <section className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3.5">
               <div>
-                <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                <h2 className="font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-emerald-700" />
                   <span>Riwayat Jurnal 5 Blok Jam ({studentLogs.length} Entri)</span>
                 </h2>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Diurutkan dari tanggal terbaru. Ketuk Edit untuk mengubah isian pada Tab Isi Hari Ini.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveTab('isi')}
-                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs font-bold inline-flex items-center gap-1.5 self-start sm:self-auto"
+                className="min-h-[42px] px-4 py-2 rounded-xl bg-[#E8FAF3] hover:bg-emerald-100 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 self-start sm:self-auto"
               >
-                <PenLine className="w-3.5 h-3.5" />
+                <PenLine className="w-4 h-4" />
                 <span>Isi Jurnal Baru</span>
               </button>
             </div>
 
             {studentLogs.length === 0 ? (
-              <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl text-xs text-slate-500 space-y-3">
+              <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl text-sm text-slate-500 space-y-3">
                 <div>
                   Belum ada riwayat jurnaling magang yang tersimpan.
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveTab('isi')}
-                  className="min-h-[40px] px-4 py-2 rounded-xl bg-[#0E2228] text-[#1DF27A] text-xs font-bold inline-flex items-center gap-1.5"
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#0E2228] text-[#1DF27A] text-sm font-bold inline-flex items-center gap-1.5"
                 >
-                  <PenLine className="w-3.5 h-3.5" />
+                  <PenLine className="w-4 h-4" />
                   <span>Mulai Isi Hari Ini</span>
                 </button>
               </div>
@@ -762,21 +762,21 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                   return (
                     <article
                       key={log.id}
-                      className="border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-3 bg-slate-50/40"
+                      className="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50/40"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                          <div className="text-xs sm:text-sm font-bold text-slate-900">
+                          <div className="text-sm sm:text-base font-bold text-slate-900">
                             {formatTanggalIndonesia(log.tanggal)}
                           </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5 tabular-nums flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <div className="text-xs text-slate-500 mt-0.5 tabular-nums flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <span className="font-bold text-emerald-700">✓ {yesCount} Terpenuhi</span>
                             <span>·</span>
                             <span className="font-bold text-rose-600">✗ {noCount} Tidak</span>
                             {logTilawahHalaman > 0 && (
                               <>
                                 <span>·</span>
-                                <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                                   Tilawah: {logTilawahHalaman} Hal
                                 </span>
                               </>
@@ -787,23 +787,23 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenDateInEditor(log.tanggal)}
-                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-xs font-bold text-slate-800 inline-flex items-center gap-1.5"
+                          className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-xs sm:text-sm font-bold text-slate-800 inline-flex items-center gap-1.5"
                         >
-                          <Edit3 className="w-3.5 h-3.5 text-emerald-700" />
+                          <Edit3 className="w-4 h-4 text-emerald-700" />
                           <span>Edit Tanggal Ini</span>
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs sm:text-sm">
                         {INTERN_HOURLY_BLOCK_DEFS.map((def) => {
                           const text = (log.hourlyBlocks?.[def.key] || '').trim();
                           if (!text) return null;
                           return (
                             <div
                               key={def.key}
-                              className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-0.5"
+                              className="p-3 rounded-xl bg-white border border-slate-200 space-y-1"
                             >
-                              <div className="text-[11px] font-bold text-emerald-800 tabular-nums">
+                              <div className="text-xs font-bold text-emerald-800 tabular-nums">
                                 {def.timeRange} · {def.shortLabel}
                               </div>
                               <p className="text-slate-700 leading-relaxed whitespace-pre-line">
@@ -815,20 +815,20 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       </div>
 
                       {(log.kejadianPenting || '').trim() && (
-                        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950">
+                        <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs sm:text-sm text-amber-950 leading-relaxed">
                           <span className="font-bold text-amber-900">Kejadian Penting: </span>
                           <span className="whitespace-pre-line">{log.kejadianPenting}</span>
                         </div>
                       )}
 
                       {(logFotos.length > 0 || logVideoUrl) && (
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
-                          <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                            <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                        <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2.5">
+                          <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <Camera className="w-4 h-4 text-emerald-700" />
                             <span>Dokumentasi Kegiatan</span>
                           </div>
                           {logFotos.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 max-w-md">
+                            <div className="grid grid-cols-2 gap-2.5 max-w-md">
                               {logFotos.map((url, fIdx) => (
                                 <button
                                   key={`${log.id}-foto-${fIdx}`}
@@ -841,8 +841,8 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                                     alt={`Dokumentasi ${fIdx + 1}`}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                   />
-                                  <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/70 text-white text-[10px] font-bold inline-flex items-center gap-1">
-                                    <ZoomIn className="w-2.5 h-2.5" />
+                                  <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded bg-slate-950/75 text-white text-xs font-bold inline-flex items-center gap-1">
+                                    <ZoomIn className="w-3 h-3" />
                                     <span>Perbesar</span>
                                   </span>
                                 </button>
@@ -854,9 +854,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                               href={logVideoUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold"
+                              className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold"
                             >
-                              <PlayCircle className="w-3.5 h-3.5 text-[#1DF27A]" />
+                              <PlayCircle className="w-4 h-4 text-[#1DF27A]" />
                               <span>Putar / Buka Video ↗</span>
                             </a>
                           )}
@@ -864,7 +864,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       )}
 
                       {(log.catatanPembimbing || '').trim() && (
-                        <div className="p-2.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs text-emerald-950">
+                        <div className="p-3 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs sm:text-sm text-emerald-950 leading-relaxed">
                           <span className="font-bold text-emerald-800">Catatan Pembimbing: </span>
                           <span>{log.catatanPembimbing}</span>
                         </div>
@@ -882,9 +882,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
       {activeTab === 'isi' && (
         <section className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5">
           {/* 1-Baris Ringkasan Info Magang */}
-          <div className="px-3.5 py-2.5 rounded-xl bg-[#E8FAF3]/80 border border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="px-4 py-3 rounded-xl bg-[#E8FAF3]/80 border border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+              <Briefcase className="w-4 h-4 text-emerald-700 shrink-0" />
               <span className="font-bold text-emerald-950 truncate">
                 {existingProfile?.tempatMagang || 'Tempat magang belum diisi'}
               </span>
@@ -898,7 +898,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('profil')}
-              className="text-[11px] font-bold text-emerald-800 hover:underline shrink-0"
+              className="text-xs sm:text-sm font-bold text-emerald-800 hover:underline shrink-0"
             >
               Ubah Profil →
             </button>
@@ -907,14 +907,14 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
           {/* Pemilih Tanggal & Status */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-start gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#E8FAF3] border border-emerald-200 flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 text-emerald-700" />
+              <div className="w-10 h-10 rounded-xl bg-[#E8FAF3] border border-emerald-200 flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5 text-emerald-700" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-bold text-sm sm:text-base text-slate-900">
+                <h2 className="font-bold text-base sm:text-lg text-slate-900">
                   Isi Jurnaling &amp; Tracker Ibadah
                 </h2>
-                <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap items-center gap-1.5">
+                <div className="text-xs sm:text-sm text-slate-600 mt-0.5 flex flex-wrap items-center gap-1.5">
                   <span>{formatTanggalIndonesia(selectedDate)}</span>
                   <span>·</span>
                   <span
@@ -934,12 +934,12 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 aria-label="Tanggal Jurnal"
-                className="min-h-[42px] px-3 py-1.5 text-xs font-bold tabular-nums border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="h-11 px-3.5 py-2 text-base sm:text-sm font-bold tabular-nums border border-slate-300 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
               />
               <button
                 type="button"
                 onClick={() => setSelectedDate(getTodayIsoDateLocal())}
-                className="min-h-[42px] px-3 py-1.5 rounded-xl border border-emerald-200 bg-[#E8FAF3] hover:bg-emerald-100 text-emerald-900 text-xs font-bold shrink-0"
+                className="min-h-[44px] px-3.5 py-2 rounded-xl border border-emerald-200 bg-[#E8FAF3] hover:bg-emerald-100 text-emerald-900 text-xs sm:text-sm font-bold shrink-0"
               >
                 Hari Ini
               </button>
@@ -951,20 +951,20 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-slate-500" />
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5">
+                    <Lock className="w-4 h-4 text-slate-500" />
                     <span>Checklist Tracker Ibadah &amp; Amal</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                     Ketuk tombol <strong>✓</strong> atau <strong>✗</strong> untuk setiap kegiatan di bawah ini.
                   </p>
                 </div>
-                <div className="text-xs font-bold tabular-nums text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
+                <div className="text-xs sm:text-sm font-bold tabular-nums text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg">
                   {answeredCount} / {trackerItems.length} dipilih
                 </div>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {groupedTrackerItems.map((grp) => {
                   const legendText =
                     grp.group === 'sholat'
@@ -976,11 +976,11 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       key={grp.group}
                       className="border border-slate-200 rounded-2xl overflow-hidden bg-white"
                     >
-                      <div className="px-3.5 py-2 bg-slate-100/95 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-800">
+                      <div className="px-4 py-2.5 bg-slate-100/95 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
                           {grp.title}
                         </span>
-                        <span className="text-[11px] font-semibold text-emerald-800">
+                        <span className="text-xs font-semibold text-emerald-800">
                           {legendText}
                         </span>
                       </div>
@@ -991,20 +991,20 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                           return (
                             <div
                               key={item.id}
-                              className="px-3 sm:px-4 py-2 flex items-center justify-between gap-2.5 hover:bg-slate-50/70"
+                              className="px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-2.5 hover:bg-slate-50/70"
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="text-xs sm:text-sm font-semibold text-slate-900 leading-snug break-words">
+                                <div className="text-sm font-semibold text-slate-900 leading-snug break-words">
                                   {item.label}
                                 </div>
                                 {!val && (
-                                  <div className="text-[10px] font-semibold text-amber-700">
+                                  <div className="text-xs font-semibold text-amber-700 mt-0.5">
                                     Belum dipilih
                                   </div>
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
                                   aria-label={`${item.label}: ${
@@ -1016,7 +1016,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                                       [item.id]: 'yes',
                                     }))
                                   }
-                                  className={`min-w-[46px] min-h-[38px] px-3 rounded-full border text-sm font-bold inline-flex items-center justify-center transition-all ${
+                                  className={`min-w-[48px] min-h-[40px] px-3.5 rounded-full border text-sm font-bold inline-flex items-center justify-center transition-all ${
                                     val === 'yes'
                                       ? 'bg-emerald-600 border-emerald-700 text-white shadow-xs'
                                       : 'bg-white border-slate-300 text-slate-600 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700'
@@ -1036,7 +1036,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                                       [item.id]: 'no',
                                     }))
                                   }
-                                  className={`min-w-[46px] min-h-[38px] px-3 rounded-full border text-sm font-bold inline-flex items-center justify-center transition-all ${
+                                  className={`min-w-[48px] min-h-[40px] px-3.5 rounded-full border text-sm font-bold inline-flex items-center justify-center transition-all ${
                                     val === 'no'
                                       ? 'bg-rose-600 border-rose-700 text-white shadow-xs'
                                       : 'bg-white border-slate-300 text-slate-600 hover:bg-rose-50 hover:border-rose-400 hover:text-rose-700'
@@ -1055,24 +1055,24 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
               </div>
 
               {/* Input Tilawah Harian (Opsional Halaman) */}
-              <div className="p-3.5 rounded-2xl border border-emerald-200 bg-[#E8FAF3]/60 space-y-2.5">
+              <div className="p-4 rounded-2xl border border-emerald-200 bg-[#E8FAF3]/60 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="text-xs font-bold text-emerald-950">
+                    <div className="text-sm font-bold text-emerald-950">
                       Input Tilawah Harian (Opsional Halaman)
                     </div>
-                    <div className="text-[11px] text-slate-600">
+                    <div className="text-xs text-slate-600 mt-0.5">
                       Dihitung ke diagram capaian 30 Juz (Konversi: 1 Juz = {halamanPerJuz} Halaman).
                     </div>
                   </div>
                   {Number(tilawahHalamanInput) > 0 && (
-                    <span className="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-[11px] font-bold text-emerald-800 tabular-nums">
+                    <span className="px-3 py-1 rounded-lg bg-white border border-emerald-200 text-xs font-bold text-emerald-800 tabular-nums">
                       ≈ {(Number(tilawahHalamanInput) / halamanPerJuz).toFixed(1).replace('.', ',')} Juz
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <input
                       type="number"
@@ -1082,12 +1082,12 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       value={tilawahHalamanInput}
                       onChange={(e) => setTilawahHalamanInput(e.target.value)}
                       placeholder="0"
-                      className="w-24 min-h-[40px] px-3 py-1.5 text-xs font-bold tabular-nums bg-white border border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-28 h-11 px-3 py-2 text-base sm:text-sm font-bold tabular-nums bg-white border border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
-                    <span className="text-xs font-bold text-slate-700">Halaman</span>
+                    <span className="text-sm font-bold text-slate-700">Halaman</span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     {[1, 2, 5, 10, 20].map((inc) => (
                       <button
                         key={inc}
@@ -1097,7 +1097,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                             String(Math.min(2000, (Number(prev) || 0) + inc))
                           )
                         }
-                        className="min-h-[38px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs font-bold tabular-nums"
+                        className="min-h-[40px] px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-bold tabular-nums"
                       >
                         +{inc} Hal
                       </button>
@@ -1106,7 +1106,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setTilawahHalamanInput('')}
-                        className="min-h-[38px] px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold"
+                        className="min-h-[40px] px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs sm:text-sm font-semibold"
                       >
                         Reset
                       </button>
@@ -1119,28 +1119,28 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             {/* 2. 5 Blok Jam Jurnaling Harian & Kejadian Penting */}
             <div className="space-y-3 pt-1">
               <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-emerald-700" />
                   <span>Jurnal Aktivitas Harian (5 Blok Jam)</span>
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Catat kegiatan nyata selama magang dan keseharian santri pada masing-masing blok jam.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {INTERN_HOURLY_BLOCK_DEFS.map((def, idx) => (
                   <div
                     key={def.key}
-                    className={`p-3 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1.5 ${
+                    className={`p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 ${
                       idx === INTERN_HOURLY_BLOCK_DEFS.length - 1 ? 'md:col-span-2' : ''
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-1">
-                      <span className="text-xs font-bold text-slate-900 tabular-nums">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 tabular-nums">
                         {def.timeRange}
                       </span>
-                      <span className="text-[11px] font-bold text-emerald-800">
+                      <span className="text-xs font-bold text-emerald-800">
                         {def.shortLabel}
                       </span>
                     </div>
@@ -1154,18 +1154,18 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                         }))
                       }
                       placeholder={def.hint}
-                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 leading-relaxed"
                     />
                   </div>
                 ))}
 
                 {/* Kejadian Penting Hari Ini */}
-                <div className="md:col-span-2 p-3 rounded-xl border border-amber-200 bg-amber-50/45 space-y-1.5">
+                <div className="md:col-span-2 p-3.5 rounded-xl border border-amber-200 bg-amber-50/45 space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-900">
+                    <span className="text-xs sm:text-sm font-bold text-slate-900">
                       Kejadian Penting Hari Ini
                     </span>
-                    <span className="text-[11px] font-semibold text-amber-800">
+                    <span className="text-xs font-semibold text-amber-800">
                       Momen, Kendala, atau Pencapaian Khusus
                     </span>
                   </div>
@@ -1174,29 +1174,29 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                     value={kejadianPenting}
                     onChange={(e) => setKejadianPenting(e.target.value)}
                     placeholder="Contoh: Presentasi desain disetujui klien, menemukan kendala teknis & cara mengatasinya, atau momen penting lainnya..."
-                    className="w-full px-3 py-2 text-xs bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 leading-relaxed"
                   />
                 </div>
 
                 {/* Dokumentasi Foto / Video Kegiatan (Opsional) */}
-                <div className="md:col-span-2 p-3.5 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3">
+                <div className="md:col-span-2 p-4 rounded-xl border border-emerald-200 bg-[#E8FAF3]/45 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                      <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                        <Camera className="w-4 h-4 text-emerald-700" />
                         <span>Dokumentasi Foto / Video Kegiatan (Opsional)</span>
                       </div>
-                      <div className="text-[11px] text-slate-600 mt-0.5">
+                      <div className="text-xs text-slate-600 mt-0.5 leading-relaxed">
                         Unggah maksimal 2 foto kegiatan (dikompres otomatis agar hemat kuota &amp; ringan di Google Sheets).
                       </div>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-800 tabular-nums">
+                    <span className="text-xs font-bold text-emerald-800 tabular-nums">
                       {fotoUrls.length} / 2 Foto
                     </span>
                   </div>
 
                   {fotoUrls.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {fotoUrls.map((url, idx) => (
                         <div
                           key={`draft-foto-${idx}`}
@@ -1213,8 +1213,8 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                               className="w-full h-full object-cover"
                             />
                           </button>
-                          <div className="px-2.5 py-1.5 flex items-center justify-between gap-2 bg-white border-t border-slate-100">
-                            <span className="text-[11px] font-bold text-slate-700">
+                          <div className="px-3 py-2 flex items-center justify-between gap-2 bg-white border-t border-slate-100">
+                            <span className="text-xs font-bold text-slate-700">
                               Foto Kegiatan {idx + 1}
                             </span>
                             <button
@@ -1222,9 +1222,9 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                               onClick={() =>
                                 setFotoUrls((prev) => prev.filter((_, i) => i !== idx))
                               }
-                              className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold inline-flex items-center gap-1"
+                              className="min-h-[34px] px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold inline-flex items-center gap-1"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                               <span>Hapus</span>
                             </button>
                           </div>
@@ -1235,7 +1235,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
 
                   {fotoUrls.length < 2 && (
                     <div>
-                      <label className="min-h-[42px] px-3.5 py-2 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                      <label className="min-h-[44px] px-4 py-2.5 rounded-xl border border-dashed border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
                         {uploadingFoto ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
@@ -1267,12 +1267,12 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                   )}
 
                   {photoError && (
-                    <div className="text-[11px] font-semibold text-rose-700">{photoError}</div>
+                    <div className="text-xs font-semibold text-rose-700">{photoError}</div>
                   )}
 
-                  <div className="pt-1 border-t border-emerald-200/70 space-y-1.5">
-                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <Video className="w-3.5 h-3.5 text-emerald-700" />
+                  <div className="pt-2 border-t border-emerald-200/70 space-y-2">
+                    <label className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <Video className="w-4 h-4 text-emerald-700" />
                       <span>Link Video Kegiatan (Opsional — Google Drive / YouTube / Sosmed)</span>
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -1281,21 +1281,21 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
                         placeholder="https://drive.google.com/... atau https://youtu.be/..."
-                        className="flex-1 min-w-0 min-h-[40px] px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                       />
                       {normalizeExternalMediaUrl(videoUrl) && (
                         <a
                           href={normalizeExternalMediaUrl(videoUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="min-h-[40px] px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
+                          className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 shrink-0"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-4 h-4" />
                           <span>Buka Link</span>
                         </a>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-xs text-slate-500 leading-relaxed">
                       Unggah video dokumentasi ke Google Drive / YouTube / Media Sosial terlebih dahulu, lalu tempel link videonya di sini agar aplikasi tetap ringan.
                     </p>
                   </div>
@@ -1304,7 +1304,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             </div>
 
             {(logForSelectedDate?.catatanPembimbing || '').trim() && (
-              <div className="p-3.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs text-emerald-950 space-y-1">
+              <div className="p-4 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-xs sm:text-sm text-emerald-950 space-y-1">
                 <div className="font-bold text-emerald-800">
                   Catatan Pembimbing ({formatTanggalShort(selectedDate)})
                 </div>
@@ -1313,7 +1313,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             )}
 
             {validationError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs sm:text-sm text-rose-800 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="leading-relaxed">{validationError}</span>
               </div>
@@ -1322,7 +1322,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             <button
               type="submit"
               disabled={savingLog || isBusy || uploadingFoto}
-              className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4 text-[#1DF27A]" />
               <span>
@@ -1353,7 +1353,7 @@ export const StudentInternshipView: React.FC<StudentInternshipViewProps> = ({
             <button
               type="button"
               onClick={() => setLightboxPhoto(null)}
-              className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-bold inline-flex items-center gap-1.5 shadow-lg"
+              className="min-h-[44px] px-5 py-2.5 rounded-xl bg-white text-slate-900 text-sm font-bold inline-flex items-center gap-1.5 shadow-lg"
             >
               <X className="w-4 h-4" />
               <span>Tutup Foto</span>

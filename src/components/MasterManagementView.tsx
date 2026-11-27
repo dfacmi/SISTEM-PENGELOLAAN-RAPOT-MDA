@@ -365,37 +365,37 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('santri')}
-            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'santri'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-4 h-4" />
             <span>Santri ({db.students.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('guru')}
-            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'guru'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <UserCheck className="w-3.5 h-3.5" />
+            <UserCheck className="w-4 h-4" />
             <span>Guru ({db.teachers.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('periode')}
-            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'periode'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
+            <Calendar className="w-4 h-4" />
             <span>Semester ({db.periods.length})</span>
           </button>
         </div>
@@ -409,7 +409,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 setBulkError(null);
                 setBulkModalOpen(true);
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-[#E8FAF3] text-emerald-900 text-xs font-semibold hover:bg-emerald-100 transition-colors whitespace-nowrap"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-300 bg-[#E8FAF3] text-emerald-900 text-xs sm:text-sm font-semibold hover:bg-emerald-100 transition-colors whitespace-nowrap"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0" />
               <span>Import Santri Massal</span>
@@ -417,7 +417,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             <button
               type="button"
               onClick={handleNewStudent}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span>Tambah Santri</span>
@@ -428,7 +428,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           <button
             type="button"
             onClick={handleNewTeacher}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
+            className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Guru</span>
@@ -438,7 +438,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           <button
             type="button"
             onClick={handleNewPeriod}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
+            className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Semester</span>
@@ -456,13 +456,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="font-display font-bold text-slate-900 text-sm">
+                  <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
                     {db.students.some((s) => s.id === editingStudent.id)
                       ? 'Edit Profil & Foto Identitas Santri'
                       : 'Tambah Santri Baru'}
                   </h3>
                   {!canManageAll && (
-                    <p className="text-[11px] text-amber-700 mt-0.5">
+                    <p className="text-xs text-amber-700 mt-1">
                       Hak akses Guru: hanya dapat memperbarui Foto &amp; Link Portofolio santri binaan.
                     </p>
                   )}
@@ -470,7 +470,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingStudent(null)}
-                  className="text-xs text-slate-500 hover:text-slate-800"
+                  className="min-h-[38px] px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 >
                   Tutup
                 </button>
@@ -484,15 +484,15 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   className="w-20 h-24 text-xl shrink-0"
                 />
                 <div className="flex-1 space-y-2">
-                  <div className="text-xs font-bold text-slate-900">
+                  <div className="text-sm font-bold text-slate-900">
                     Foto Profil Identitas Santri
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Foto tampil pada halaman identitas rapor digital, portal orang tua, dan halaman PDF resmi. Anda dapat mengunggah foto langsung dari galeri/komputer atau menempelkan URL foto.
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white cursor-pointer whitespace-nowrap">
-                      <Upload className="w-3.5 h-3.5" />
+                    <label className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm font-semibold text-white cursor-pointer whitespace-nowrap">
+                      <Upload className="w-4 h-4" />
                       <span>{uploadingPhoto ? 'Memproses Foto...' : 'Upload Foto Santri'}</span>
                       <input
                         type="file"
@@ -505,7 +505,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setEditingStudent({ ...editingStudent, fotoUrl: '' })}
-                        className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
                       >
                         Hapus Foto
                       </button>
@@ -516,7 +516,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     ID Santri MDA
                   </label>
                   <input
@@ -544,12 +544,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           : editingStudent.accessPin,
                       });
                     }}
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="MDA02.2526.791"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Nama Lengkap Santri
                   </label>
                   <input
@@ -577,12 +577,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           : editingStudent.accessPin,
                       });
                     }}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="Alwan Hanif"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Kelas (Pilih atau Ketik Kelas Baru)
                   </label>
                   <input
@@ -600,7 +600,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       });
                     }}
                     placeholder="Contoh: MDA Junior / MDA Senior / MDA Putri"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white disabled:bg-slate-100 disabled:text-slate-500"
                   />
                   <datalist id="mda-class-suggestions">
                     {Array.from(
@@ -613,7 +613,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     ))}
                   </datalist>
                   {canManageAll && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
+                    <div className="flex flex-wrap gap-1.5 mt-2">
                       {Array.from(
                         new Set([
                           ...DEFAULT_CLASS_PRESETS,
@@ -630,7 +630,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                               program: `Muslim Digital Academy – ${cls.replace(/^MDA\s+/i, '')}`,
                             })
                           }
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${
                             editingStudent.kelas.trim().toLowerCase() === cls.toLowerCase()
                               ? 'bg-emerald-600 text-white border-emerald-600'
                               : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -644,7 +644,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Wali Kelas
                   </label>
                   <select
@@ -653,7 +653,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingStudent({ ...editingStudent, waliKelasId: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     {db.teachers.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -664,7 +664,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Email Google Santri / Orang Tua
                   </label>
                   <input
@@ -677,13 +677,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         emailSantriOrtu: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="wali.santri@gmail.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     PIN Akses Privat (Nama + 3 Angka Akhir / Editable)
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -698,7 +698,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           accessPin: e.target.value.toUpperCase(),
                         })
                       }
-                      className="flex-1 min-w-0 px-3 py-2 text-xs font-mono font-bold border border-slate-200 rounded-lg uppercase disabled:bg-slate-100 disabled:text-slate-500"
+                      className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm font-mono font-bold border border-slate-200 rounded-xl uppercase disabled:bg-slate-100 disabled:text-slate-500"
                       placeholder="ALWAN791"
                     />
                     <button
@@ -713,16 +713,16 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           ),
                         })
                       }
-                      className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                       title="Buat PIN Otomatis (Nama + 3 Angka Terakhir ID)"
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
+                      <RefreshCw className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Link / Slug Portofolio Santri (Bisa Isi URL Sendiri)
                   </label>
                   <input
@@ -734,13 +734,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         portfolioSlug: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                     placeholder="https://drive.google.com/... atau alwan-hanif"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     URL Foto Alternatif (Opsional)
                   </label>
                   <input
@@ -749,13 +749,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingStudent({ ...editingStudent, fotoUrl: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                     placeholder="https://... atau hasil upload otomatis"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Status Santri
                   </label>
                   <select
@@ -767,7 +767,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         statusAktif: e.target.value as Student['statusAktif'],
                       })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="Aktif">Aktif</option>
                     <option value="Alumni">Alumni</option>
@@ -776,17 +776,17 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setEditingStudent(null)}
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700"
                 >
                   Simpan Data Santri
                 </button>
@@ -795,12 +795,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           )}
 
           {/* Filter Kelas Dinamis + Pencarian Santri */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               <button
                 type="button"
                 onClick={() => setSantriClassFilter('ALL')}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                   santriClassFilter === 'ALL'
                     ? 'bg-[#0E2228] text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -813,7 +813,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   key={cls.key}
                   type="button"
                   onClick={() => setSantriClassFilter(cls.name)}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                     santriClassFilter.toLowerCase() === cls.key
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -828,12 +828,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
               value={santriSearch}
               onChange={(e) => setSantriSearch(e.target.value)}
               placeholder="Cari nama / NISN / kelas..."
-              className="w-full sm:w-56 px-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="w-full sm:w-64 h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
             />
           </div>
 
           {filteredSantri.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-xs text-slate-500">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-500">
               Tidak ada data santri pada filter kelas ini.
             </div>
           ) : (
@@ -841,7 +841,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
               {filteredSantri.map((student) => (
               <div
                 key={student.id}
-                className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-4 hover:border-emerald-300 transition-colors"
+                className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 hover:border-emerald-300 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <StudentAvatar
@@ -849,8 +849,8 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     fotoUrl={student.fotoUrl}
                     className="w-14 h-16 text-sm shrink-0"
                   />
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="font-display font-bold text-slate-900 text-sm truncate">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="font-display font-bold text-slate-900 text-sm sm:text-base truncate">
                       {student.nama}
                     </div>
                     <div className="font-mono text-xs text-emerald-700 font-semibold">
@@ -859,40 +859,40 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     <div className="text-xs text-slate-500">
                       {student.kelas} · {student.statusAktif}
                     </div>
-                    <div className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-700 pt-0.5">
-                      <KeyRound className="w-3 h-3 text-emerald-600" />
+                    <div className="inline-flex items-center gap-1 text-xs font-mono font-bold text-slate-700 pt-0.5">
+                      <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
                       <span>PIN: {student.accessPin || 'MDA123'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Vertical metadata list */}
-                <div className="text-xs text-slate-600 space-y-1.5 border-t border-slate-100 pt-3">
+                <div className="text-xs sm:text-sm text-slate-600 space-y-2 border-t border-slate-100 pt-3">
                   <div>
-                    <div className="text-[11px] text-slate-400">Wali Kelas</div>
+                    <div className="text-xs text-slate-400">Wali Kelas</div>
                     <div className="font-medium text-slate-800 truncate">
                       {student.waliKelasNama}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-slate-400">Email Google Ortu</div>
-                    <div className="truncate">{student.emailSantriOrtu || '—'}</div>
+                    <div className="text-xs text-slate-400">Email Google Ortu</div>
+                    <div className="truncate text-xs sm:text-sm">{student.emailSantriOrtu || '—'}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-slate-400">Link Portofolio</div>
-                    <div className="truncate font-mono text-[11px] text-emerald-700">
+                    <div className="text-xs text-slate-400">Link Portofolio</div>
+                    <div className="truncate font-mono text-xs text-emerald-700">
                       ?portfolio={student.portfolioSlug}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShareModalStudent(student)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#E8FAF3] border border-emerald-200 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold"
+                    className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#E8FAF3] border border-emerald-200 text-emerald-800 hover:bg-emerald-100 text-xs sm:text-sm font-semibold"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-4 h-4" />
                     <span>Akses Wali</span>
                   </button>
 
@@ -900,7 +900,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setEditingStudent(student)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      className="min-h-[40px] px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       Edit / Foto
                     </button>
@@ -910,10 +910,10 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         onClick={() =>
                           onSaveStudents(db.students.filter((s) => s.id !== student.id))
                         }
-                        className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                        className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
                         title="Hapus Santri"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -933,12 +933,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
               onSubmit={handleSaveTeacherForm}
               className="bg-white border border-emerald-200 rounded-2xl p-5 space-y-4"
             >
-              <h3 className="font-display font-bold text-slate-900 text-sm">
+              <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
                 Form Data Ustadz / Wali Kelas
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Nama Lengkap &amp; Gelar
                   </label>
                   <input
@@ -965,11 +965,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           : editingTeacher.accessPin,
                       });
                     }}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Jabatan / Bidang
                   </label>
                   <input
@@ -979,11 +979,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingTeacher({ ...editingTeacher, jabatan: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Email Google
                   </label>
                   <input
@@ -993,11 +993,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingTeacher({ ...editingTeacher, email: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     ID / Kode Guru &amp; Admin
                   </label>
                   <input
@@ -1023,12 +1023,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           : editingTeacher.accessPin,
                       });
                     }}
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                     placeholder="MDA-GRU-001"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     PIN Akses (Nama + 3 Angka Akhir / Editable)
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -1042,7 +1042,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           accessPin: e.target.value.toUpperCase(),
                         })
                       }
-                      className="flex-1 min-w-0 px-3 py-2 text-xs font-mono font-bold border border-slate-200 rounded-lg uppercase"
+                      className="flex-1 min-w-0 h-11 px-3.5 py-2 text-base sm:text-sm font-mono font-bold border border-slate-200 rounded-xl uppercase"
                       placeholder="TEGUH001"
                     />
                     <button
@@ -1056,15 +1056,15 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           ),
                         })
                       }
-                      className="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
+                      className="h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
                       title="Buat PIN Otomatis (Nama + 3 Angka Terakhir)"
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
+                      <RefreshCw className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Kelas Diampu
                   </label>
                   <input
@@ -1075,7 +1075,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       setEditingTeacher({ ...editingTeacher, kelasDiampu: e.target.value })
                     }
                     placeholder="Contoh: MDA Junior / MDA Senior / MDA Putri / Semua Kelas"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                   <datalist id="mda-teacher-class-suggestions">
                     {Array.from(
@@ -1090,7 +1090,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   </datalist>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Role Sistem
                   </label>
                   <select
@@ -1101,18 +1101,18 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         role: e.target.value as 'admin' | 'guru',
                       })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                   >
                     <option value="guru">Guru / Wali Kelas</option>
                     <option value="admin">Admin MDA</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Tanda Tangan Digital Guru / Wali Kelas (PNG Transparan / URL)
                   </label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <div className="w-28 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="w-32 h-14 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                       {editingTeacher.ttdUrl ? (
                         <img
                           src={editingTeacher.ttdUrl}
@@ -1121,10 +1121,10 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           className="max-h-full max-w-full object-contain"
                         />
                       ) : (
-                        <span className="text-[10px] text-slate-400">Belum ada TTD</span>
+                        <span className="text-xs text-slate-400">Belum ada TTD</span>
                       )}
                     </div>
-                    <div className="flex-1 space-y-1.5">
+                    <div className="flex-1 space-y-2">
                       <input
                         type="text"
                         value={editingTeacher.ttdUrl || ''}
@@ -1132,11 +1132,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           setEditingTeacher({ ...editingTeacher, ttdUrl: e.target.value })
                         }
                         placeholder="https://... atau upload PNG tanda tangan"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                       />
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
-                          <Upload className="w-3 h-3" />
+                        <label className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
                           <span>{uploadingTtd === 'guru' ? 'Memproses...' : 'Upload TTD PNG'}</span>
                           <input
                             type="file"
@@ -1149,7 +1149,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setEditingTeacher({ ...editingTeacher, ttdUrl: '' })}
-                            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-[11px] text-slate-700 hover:bg-slate-50"
+                            className="min-h-[38px] px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
                           >
                             Hapus TTD
                           </button>
@@ -1159,17 +1159,17 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setEditingTeacher(null)}
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
                 >
                   Simpan Guru
                 </button>
@@ -1182,33 +1182,33 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             {db.teachers.map((t) => (
               <div
                 key={t.id}
-                className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 text-xs"
+                className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2.5 text-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">{t.nama}</div>
-                    <div className="text-slate-500">{t.jabatan}</div>
+                    <div className="font-bold text-slate-900 text-base">{t.nama}</div>
+                    <div className="text-xs sm:text-sm text-slate-500">{t.jabatan}</div>
                   </div>
-                  <span className="uppercase font-mono font-bold text-emerald-700">
+                  <span className="uppercase font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
                     {t.role}
                   </span>
                 </div>
-                <div className="text-slate-600">Kelas: {t.kelasDiampu}</div>
-                <div className="font-mono text-slate-500 truncate">
+                <div className="text-xs sm:text-sm text-slate-600">Kelas: {t.kelasDiampu}</div>
+                <div className="font-mono text-xs text-slate-500 truncate">
                   {t.kodeGuru || t.id} · {t.email}
                 </div>
-                <div className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-700">
-                  <KeyRound className="w-3 h-3 text-emerald-600" />
+                <div className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-slate-700">
+                  <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
                   <span>
                     PIN: {t.accessPin || generateSmartAccessPin(t.nama, t.kodeGuru || t.id)}
                   </span>
                 </div>
                 {canManageAll && (
-                  <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex justify-end gap-2 pt-2.5 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => setEditingTeacher(t)}
-                      className="text-emerald-700 font-semibold"
+                      className="min-h-[38px] px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold"
                     >
                       Edit
                     </button>
@@ -1217,7 +1217,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       onClick={() =>
                         onSaveTeachers(db.teachers.filter((x) => x.id !== t.id))
                       }
-                      className="text-rose-600 font-semibold"
+                      className="min-h-[38px] px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-semibold"
                     >
                       Hapus
                     </button>
@@ -1228,41 +1228,41 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           </div>
 
           <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-[#0E2228] text-white">
-                  <th className="py-3 px-4">Nama Pengajar</th>
-                  <th className="py-3 px-4">ID / Kode &amp; PIN</th>
-                  <th className="py-3 px-4">Kelas Diampu</th>
-                  <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-4">Role</th>
-                  {canManageAll && <th className="py-3 px-4 text-right">Aksi</th>}
+                <tr className="bg-[#0E2228] text-white text-xs sm:text-sm">
+                  <th className="py-3.5 px-4">Nama Pengajar</th>
+                  <th className="py-3.5 px-4">ID / Kode &amp; PIN</th>
+                  <th className="py-3.5 px-4">Kelas Diampu</th>
+                  <th className="py-3.5 px-4">Email</th>
+                  <th className="py-3.5 px-4">Role</th>
+                  {canManageAll && <th className="py-3.5 px-4 text-right">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {db.teachers.map((t) => (
                   <tr key={t.id} className="hover:bg-emerald-50/40">
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{t.nama}</div>
-                      <div className="text-[11px] text-slate-500">{t.jabatan}</div>
+                      <div className="text-xs text-slate-500">{t.jabatan}</div>
                     </td>
-                    <td className="py-3 px-4 font-mono">
+                    <td className="py-3.5 px-4 font-mono text-xs sm:text-sm">
                       <div className="text-slate-700">{t.kodeGuru || t.id}</div>
-                      <div className="text-[11px] font-bold text-emerald-700">
+                      <div className="text-xs font-bold text-emerald-700">
                         PIN: {t.accessPin || generateSmartAccessPin(t.nama, t.kodeGuru || t.id)}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-700">{t.kelasDiampu}</td>
-                    <td className="py-3 px-4 font-mono text-slate-600">{t.email}</td>
-                    <td className="py-3 px-4 uppercase font-semibold text-emerald-700">
+                    <td className="py-3.5 px-4 text-slate-700">{t.kelasDiampu}</td>
+                    <td className="py-3.5 px-4 font-mono text-xs sm:text-sm text-slate-600">{t.email}</td>
+                    <td className="py-3.5 px-4 uppercase text-xs font-semibold text-emerald-700">
                       {t.role}
                     </td>
                     {canManageAll && (
-                      <td className="py-3 px-4 text-right space-x-2">
+                      <td className="py-3.5 px-4 text-right space-x-3 text-sm">
                         <button
                           type="button"
                           onClick={() => setEditingTeacher(t)}
-                          className="text-emerald-700 hover:underline font-medium"
+                          className="text-emerald-700 hover:underline font-semibold"
                         >
                           Edit
                         </button>
@@ -1271,7 +1271,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           onClick={() =>
                             onSaveTeachers(db.teachers.filter((x) => x.id !== t.id))
                           }
-                          className="text-rose-600 hover:underline font-medium"
+                          className="text-rose-600 hover:underline font-semibold"
                         >
                           Hapus
                         </button>
@@ -1293,12 +1293,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
               onSubmit={handleSavePeriodForm}
               className="bg-white border border-emerald-200 rounded-2xl p-5 space-y-4"
             >
-              <h3 className="font-display font-bold text-slate-900 text-sm">
+              <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
                 Pengaturan Semester, KKM &amp; Pengesahan Rapor
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Tahun Akademik
                   </label>
                   <input
@@ -1308,11 +1308,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingPeriod({ ...editingPeriod, tahunAkademik: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Semester
                   </label>
                   <select
@@ -1323,14 +1323,14 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         semester: e.target.value as 'Gasal' | 'Genap',
                       })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                   >
                     <option value="Gasal">Gasal</option>
                     <option value="Genap">Genap</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Tanggal Pembagian Rapor
                   </label>
                   <input
@@ -1340,24 +1340,24 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingPeriod({ ...editingPeriod, tanggalRapor: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
-                <div className="flex items-end pb-2">
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <div className="flex items-end pb-2.5">
+                  <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={editingPeriod.isActive}
                       onChange={(e) =>
                         setEditingPeriod({ ...editingPeriod, isActive: e.target.checked })
                       }
-                      className="rounded border-slate-300 text-emerald-600"
+                      className="w-4 h-4 rounded border-slate-300 text-emerald-600"
                     />
                     <span>Jadikan Semester Aktif</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     KKM Diniyah
                   </label>
                   <input
@@ -1369,11 +1369,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         kkmDiniyah: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     KKM Tahfidz
                   </label>
                   <input
@@ -1385,11 +1385,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         kkmTahfidz: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     KKM Skill Digital
                   </label>
                   <input
@@ -1401,11 +1401,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         kkmDigital: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Kepala Unit MDA
                   </label>
                   <input
@@ -1414,11 +1414,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingPeriod({ ...editingPeriod, kepalaUnitMda: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Mudir / Kepala Pesantren
                   </label>
                   <input
@@ -1427,17 +1427,17 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     onChange={(e) =>
                       setEditingPeriod({ ...editingPeriod, mudirPesantren: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                   />
                 </div>
 
                 {/* TTD Kepala Unit MDA */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     TTD Digital Kepala Unit MDA (Tampil di Ekspor PDF)
                   </label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
-                    <div className="w-24 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+                    <div className="w-28 h-14 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                       {editingPeriod.ttdKepalaUnitUrl ? (
                         <img
                           src={editingPeriod.ttdKepalaUnitUrl}
@@ -1446,10 +1446,10 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           className="max-h-full max-w-full object-contain"
                         />
                       ) : (
-                        <span className="text-[10px] text-slate-400">Kosong</span>
+                        <span className="text-xs text-slate-400">Kosong</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex-1 min-w-0 space-y-2">
                       <input
                         type="text"
                         value={editingPeriod.ttdKepalaUnitUrl || ''}
@@ -1460,11 +1460,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           })
                         }
                         placeholder="URL / Upload PNG tanda tangan Kepala Unit"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                       />
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
-                          <Upload className="w-3 h-3" />
+                        <label className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
                           <span>{uploadingTtd === 'kepala' ? 'Memproses...' : 'Upload TTD'}</span>
                           <input
                             type="file"
@@ -1479,7 +1479,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                             onClick={() =>
                               setEditingPeriod({ ...editingPeriod, ttdKepalaUnitUrl: '' })
                             }
-                            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-[11px] text-slate-700"
+                            className="min-h-[38px] px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700"
                           >
                             Hapus
                           </button>
@@ -1491,11 +1491,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
 
                 {/* TTD Mudir Pesantren */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     TTD Digital Mudir Pesantren (Tampil di Ekspor PDF)
                   </label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
-                    <div className="w-24 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+                    <div className="w-28 h-14 rounded-lg bg-white border border-slate-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                       {editingPeriod.ttdMudirUrl ? (
                         <img
                           src={editingPeriod.ttdMudirUrl}
@@ -1504,10 +1504,10 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           className="max-h-full max-w-full object-contain"
                         />
                       ) : (
-                        <span className="text-[10px] text-slate-400">Kosong</span>
+                        <span className="text-xs text-slate-400">Kosong</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex-1 min-w-0 space-y-2">
                       <input
                         type="text"
                         value={editingPeriod.ttdMudirUrl || ''}
@@ -1518,11 +1518,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           })
                         }
                         placeholder="URL / Upload PNG tanda tangan Mudir"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-xl"
                       />
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
-                          <Upload className="w-3 h-3" />
+                        <label className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
                           <span>{uploadingTtd === 'mudir' ? 'Memproses...' : 'Upload TTD'}</span>
                           <input
                             type="file"
@@ -1537,7 +1537,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                             onClick={() =>
                               setEditingPeriod({ ...editingPeriod, ttdMudirUrl: '' })
                             }
-                            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-[11px] text-slate-700"
+                            className="min-h-[38px] px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700"
                           >
                             Hapus
                           </button>
@@ -1547,17 +1547,17 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setEditingPeriod(null)}
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
                 >
                   Simpan Periode
                 </button>
@@ -1570,22 +1570,22 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             {db.periods.map((p) => (
               <div
                 key={p.id}
-                className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 text-xs"
+                className="bg-white border border-slate-200 rounded-2xl p-4 space-y-2 text-sm"
               >
                 <div className="flex items-center justify-between">
                   <div className="font-mono font-bold text-slate-900">
                     {p.semester} · {p.tahunAkademik}
                   </div>
                   <span
-                    className={`font-semibold ${
+                    className={`text-xs font-semibold ${
                       p.isActive ? 'text-emerald-700' : 'text-slate-400'
                     }`}
                   >
                     {p.isActive ? 'Aktif' : 'Arsip'}
                   </span>
                 </div>
-                <div className="text-slate-600">Tanggal Rapor: {p.tanggalRapor}</div>
-                <div className="font-mono text-slate-700">
+                <div className="text-xs sm:text-sm text-slate-600">Tanggal Rapor: {p.tanggalRapor}</div>
+                <div className="font-mono text-xs sm:text-sm text-slate-700">
                   KKM (D/T/SD): {p.kkmDiniyah} / {p.kkmTahfidz} / {p.kkmDigital}
                 </div>
                 {canManageAll && (
@@ -1593,7 +1593,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setEditingPeriod(p)}
-                      className="text-emerald-700 font-semibold"
+                      className="min-h-[38px] px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-semibold"
                     >
                       Edit Periode
                     </button>
@@ -1604,34 +1604,34 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
           </div>
 
           <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-[#0E2228] text-white">
-                  <th className="py-3 px-4">Tahun Akademik</th>
-                  <th className="py-3 px-4">Semester</th>
-                  <th className="py-3 px-4">Tanggal Rapor</th>
-                  <th className="py-3 px-4">KKM (D / T / SD)</th>
-                  <th className="py-3 px-4">Kepala Unit &amp; Mudir</th>
-                  <th className="py-3 px-4">Status</th>
-                  {canManageAll && <th className="py-3 px-4 text-right">Aksi</th>}
+                <tr className="bg-[#0E2228] text-white text-xs sm:text-sm">
+                  <th className="py-3.5 px-4">Tahun Akademik</th>
+                  <th className="py-3.5 px-4">Semester</th>
+                  <th className="py-3.5 px-4">Tanggal Rapor</th>
+                  <th className="py-3.5 px-4">KKM (D / T / SD)</th>
+                  <th className="py-3.5 px-4">Kepala Unit &amp; Mudir</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  {canManageAll && <th className="py-3.5 px-4 text-right">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {db.periods.map((p) => (
                   <tr key={p.id} className="hover:bg-emerald-50/40">
-                    <td className="py-3 px-4 font-mono font-semibold text-slate-900">
+                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
                       {p.tahunAkademik}
                     </td>
-                    <td className="py-3 px-4 font-medium">{p.semester}</td>
-                    <td className="py-3 px-4 text-slate-600">{p.tanggalRapor}</td>
-                    <td className="py-3 px-4 font-mono tabular-nums">
+                    <td className="py-3.5 px-4 font-medium">{p.semester}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{p.tanggalRapor}</td>
+                    <td className="py-3.5 px-4 font-mono tabular-nums">
                       {p.kkmDiniyah} / {p.kkmTahfidz} / {p.kkmDigital}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">
+                    <td className="py-3.5 px-4 text-slate-600">
                       <div>{p.kepalaUnitMda}</div>
-                      <div className="text-[11px] text-slate-400">{p.mudirPesantren}</div>
+                      <div className="text-xs text-slate-400">{p.mudirPesantren}</div>
                     </td>
-                    <td className="py-3 px-4 font-semibold">
+                    <td className="py-3.5 px-4 font-semibold">
                       {p.isActive ? (
                         <span className="text-emerald-700">Aktif</span>
                       ) : (
@@ -1639,11 +1639,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       )}
                     </td>
                     {canManageAll && (
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <button
                           type="button"
                           onClick={() => setEditingPeriod(p)}
-                          className="text-emerald-700 hover:underline font-medium"
+                          className="text-emerald-700 hover:underline font-semibold"
                         >
                           Edit
                         </button>
@@ -1709,7 +1709,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[#E8FAF3] border border-emerald-200 space-y-2.5 text-xs">
+              <div className="p-4 rounded-xl bg-[#E8FAF3] border border-emerald-200 space-y-2.5 text-xs sm:text-sm">
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2">
                   <span className="text-slate-600 shrink-0">ID Santri / Nama Lengkap:</span>
                   <span className="font-mono font-bold text-slate-900 break-words sm:text-right">
@@ -1734,36 +1734,36 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-600 leading-relaxed break-words">
+              <div className="text-xs text-slate-600 leading-relaxed break-words">
                 Orang tua dapat masuk dengan <strong>ID Santri MDA atau Nama Lengkap Santri</strong> ditambah <strong>PIN Akses</strong> di atas (atau link langsung di bawah ini) dan hanya dapat melihat rapor milik <strong>{shareModalStudent.nama}</strong> sendiri.
               </div>
 
-              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700 break-all">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-700 break-all">
                 {directUrl}
               </div>
 
-              <div className="flex flex-col-reverse sm:flex-row gap-2">
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleCopyText(directUrl, 'url')}
-                  className="w-full sm:flex-1 min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800"
+                  className="w-full sm:flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-800"
                 >
                   {copiedType === 'url' ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4" />
                   )}
                   <span>{copiedType === 'url' ? 'Link Disalin' : 'Salin Link Langsung'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCopyText(waText, 'wa')}
-                  className="w-full sm:flex-1 min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white"
+                  className="w-full sm:flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm font-semibold text-white"
                 >
                   {copiedType === 'wa' ? (
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-4 h-4" />
                   ) : (
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-4 h-4" />
                   )}
                   <span>{copiedType === 'wa' ? 'Pesan WA Disalin' : 'Salin Pesan WhatsApp'}</span>
                 </button>
@@ -1786,13 +1786,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
                   Add-on Import Massal Santri &amp; Akses Login
                 </div>
                 <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 break-words">
                   Import Santri Massal (Excel / CSV / Tempel Teks)
                 </h3>
-                <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed break-words">
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed break-words">
                   Menambahkan banyak santri sekaligus beserta PIN akses CBT &amp; Portal Rapor tanpa menghapus atau menimpa santri yang sudah ada.
                 </p>
               </div>
@@ -1800,36 +1800,36 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 type="button"
                 disabled={isBusy}
                 onClick={() => setBulkModalOpen(false)}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Quick Preset 9 Santri MDA Putri */}
-            <div className="p-3.5 rounded-2xl bg-[#E8FAF3] border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="min-w-0 space-y-0.5">
-                <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-[#E8FAF3] border border-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <div className="text-sm font-bold text-emerald-950 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>Preset Cepat: 9 Santri Baru MDA Putri</span>
                 </div>
-                <p className="text-[11px] text-emerald-900/90 leading-relaxed break-words">
+                <p className="text-xs text-emerald-900/90 leading-relaxed break-words">
                   Isi otomatis daftar 9 santri kelas <strong>MDA Putri</strong> (ID <span className="font-mono">MDA03.2627.820</span> – <span className="font-mono">828</span>, Marhalah Tahsin &amp; Tahfizh) beserta PIN login CBT &amp; Rapor.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleApplyPreset9Putri}
-                className="w-full sm:w-auto min-h-[40px] px-3.5 py-2 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs font-bold inline-flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+                className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 shrink-0 transition-colors"
               >
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <Sparkles className="w-4 h-4 shrink-0" />
                 <span>Isi Template 9 Santri MDA Putri</span>
               </button>
             </div>
 
             {/* Upload Excel/CSV + Download Template */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <label className="min-h-[42px] px-3.5 py-2 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-900 text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
+              <label className="min-h-[44px] px-4 py-2.5 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors">
                 <Upload className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span>
                   {bulkParsing ? 'Membaca File...' : 'Upload File Excel / CSV (.xlsx, .csv)'}
@@ -1845,7 +1845,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
               <button
                 type="button"
                 onClick={downloadStudentImportTemplateXlsx}
-                className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+                className="min-h-[44px] px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-4 h-4 text-slate-600 shrink-0" />
                 <span>Unduh Template Excel (.xlsx)</span>
@@ -1855,7 +1855,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             {/* Paste Text Input */}
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs sm:text-sm font-semibold text-slate-700">
                   Tempel Daftar Teks (1 baris per santri)
                 </label>
                 {bulkText && (
@@ -1866,7 +1866,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                       setBulkRows([]);
                       setBulkError(null);
                     }}
-                    className="text-[11px] font-semibold text-rose-600 hover:underline"
+                    className="text-xs font-semibold text-rose-600 hover:underline"
                   >
                     Bersihkan Teks
                   </button>
@@ -1879,20 +1879,20 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 placeholder={
                   'Format: ID | Nama Lengkap | Kelas | Marhalah/Keterangan | PIN (opsional)\nContoh: MDA03.2627.820 | Anisa Nurul Azizah | MDA Putri | Marhalah Tahsin | ANISA820'
                 }
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3.5 py-2.5 text-base sm:text-sm leading-relaxed font-mono border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
               />
             </div>
 
             {/* Settings Row: Default Wali + Anti-Duplicate Policy */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Wali Kelas Default (Opsional)
                 </label>
                 <select
                   value={bulkDefaultWaliId}
                   onChange={(e) => setBulkDefaultWaliId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"
+                  className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                 >
                   <option value="">-- Belum ditentukan / Atur nanti --</option>
                   {db.teachers.map((t) => (
@@ -1903,7 +1903,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Jika ID Santri Sudah Ada di Sheets
                 </label>
                 <select
@@ -1911,7 +1911,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                   onChange={(e) =>
                     setBulkDuplicatePolicy(e.target.value as 'skip' | 'update')
                   }
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white font-semibold"
+                  className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white font-semibold"
                 >
                   <option value="skip">Lewati Duplikat — Anti-Timpa (Disarankan)</option>
                   <option value="update">Perbarui Data yang ID-nya Sama</option>
@@ -1920,7 +1920,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             </div>
 
             {bulkError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold break-words">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs sm:text-sm text-rose-700 font-semibold break-words">
                 {bulkError}
               </div>
             )}
@@ -1928,16 +1928,16 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             {/* Live Preview */}
             {bulkRows.length > 0 && (
               <div className="space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <div className="font-bold text-slate-900">
                     Pratinjau Data Santri ({bulkSummary.total} Baris)
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-bold">
                       {bulkSummary.fresh} Baru
                     </span>
                     {bulkSummary.dup > 0 && (
-                      <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold">
+                      <span className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 font-bold">
                         {bulkSummary.dup} Sudah Ada ({bulkDuplicatePolicy === 'skip' ? 'Dilewati' : 'Diperbarui'})
                       </span>
                     )}
@@ -1945,7 +1945,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 </div>
 
                 {/* Mobile Preview Cards (< md) */}
-                <div className="md:hidden max-h-64 overflow-y-auto space-y-2 pr-0.5">
+                <div className="md:hidden max-h-64 overflow-y-auto space-y-2.5 pr-0.5">
                   {bulkRows.map((row, idx) => {
                     const isExisting = existingNisnSet.has(
                       row.nisnMda.trim().toLowerCase()
@@ -1953,14 +1953,14 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                     return (
                       <div
                         key={row.rowId}
-                        className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5 text-xs"
+                        className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-sm"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="font-bold text-slate-900 break-words">
                               {idx + 1}. {row.nama}
                             </div>
-                            <div className="font-mono text-[11px] text-emerald-700 font-semibold">
+                            <div className="font-mono text-xs text-emerald-700 font-semibold">
                               {row.nisnMda} · {row.kelas}
                             </div>
                           </div>
@@ -1971,13 +1971,13 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                                 prev.filter((r) => r.rowId !== row.rowId)
                               )
                             }
-                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 shrink-0"
+                            className="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 shrink-0"
                             title="Hapus baris"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                           <span className="text-slate-600">
                             {row.marhalah || 'Program MDA'} ·{' '}
                             <span className="font-semibold text-emerald-700">
@@ -1985,7 +1985,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                             </span>
                           </span>
                           <span
-                            className={`px-1.5 py-0.5 rounded font-bold text-[10px] ${
+                            className={`px-2 py-0.5 rounded font-bold text-xs ${
                               isExisting
                                 ? 'bg-amber-100 text-amber-800'
                                 : 'bg-emerald-100 text-emerald-800'
@@ -1995,7 +1995,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2 pt-1">
-                          <span className="text-[11px] text-slate-500">PIN Login:</span>
+                          <span className="text-xs text-slate-500">PIN Login:</span>
                           <input
                             type="text"
                             value={row.pin}
@@ -2007,7 +2007,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                                 )
                               );
                             }}
-                            className="flex-1 min-w-0 px-2 py-1 text-[11px] font-mono font-bold border border-slate-200 rounded-lg bg-white uppercase"
+                            className="flex-1 min-w-0 h-10 px-2.5 py-1.5 text-sm font-mono font-bold border border-slate-200 rounded-lg bg-white uppercase"
                           />
                         </div>
                       </div>
@@ -2017,17 +2017,17 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
 
                 {/* Desktop Preview Table (md+) */}
                 <div className="hidden md:block max-h-64 overflow-y-auto border border-slate-200 rounded-xl">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead className="sticky top-0 bg-slate-100 text-slate-700 z-10">
+                  <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead className="sticky top-0 bg-slate-100 text-slate-700 z-10 text-xs">
                       <tr>
-                        <th className="py-2 px-2.5">#</th>
-                        <th className="py-2 px-2.5">ID Santri</th>
-                        <th className="py-2 px-2.5">Nama Lengkap</th>
-                        <th className="py-2 px-2.5">Kelas</th>
-                        <th className="py-2 px-2.5">Marhalah / Program</th>
-                        <th className="py-2 px-2.5">PIN Login</th>
-                        <th className="py-2 px-2.5">Status</th>
-                        <th className="py-2 px-2.5 text-right">Aksi</th>
+                        <th className="py-2.5 px-3">#</th>
+                        <th className="py-2.5 px-3">ID Santri</th>
+                        <th className="py-2.5 px-3">Nama Lengkap</th>
+                        <th className="py-2.5 px-3">Kelas</th>
+                        <th className="py-2.5 px-3">Marhalah / Program</th>
+                        <th className="py-2.5 px-3">PIN Login</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -2037,18 +2037,18 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                         );
                         return (
                           <tr key={row.rowId} className="hover:bg-slate-50">
-                            <td className="py-2 px-2.5 text-slate-500">{idx + 1}</td>
-                            <td className="py-2 px-2.5 font-mono font-semibold text-emerald-800 whitespace-nowrap">
+                            <td className="py-2.5 px-3 text-slate-500">{idx + 1}</td>
+                            <td className="py-2.5 px-3 font-mono text-xs font-semibold text-emerald-800 whitespace-nowrap">
                               {row.nisnMda}
                             </td>
-                            <td className="py-2 px-2.5 font-semibold text-slate-900">
+                            <td className="py-2.5 px-3 font-semibold text-slate-900">
                               {row.nama}
                             </td>
-                            <td className="py-2 px-2.5 whitespace-nowrap">{row.kelas}</td>
-                            <td className="py-2 px-2.5 text-slate-700">
+                            <td className="py-2.5 px-3 whitespace-nowrap">{row.kelas}</td>
+                            <td className="py-2.5 px-3 text-slate-700">
                               {row.marhalah || '—'}
                             </td>
-                            <td className="py-2 px-2.5">
+                            <td className="py-2.5 px-3">
                               <input
                                 type="text"
                                 value={row.pin}
@@ -2060,12 +2060,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                                     )
                                   );
                                 }}
-                                className="w-24 px-2 py-1 text-[11px] font-mono font-bold border border-slate-200 rounded-md bg-white uppercase"
+                                className="w-28 h-9 px-2.5 py-1 text-xs font-mono font-bold border border-slate-200 rounded-lg bg-white uppercase"
                               />
                             </td>
-                            <td className="py-2 px-2.5 whitespace-nowrap">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                className={`px-2 py-0.5 rounded text-xs font-bold ${
                                   isExisting
                                     ? 'bg-amber-100 text-amber-800'
                                     : 'bg-emerald-100 text-emerald-800'
@@ -2074,7 +2074,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                                 {isExisting ? 'Sudah Ada' : `${row.statusAktif} · Baru`}
                               </span>
                             </td>
-                            <td className="py-2 px-2.5 text-right">
+                            <td className="py-2.5 px-3 text-right">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -2082,10 +2082,10 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                                     prev.filter((r) => r.rowId !== row.rowId)
                                   )
                                 }
-                                className="p-1 rounded text-rose-600 hover:bg-rose-50"
+                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50"
                                 title="Hapus baris"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </td>
                           </tr>
@@ -2098,7 +2098,7 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             )}
 
             {/* Anti-Overwrite Guarantee */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2 text-[11px] text-slate-600">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-xs text-slate-600">
               <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
               <span className="leading-relaxed break-words">
                 <strong>Mode Anti-Timpa Aktif:</strong> Data santri lama (seperti MDA Senior &amp; MDA Junior) tetap aman tersimpan. Akun akses login CBT &amp; Portal Rapor otomatis dibuatkan untuk setiap santri baru.
@@ -2106,12 +2106,12 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
             </div>
 
             {/* Footer Actions */}
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 disabled={isBusy}
                 onClick={() => setBulkModalOpen(false)}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold"
               >
                 Batal
               </button>
@@ -2119,11 +2119,11 @@ export const MasterManagementView: React.FC<MasterManagementViewProps> = ({
                 type="button"
                 disabled={bulkRows.length === 0 || isBusy}
                 onClick={() => void handleSubmitBulkImport()}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
               >
                 {isBusy ? (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <RefreshCw className="w-4 h-4 animate-spin" />
                     <span>Menyimpan ke Sheets...</span>
                   </>
                 ) : (

@@ -668,35 +668,35 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
   return (
     <div className="space-y-4 sm:space-y-5 min-w-0 max-w-full">
       {/* Top Mode Switcher */}
-      <div className="bg-white border border-emerald-200/80 rounded-2xl p-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+      <div className="bg-white border border-emerald-200/80 rounded-2xl p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
         <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setEditorMode('mapel')}
-            className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+            className={`min-h-[42px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
               editorMode === 'mapel'
                 ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <ClipboardList className="w-3.5 h-3.5 shrink-0" />
+            <ClipboardList className="w-4 h-4 shrink-0" />
             <span className="truncate">Nilai Mata Pelajaran</span>
           </button>
           <button
             type="button"
             onClick={() => setEditorMode('santri')}
-            className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+            className={`min-h-[42px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
               editorMode === 'santri'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Users className="w-3.5 h-3.5 shrink-0" />
+            <Users className="w-4 h-4 shrink-0" />
             <span className="truncate">Rapor Per Santri</span>
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-500 px-2 hidden sm:block">
+        <div className="text-xs text-slate-600 px-2 hidden sm:block">
           {editorMode === 'mapel'
             ? 'Input nilai massal SK, TG, UL, UAS per kelas & mapel — otomatis hitung NR dan sinkron ke Rapor & PDF.'
             : 'Edit lengkap 5 Pilar, Sikap, Tahfidz, Diniyah, Skill Digital, Kehadiran & Catatan Wali.'}
@@ -709,14 +709,14 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
       {editorMode === 'mapel' && (
         <div className="space-y-4 min-w-0 max-w-full">
           {/* Filter Header + Top-Right Simpan */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-5 space-y-3.5 shadow-xs min-w-0">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="min-w-0">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-                  <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                  <BookOpen className="w-4 h-4 shrink-0" />
                   <span>Input Nilai Mata Pelajaran Per Kelas</span>
                 </div>
-                <h2 className="font-display font-bold text-slate-900 text-base sm:text-lg mt-0.5 break-words">
+                <h2 className="font-display font-bold text-slate-900 text-lg sm:text-xl mt-0.5 break-words">
                   {selectedSubject?.name || 'Mata Pelajaran'} ·{' '}
                   {bulkClassFilter === 'ALL' ? 'Semua Kelas' : bulkClassFilter}
                 </h2>
@@ -726,7 +726,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 type="button"
                 disabled={dirtyStudentCount === 0 || isBusy}
                 onClick={handleSaveBulkMapel}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs disabled:opacity-45 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-xs disabled:opacity-45 disabled:cursor-not-allowed transition-colors shrink-0"
               >
                 <Save className="w-4 h-4 shrink-0" />
                 <span>
@@ -738,15 +738,15 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             </div>
 
             {/* 3 Filter Dropdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Kelas
                 </label>
                 <select
                   value={bulkClassFilter}
                   onChange={(e) => setBulkClassFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 >
                   <option value="ALL">Semua Kelas ({db.students.length} Santri)</option>
                   {dynamicClasses.map((cls) => (
@@ -758,13 +758,13 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Mata Pelajaran
                 </label>
                 <select
                   value={selectedSubject?.key || ''}
                   onChange={(e) => setSelectedSubjectKey(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 >
                   <optgroup label={`Mapel Diniyah (UL = Ujian Lisan · KKM ${bulkKkmDiniyah})`}>
                     {subjectOptions
@@ -788,7 +788,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Semester / Periode
                 </label>
                 <select
@@ -798,7 +798,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     setBulkYear(yr);
                     setBulkSemester(sem === 'Genap' ? 'Genap' : 'Gasal');
                   }}
-                  className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full h-11 px-3.5 py-2.5 text-base sm:text-sm font-semibold border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 >
                   {periodOptions.map((p) => (
                     <option key={`${p.year}::${p.semester}`} value={`${p.year}::${p.semester}`}>
@@ -811,9 +811,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
             {/* Dynamic UL Component Badge + Optional Weight Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span
-                  className={`px-2.5 py-1 rounded-lg font-bold border ${
+                  className={`px-3 py-1.5 rounded-lg font-bold border ${
                     selectedSubject?.category === 'diniyah'
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                       : 'bg-sky-50 border-sky-200 text-sky-900'
@@ -823,7 +823,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     ? 'UL: Ujian Lisan'
                     : 'UL: Keterampilan (Mapel IT)'}
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-mono font-semibold text-slate-700 tabular-nums">
+                <span className="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 font-mono font-semibold text-slate-700 tabular-nums">
                   KKM {activeSubjectKkm} · A ≥ {activeSubjectBounds.minA} | B ≥{' '}
                   {activeSubjectBounds.minB} | C ≥ {activeSubjectBounds.minC}
                 </span>
@@ -832,9 +832,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowWeightEditor((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-700"
+                className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-600" />
+                <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
                 <span>
                   Bobot: {weights.sk}/{weights.tg}/{weights.ul}/{weights.uas}%
                 </span>
@@ -842,8 +842,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             </div>
 
             {showWeightEditor && (
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between text-[11px]">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-800">
                     Pengaturan % Bobot Komponen (Total saat ini: {totalWeightPct}%)
                   </span>
@@ -855,7 +855,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     Reset 25/25/25/25
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2.5">
                   {(
                     [
                       { key: 'sk', label: 'SK (%)' },
@@ -865,7 +865,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     ] as const
                   ).map((item) => (
                     <div key={item.key}>
-                      <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         {item.label}
                       </label>
                       <input
@@ -880,7 +880,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             [item.key]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
                           }))
                         }
-                        className="w-full px-2 py-1.5 text-xs font-mono border border-slate-200 rounded-lg bg-white text-center"
+                        className="w-full h-10 px-2.5 py-1.5 text-base sm:text-sm font-mono border border-slate-200 rounded-lg bg-white text-center"
                       />
                     </div>
                   ))}
@@ -893,34 +893,34 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#0E2228] text-white">
-                    <th className="py-3 px-3 w-12 text-center">No</th>
-                    <th className="py-3 px-3">Nama Santri</th>
-                    <th className="py-3 px-2 w-24 text-center">SK</th>
-                    <th className="py-3 px-2 w-24 text-center">TG</th>
-                    <th className="py-3 px-2 w-28 text-center">
+                  <tr className="bg-[#0E2228] text-white text-xs">
+                    <th className="py-3.5 px-3 w-12 text-center">No</th>
+                    <th className="py-3.5 px-3">Nama Santri</th>
+                    <th className="py-3.5 px-2 w-24 text-center">SK</th>
+                    <th className="py-3.5 px-2 w-24 text-center">TG</th>
+                    <th className="py-3.5 px-2 w-32 text-center">
                       UL{' '}
-                      <span className="block text-[10px] font-normal text-emerald-300">
+                      <span className="block text-xs font-normal text-emerald-300">
                         {selectedSubject?.category === 'diniyah'
                           ? '(Ujian Lisan)'
                           : '(Keterampilan)'}
                       </span>
                     </th>
-                    <th className="py-3 px-2 w-28 text-center">
+                    <th className="py-3.5 px-2 w-32 text-center">
                       UAS
-                      <span className="block text-[10px] font-normal text-slate-300">
+                      <span className="block text-xs font-normal text-slate-300">
                         (CBT / Ujian)
                       </span>
                     </th>
-                    <th className="py-3 px-3 w-28 text-center">NR</th>
+                    <th className="py-3.5 px-3 w-32 text-center">NR</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {bulkStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-10 text-center text-slate-500">
+                      <td colSpan={7} className="py-10 text-center text-sm text-slate-500">
                         Belum ada santri di kelas {bulkClassFilter}.
                       </td>
                     </tr>
@@ -935,17 +935,17 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             info.isDirty ? 'bg-amber-50/40' : 'hover:bg-emerald-50/30'
                           }`}
                         >
-                          <td className="py-2.5 px-3 text-center font-mono text-slate-500 tabular-nums">
+                          <td className="py-3 px-3 text-center font-mono text-xs text-slate-500 tabular-nums">
                             {idx + 1}
                           </td>
-                          <td className="py-2.5 px-3">
-                            <div className="font-bold text-slate-900">{stu.nama}</div>
-                            <div className="text-[11px] font-mono text-slate-500">
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-slate-900 text-sm">{stu.nama}</div>
+                            <div className="text-xs font-mono text-slate-500 mt-0.5">
                               {stu.nisnMda} · {stu.kelas}
                             </div>
                           </td>
                           {(['sk', 'tg', 'ul', 'uas'] as const).map((field) => (
-                            <td key={field} className="py-2 px-2">
+                            <td key={field} className="py-2.5 px-2">
                               <div className="relative">
                                 <input
                                   type="number"
@@ -958,7 +958,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                   onChange={(e) =>
                                     handleBulkFieldChange(stu, field, e.target.value)
                                   }
-                                  className={`w-full px-2 py-1.5 text-xs font-mono text-center border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${
+                                  className={`w-full h-10 px-2.5 py-1.5 text-sm font-mono text-center border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${
                                     field === 'uas' && info.entry.uasFromCbt
                                       ? 'border-sky-300 bg-sky-50/70 font-bold text-sky-950'
                                       : 'border-slate-200 bg-white'
@@ -967,7 +967,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                 {field === 'uas' && info.entry.uasFromCbt && (
                                   <span
                                     title="Nilai otomatis dari Ujian CBT"
-                                    className="block text-[9px] text-center font-bold text-sky-700 mt-0.5"
+                                    className="block text-xs text-center font-bold text-sky-700 mt-0.5"
                                   >
                                     Dari CBT
                                   </span>
@@ -975,14 +975,14 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                               </div>
                             </td>
                           ))}
-                          <td className="py-2.5 px-3 text-center">
-                            <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-mono font-bold tabular-nums">
+                          <td className="py-3 px-3 text-center">
+                            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 font-mono text-sm font-bold tabular-nums">
                               <span className="text-slate-900">
                                 {info.hasComponents || info.nr > 0 ? info.nr : '—'}
                               </span>
                               {(info.hasComponents || info.nr > 0) && (
                                 <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                  className={`px-1.5 py-0.5 rounded text-xs ${
                                     isTuntas
                                       ? 'bg-emerald-100 text-emerald-800'
                                       : 'bg-rose-100 text-rose-700'
@@ -1004,7 +1004,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             {/* Mobile Fit-Screen List (360px - 430px without right-edge clipping) */}
             <div className="md:hidden divide-y divide-slate-100">
               {bulkStudents.length === 0 ? (
-                <div className="py-8 px-4 text-center text-xs text-slate-500">
+                <div className="py-8 px-4 text-center text-sm text-slate-500">
                   Belum ada santri di kelas {bulkClassFilter}.
                 </div>
               ) : (
@@ -1014,30 +1014,30 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                   return (
                     <div
                       key={stu.id}
-                      className={`p-3 space-y-2 ${
+                      className={`p-3.5 space-y-2.5 ${
                         info.isDirty ? 'bg-amber-50/40' : 'bg-white'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2 min-w-0">
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-bold text-slate-900 leading-snug line-clamp-2 break-words">
+                          <div className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 break-words">
                             {idx + 1}. {stu.nama}
                           </div>
-                          <div className="text-[10px] font-mono text-slate-500 truncate">
+                          <div className="text-xs font-mono text-slate-500 truncate mt-0.5">
                             {stu.kelas} · {stu.nisnMda}
                           </div>
                         </div>
                         <div className="shrink-0 text-right">
-                          <div className="text-[9px] font-semibold text-slate-500 uppercase">
+                          <div className="text-xs font-semibold text-slate-500 uppercase">
                             NR
                           </div>
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 font-mono text-xs font-bold tabular-nums">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-mono text-sm font-bold tabular-nums">
                             <span className="text-slate-900">
                               {info.hasComponents || info.nr > 0 ? info.nr : '—'}
                             </span>
                             {(info.hasComponents || info.nr > 0) && (
                               <span
-                                className={`px-1 rounded text-[10px] ${
+                                className={`px-1.5 rounded text-xs ${
                                   isTuntas
                                     ? 'bg-emerald-100 text-emerald-800'
                                     : 'bg-rose-100 text-rose-700'
@@ -1050,7 +1050,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-4 gap-1.5">
+                      <div className="grid grid-cols-4 gap-2">
                         {(
                           [
                             { key: 'sk', label: 'SK' },
@@ -1060,10 +1060,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           ] as const
                         ).map((col) => (
                           <div key={col.key} className="min-w-0">
-                            <label className="flex items-center justify-between text-[10px] font-bold text-slate-600 mb-0.5 px-0.5">
+                            <label className="flex items-center justify-between text-xs font-bold text-slate-600 mb-1 px-0.5">
                               <span>{col.label}</span>
                               {col.key === 'uas' && info.entry.uasFromCbt && (
-                                <span className="text-[8.5px] font-bold text-sky-700">
+                                <span className="text-xs font-bold text-sky-700">
                                   CBT
                                 </span>
                               )}
@@ -1079,7 +1079,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                               onChange={(e) =>
                                 handleBulkFieldChange(stu, col.key, e.target.value)
                               }
-                              className={`w-full min-h-[38px] px-1 py-1 text-xs font-mono text-center border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${
+                              className={`w-full h-11 px-1.5 py-1.5 text-base sm:text-sm font-mono text-center border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 ${
                                 col.key === 'uas' && info.entry.uasFromCbt
                                   ? 'border-sky-300 bg-sky-50/70 font-bold text-sky-950'
                                   : 'border-slate-200 bg-slate-50 focus:bg-white'
@@ -1095,8 +1095,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             </div>
 
             {/* Bottom Legend + Bottom-Right Simpan */}
-            <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="text-[11px] text-slate-600 space-y-1 min-w-0">
+            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs text-slate-600 space-y-1 min-w-0">
                 <div className="font-bold text-slate-800">Keterangan Singkatan Kolom:</div>
                 <div className="flex flex-wrap gap-x-3 gap-y-1 leading-relaxed">
                   <span>
@@ -1124,7 +1124,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 type="button"
                 disabled={dirtyStudentCount === 0 || isBusy}
                 onClick={handleSaveBulkMapel}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs disabled:opacity-45 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-xs disabled:opacity-45 disabled:cursor-not-allowed transition-colors shrink-0"
               >
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>
@@ -1144,7 +1144,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
       {editorMode === 'santri' && (
         <div className="space-y-5 min-w-0 max-w-full">
           {/* Top Santri Selector & Save Bar */}
-          <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <StudentAvatar
                 name={student.nama}
@@ -1164,7 +1164,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       if (firstMatch) onSelectStudent(firstMatch.id);
                     }}
                     aria-label="Filter Kelas Santri"
-                    className="w-full sm:w-auto max-w-full min-w-0 text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5"
+                    className="w-full sm:w-auto max-w-full min-w-0 h-11 text-base sm:text-sm font-semibold text-slate-800 bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2"
                   >
                     <option value="ALL">Semua Kelas ({db.students.length})</option>
                     {dynamicClasses.map((cls) => (
@@ -1177,7 +1177,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                   <select
                     value={student.id}
                     onChange={(e) => onSelectStudent(e.target.value)}
-                    className="w-full sm:w-auto max-w-full min-w-0 truncate font-display font-bold text-slate-900 text-sm sm:text-base bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full sm:w-auto max-w-full min-w-0 truncate h-11 font-display font-bold text-slate-900 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   >
                     {filteredStudentsForIndividual.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -1189,7 +1189,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     {student.nisnMda}
                   </span>
                 </div>
-                <div className="text-xs text-slate-500 mt-1 break-words">
+                <div className="text-xs sm:text-sm text-slate-500 mt-1.5 break-words">
                   Semester {selectedSemester} {selectedYear} · Wali Kelas: {student.waliKelasNama}
                 </div>
               </div>
@@ -1204,18 +1204,18 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     pilar: { ...prev.pilar, autoCalculate: true },
                   }))
                 }
-                className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold whitespace-nowrap"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-semibold whitespace-nowrap"
               >
-                <Calculator className="w-3.5 h-3.5 text-emerald-600" />
+                <Calculator className="w-4 h-4 text-emerald-600" />
                 <span>Hitung Pilar Otomatis</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onOpenPrint(student.id)}
-                className="w-full sm:w-auto min-h-[40px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold whitespace-nowrap"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm font-semibold whitespace-nowrap"
               >
-                <Printer className="w-3.5 h-3.5" />
+                <Printer className="w-4 h-4" />
                 <span>Pratinjau PDF</span>
               </button>
 
@@ -1227,16 +1227,16 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     updatedAt: new Date().toISOString(),
                   })
                 }
-                className="min-[420px]:col-span-2 sm:col-span-1 w-full sm:w-auto min-h-[42px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold whitespace-nowrap"
+                className="min-[420px]:col-span-2 sm:col-span-1 w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-semibold whitespace-nowrap"
               >
-                <Save className="w-3.5 h-3.5" />
+                <Save className="w-4 h-4" />
                 <span>Simpan Nilai Rapor</span>
               </button>
             </div>
           </div>
 
           {/* Editor Section Tabs */}
-          <div className="w-full max-w-full flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+          <div className="w-full max-w-full flex items-center gap-1.5 p-1.5 bg-slate-100 rounded-xl overflow-x-auto">
             {[
               { id: 'ringkasan' as const, label: '5 Pilar & KPI MDA' },
               { id: 'sikap' as const, label: 'A. Sikap & Character Building' },
@@ -1248,7 +1248,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                className={`min-h-[42px] px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${
                   tab === item.id
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1265,14 +1265,14 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="font-display font-bold text-slate-900 text-sm">
+                    <h3 className="font-display font-bold text-slate-900 text-base">
                       Ringkasan Capaian 5 Pilar (%)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs sm:text-sm text-slate-500">
                       Otomatis dari kalkulasi direktarium atau sesuaikan manual
                     </p>
                   </div>
-                  <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <label className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={draft.pilar.autoCalculate}
@@ -1296,8 +1296,8 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     { key: 'kesantrianKeasramaan' as const, label: 'Kesantrian dan Keasramaan' },
                     { key: 'characterBuilding' as const, label: 'Character Building' },
                   ].map((item) => (
-                    <div key={item.key} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <div key={item.key} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-700">
                         <span>{item.label}</span>
                         <span className="font-mono text-slate-900 tabular-nums">
                           {draft.pilar[item.key]}%
@@ -1330,7 +1330,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                               pilar: { ...p.pilar, [item.key]: Number(e.target.value) },
                             }))
                           }
-                          className="w-16 px-2 py-1 text-xs font-mono border border-slate-200 rounded-lg text-right disabled:bg-slate-50"
+                          className="w-20 h-10 px-2.5 py-1.5 text-base sm:text-sm font-mono border border-slate-200 rounded-lg text-right disabled:bg-slate-50"
                         />
                       </div>
                     </div>
@@ -1340,10 +1340,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
               <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                 <div>
-                  <h3 className="font-display font-bold text-slate-900 text-sm">
+                  <h3 className="font-display font-bold text-slate-900 text-base">
                     Statistik Project &amp; Capaian MDA (Halaman 2 Rapor)
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs sm:text-sm text-slate-500">
                     Rekap kegiatan character building, client project, dan income santri
                   </p>
                 </div>
@@ -1357,7 +1357,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     { key: 'produksiKontenCount' as const, label: 'Produksi Konten' },
                   ].map((field) => (
                     <div key={field.key}>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                         {field.label}
                       </label>
                       <input
@@ -1373,13 +1373,13 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
                   ))}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                       Income Project (Rp)
                     </label>
                     <input
@@ -1396,9 +1396,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           },
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                      className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                     />
-                    <div className="text-[11px] text-emerald-700 mt-1 font-mono">
+                    <div className="text-xs text-emerald-700 mt-1.5 font-mono">
                       {formatRupiah(draft.kpiMda.incomeRp)}
                     </div>
                   </div>
@@ -1412,25 +1412,25 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
             <div className="space-y-6 min-w-0">
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
-                  <h3 className="font-display font-bold text-slate-900 text-sm">
+                  <h3 className="font-display font-bold text-slate-900 text-base">
                     A. Penilaian Sikap dan Character
                   </h3>
                 </div>
                 <div className="w-full max-w-full overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left border-collapse text-xs">
+                  <table className="w-full min-w-[640px] text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-900 text-white">
-                        <th className="py-2.5 px-4 w-12">No</th>
-                        <th className="py-2.5 px-4">Aspek Penilaian</th>
-                        <th className="py-2.5 px-4 w-32">Predikat</th>
-                        <th className="py-2.5 px-4">Deskripsi Sikap</th>
+                      <tr className="bg-slate-900 text-white text-xs">
+                        <th className="py-3 px-4 w-12">No</th>
+                        <th className="py-3 px-4">Aspek Penilaian</th>
+                        <th className="py-3 px-4 w-36">Predikat</th>
+                        <th className="py-3 px-4">Deskripsi Sikap</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {draft.sikap.map((item, idx) => (
                         <tr key={item.aspek}>
-                          <td className="py-2.5 px-4 font-mono text-slate-500">{idx + 1}</td>
-                          <td className="py-2.5 px-4 font-medium text-slate-900">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-500">{idx + 1}</td>
+                          <td className="py-3 px-4 font-medium text-slate-900">
                             {item.aspek}
                           </td>
                           <td className="py-2.5 px-4">
@@ -1444,7 +1444,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                 };
                                 updateDraft((p) => ({ ...p, sikap: next }));
                               }}
-                              className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono font-bold bg-white"
+                              className="w-full h-10 px-2.5 py-1.5 border border-slate-200 rounded-lg font-mono text-sm font-bold bg-white"
                             >
                               <option value="A">A (Sangat Baik)</option>
                               <option value="B">B (Baik)</option>
@@ -1462,7 +1462,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                 updateDraft((p) => ({ ...p, sikap: next }));
                               }}
                               placeholder="Tulis deskripsi sikap santri..."
-                              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md"
+                              className="w-full h-10 px-3 py-1.5 text-sm border border-slate-200 rounded-lg"
                             />
                           </td>
                         </tr>
@@ -1474,24 +1474,24 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
-                  <h3 className="font-display font-bold text-slate-900 text-sm">
+                  <h3 className="font-display font-bold text-slate-900 text-base">
                     Program Character Building MDA
                   </h3>
                 </div>
                 <div className="w-full max-w-full overflow-x-auto">
-                  <table className="w-full min-w-[540px] text-left border-collapse text-xs">
+                  <table className="w-full min-w-[540px] text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-900 text-white">
-                        <th className="py-2.5 px-4 w-12">No</th>
-                        <th className="py-2.5 px-4 w-64">Kegiatan</th>
-                        <th className="py-2.5 px-4">Keterangan Pelaksanaan / Capaian</th>
+                      <tr className="bg-slate-900 text-white text-xs">
+                        <th className="py-3 px-4 w-12">No</th>
+                        <th className="py-3 px-4 w-64">Kegiatan</th>
+                        <th className="py-3 px-4">Keterangan Pelaksanaan / Capaian</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {draft.characterPrograms.map((prog, idx) => (
                         <tr key={prog.kegiatan}>
-                          <td className="py-2.5 px-4 font-mono text-slate-500">{idx + 1}</td>
-                          <td className="py-2.5 px-4 font-semibold text-slate-900">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-500">{idx + 1}</td>
+                          <td className="py-3 px-4 font-semibold text-slate-900">
                             {prog.kegiatan}
                           </td>
                           <td className="py-2.5 px-4">
@@ -1504,7 +1504,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                 updateDraft((p) => ({ ...p, characterPrograms: next }));
                               }}
                               placeholder="Contoh: Mengikuti dan aktif dalam kegiatan..."
-                              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md"
+                              className="w-full h-10 px-3 py-1.5 text-sm border border-slate-200 rounded-lg"
                             />
                           </td>
                         </tr>
@@ -1520,7 +1520,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
           {tab === 'tahfidz' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
               <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
-                <h3 className="font-display font-bold text-slate-900 text-sm">
+                <h3 className="font-display font-bold text-slate-900 text-base">
                   B. Capaian Hafalan Al-Qur’an
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1555,7 +1555,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       key={field.key}
                       className={field.key === 'totalHafalan' ? 'sm:col-span-2' : ''}
                     >
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                         {field.label}
                       </label>
                       <input
@@ -1568,7 +1568,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           }))
                         }
                         placeholder={field.ph}
-                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl"
                       />
                     </div>
                   ))}
@@ -1577,10 +1577,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
 
               <div className="lg:col-span-6 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 className="font-display font-bold text-slate-900 text-sm">
+                  <h3 className="font-display font-bold text-slate-900 text-base">
                     Aspek Penilaian Tahfidz (KKM {periodKkmOverrides.kkmTahfidz})
                   </h3>
-                  <div className="font-mono text-xs font-bold text-emerald-700 tabular-nums">
+                  <div className="font-mono text-xs sm:text-sm font-bold text-emerald-700 tabular-nums">
                     Nilai Akhir: {draft.tahfidz.nilaiAkhir} ({draft.tahfidz.predikat} ·{' '}
                     {getKategoriPredikat(draft.tahfidz.predikat)})
                   </div>
@@ -1594,7 +1594,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     { key: 'ketepatanAyat' as const, label: 'Ketepatan Ayat' },
                   ].map((item) => (
                     <div key={item.key}>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                         {item.label}
                       </label>
                       <input
@@ -1611,14 +1611,14 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
                   ))}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                     Deskripsi Capaian Tahfidz
                   </label>
                   <textarea
@@ -1631,7 +1631,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       }))
                     }
                     placeholder="Contoh: Ananda telah mencapai target hafalan dengan lancar..."
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl leading-relaxed"
                   />
                 </div>
               </div>
@@ -1645,29 +1645,29 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="font-display font-bold text-slate-900 text-sm">
+                    <h3 className="font-display font-bold text-slate-900 text-base">
                       C. Mata Pelajaran Diniyah (KKM {periodKkmOverrides.kkmDiniyah})
                     </h3>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       Untuk input komponen SK/TG/UL/UAS per kelas, gunakan tab &ldquo;Nilai Mata Pelajaran&rdquo; di atas.
                     </p>
                   </div>
-                  <div className="font-mono text-xs font-bold text-slate-900 tabular-nums">
+                  <div className="font-mono text-xs sm:text-sm font-bold text-slate-900 tabular-nums">
                     Rata-rata Diniyah: {diniyahAvg} (
                     {hitungPredikatByKkm(diniyahAvg, periodKkmOverrides.kkmDiniyah)})
                   </div>
                 </div>
                 <div className="w-full max-w-full overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-left border-collapse text-xs">
+                  <table className="w-full min-w-[720px] text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-900 text-white">
-                        <th className="py-2.5 px-3 w-10">No</th>
-                        <th className="py-2.5 px-3">Mata Pelajaran</th>
-                        <th className="py-2.5 px-3">Kitab / Materi</th>
-                        <th className="py-2.5 px-3 w-20 text-right">KKM</th>
-                        <th className="py-2.5 px-3 w-24 text-right">Nilai</th>
-                        <th className="py-2.5 px-3 w-28">Status KKM</th>
-                        <th className="py-2.5 px-3">Deskripsi Capaian</th>
+                      <tr className="bg-slate-900 text-white text-xs">
+                        <th className="py-3 px-3 w-10">No</th>
+                        <th className="py-3 px-3">Mata Pelajaran</th>
+                        <th className="py-3 px-3">Kitab / Materi</th>
+                        <th className="py-3 px-3 w-20 text-right">KKM</th>
+                        <th className="py-3 px-3 w-24 text-right">Nilai</th>
+                        <th className="py-3 px-3 w-32">Status KKM</th>
+                        <th className="py-3 px-3">Deskripsi Capaian</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1675,11 +1675,11 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                         const tuntas = d.nilai >= d.kkm;
                         return (
                           <tr key={d.no}>
-                            <td className="py-2.5 px-3 font-mono text-slate-500">{d.no}</td>
-                            <td className="py-2.5 px-3 font-semibold text-slate-900">
+                            <td className="py-3 px-3 font-mono text-xs text-slate-500">{d.no}</td>
+                            <td className="py-3 px-3 font-semibold text-slate-900">
                               <div>{d.mataPelajaran}</div>
                               {hasSubjectComponents(d) && (
-                                <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                                <div className="text-xs font-mono text-slate-500 mt-0.5">
                                   SK:{d.sk ?? '—'} TG:{d.tg ?? '—'} UL:{d.ul ?? '—'} UAS:
                                   {d.uas ?? '—'}
                                 </div>
@@ -1694,10 +1694,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                   next[idx] = { ...next[idx], kitabMateri: e.target.value };
                                   updateDraft((p) => ({ ...p, diniyah: next }));
                                 }}
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md"
+                                className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg"
                               />
                             </td>
-                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                            <td className="py-3 px-3 text-right font-mono tabular-nums">
                               {d.kkm}
                             </td>
                             <td className="py-2.5 px-3">
@@ -1719,10 +1719,10 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                   };
                                   updateDraft((p) => ({ ...p, diniyah: next }));
                                 }}
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
+                                className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg font-mono text-right"
                               />
                             </td>
-                            <td className="py-2.5 px-3 font-semibold">
+                            <td className="py-3 px-3 font-semibold text-xs sm:text-sm">
                               <span className={tuntas ? 'text-emerald-700' : 'text-rose-600'}>
                                 {d.predikat} · {tuntas ? 'Tuntas' : 'Belum'}
                               </span>
@@ -1737,7 +1737,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                   updateDraft((p) => ({ ...p, diniyah: next }));
                                 }}
                                 placeholder="Deskripsi capaian..."
-                                className="w-full px-2 py-1 border border-slate-200 rounded-md"
+                                className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg"
                               />
                             </td>
                           </tr>
@@ -1752,29 +1752,29 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="font-display font-bold text-slate-900 text-sm">
+                    <h3 className="font-display font-bold text-slate-900 text-base">
                       D. Skill Digital (KKM {periodKkmOverrides.kkmDigital})
                     </h3>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       Jika diisi via Nilai Mata Pelajaran: Pengetahuan = rata-rata (SK, TG, UAS), Keterampilan = UL, dan Nilai Akhir = NR.
                     </p>
                   </div>
-                  <div className="font-mono text-xs font-bold text-slate-900 tabular-nums">
+                  <div className="font-mono text-xs sm:text-sm font-bold text-slate-900 tabular-nums">
                     Rata-rata Skill Digital: {digitalAvg} (
                     {hitungPredikatByKkm(digitalAvg, periodKkmOverrides.kkmDigital)})
                   </div>
                 </div>
                 <div className="w-full max-w-full overflow-x-auto">
-                  <table className="w-full min-w-[680px] text-left border-collapse text-xs">
+                  <table className="w-full min-w-[680px] text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-900 text-white">
-                        <th className="py-2.5 px-3 w-10">No</th>
-                        <th className="py-2.5 px-3">Materi Skill</th>
-                        <th className="py-2.5 px-3 w-20 text-right">KKM</th>
-                        <th className="py-2.5 px-3 w-28 text-right">Pengetahuan</th>
-                        <th className="py-2.5 px-3 w-28 text-right">Keterampilan</th>
-                        <th className="py-2.5 px-3 w-24 text-right">Nilai Akhir</th>
-                        <th className="py-2.5 px-3 w-28">Predikat</th>
+                      <tr className="bg-slate-900 text-white text-xs">
+                        <th className="py-3 px-3 w-10">No</th>
+                        <th className="py-3 px-3">Materi Skill</th>
+                        <th className="py-3 px-3 w-20 text-right">KKM</th>
+                        <th className="py-3 px-3 w-28 text-right">Pengetahuan</th>
+                        <th className="py-3 px-3 w-28 text-right">Keterampilan</th>
+                        <th className="py-3 px-3 w-24 text-right">Nilai Akhir</th>
+                        <th className="py-3 px-3 w-32">Predikat</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1801,7 +1801,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             const tuntas = s.nilaiAkhir >= s.kkm;
                             return (
                               <tr key={`${rawIdx}-${s.materiSkill}`}>
-                                <td className="py-2.5 px-3 font-mono text-slate-500">
+                                <td className="py-3 px-3 font-mono text-xs text-slate-500">
                                   {displayNo}
                                 </td>
                                 <td className="py-2.5 px-3">
@@ -1817,16 +1817,16 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                       };
                                       updateDraft((p) => ({ ...p, skillDigital: next }));
                                     }}
-                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-medium"
+                                    className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg font-medium"
                                   />
                                   {hasSubjectComponents(s) && (
-                                    <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                                    <div className="text-xs font-mono text-slate-500 mt-1">
                                       SK:{s.sk ?? '—'} TG:{s.tg ?? '—'} UL:{s.ul ?? '—'} UAS:
                                       {s.uas ?? '—'}
                                     </div>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                <td className="py-3 px-3 text-right font-mono tabular-nums">
                                   {s.kkm}
                                 </td>
                                 <td className="py-2.5 px-3">
@@ -1849,7 +1849,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                       };
                                       updateDraft((p) => ({ ...p, skillDigital: next }));
                                     }}
-                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
+                                    className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg font-mono text-right"
                                   />
                                 </td>
                                 <td className="py-2.5 px-3">
@@ -1872,13 +1872,13 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                                       };
                                       updateDraft((p) => ({ ...p, skillDigital: next }));
                                     }}
-                                    className="w-full px-2 py-1 border border-slate-200 rounded-md font-mono text-right"
+                                    className="w-full h-10 px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg font-mono text-right"
                                   />
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                                <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
                                   {s.nilaiAkhir}
                                 </td>
-                                <td className="py-2.5 px-3 font-semibold">
+                                <td className="py-3 px-3 font-semibold text-xs sm:text-sm">
                                   <span
                                     className={
                                       s.nilaiAkhir === 0
@@ -1908,7 +1908,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
           {tab === 'catatan' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
               <div className="lg:col-span-4 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
-                <h3 className="font-display font-bold text-slate-900 text-sm">
+                <h3 className="font-display font-bold text-slate-900 text-base">
                   E. Kehadiran Santri (Hari)
                 </h3>
                 <div className="space-y-3">
@@ -1918,7 +1918,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     { key: 'alpa' as const, label: 'Alpa (tanpa keterangan)' },
                   ].map((item) => (
                     <div key={item.key}>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                         {item.label}
                       </label>
                       <input
@@ -1934,14 +1934,14 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             },
                           }))
                         }
-                        className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                        className="w-full h-11 px-3.5 py-2 text-base sm:text-sm font-mono border border-slate-200 rounded-xl"
                       />
                     </div>
                   ))}
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 space-y-3">
-                  <h4 className="font-display font-bold text-slate-900 text-sm">
+                  <h4 className="font-display font-bold text-slate-900 text-base">
                     Keputusan Semester
                   </h4>
                   <select
@@ -1952,7 +1952,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                         keputusanSemester: e.target.value as KeputusanSemester,
                       }))
                     }
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white"
+                    className="w-full h-11 px-3.5 py-2 text-base sm:text-sm border border-slate-200 rounded-xl bg-white"
                   >
                     <option value="Lanjut ke semester genap">Lanjut ke semester genap</option>
                     <option value="Lanjut dengan bimbingan">Lanjut dengan bimbingan</option>
@@ -1960,7 +1960,7 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                     <option value="Lainnya">Lainnya</option>
                   </select>
 
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer pt-1">
+                  <label className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer pt-1">
                     <input
                       type="checkbox"
                       checked={draft.published}
@@ -1975,12 +1975,12 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
               </div>
 
               <div className="lg:col-span-8 min-w-0 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
-                <h3 className="font-display font-bold text-slate-900 text-sm">
+                <h3 className="font-display font-bold text-slate-900 text-base">
                   F. Catatan &amp; Pesan Wali Kelas
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                       Pesan Singkat Wali Kelas (Halaman 2 Rapor)
                     </label>
                     <textarea
@@ -1992,12 +1992,12 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           catatanWali: { ...p.catatanWali, pesanSingkat: e.target.value },
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl leading-relaxed"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                       Perkembangan Menyeluruh (Diniyah, Tahfidz, Skill Digital)
                     </label>
                     <textarea
@@ -2009,12 +2009,12 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           catatanWali: { ...p.catatanWali, perkembangan: e.target.value },
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl leading-relaxed"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                       Kekuatan Santri
                     </label>
                     <textarea
@@ -2026,12 +2026,12 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           catatanWali: { ...p.catatanWali, kekuatan: e.target.value },
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl leading-relaxed"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
                       Saran Semester Depan &amp; Peran Orang Tua / Wali
                     </label>
                     <textarea
@@ -2046,13 +2046,13 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           },
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl leading-relaxed"
                     />
                   </div>
 
                   <div className="pt-3 border-t border-slate-100">
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                      <label className="block text-xs font-semibold text-emerald-900">
+                      <label className="block text-xs sm:text-sm font-semibold text-emerald-900">
                         Ringkasan Perkembangan Karya &amp; Kompetensi (Tampil di Rapor Hal. 5 &amp; Portal Wali)
                       </label>
                       <button
@@ -2070,9 +2070,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                             ringkasanPortofolio: regenerated,
                           }));
                         }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[11px] font-semibold text-emerald-800 transition-colors"
+                        className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold text-emerald-800 transition-colors"
                       >
-                        <Sparkles className="w-3 h-3" />
+                        <Sparkles className="w-3.5 h-3.5" />
                         <span>Buat Ulang Otomatis</span>
                       </button>
                     </div>
@@ -2094,9 +2094,9 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                           ringkasanPortofolio: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 text-xs border border-emerald-200 bg-emerald-50/30 rounded-lg leading-relaxed"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-sm border border-emerald-200 bg-emerald-50/30 rounded-xl leading-relaxed"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
                       Otomatis dirangkum dalam bahasa yang mudah dipahami wali santri. Editan manual Anda tidak akan tertimpa kecuali Anda menekan &ldquo;Buat Ulang Otomatis&rdquo;.
                     </p>
                   </div>

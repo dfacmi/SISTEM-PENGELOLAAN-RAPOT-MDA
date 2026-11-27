@@ -79,16 +79,16 @@ export const RadarFivePillarsChart: React.FC<RadarProps> = ({
                 y={labelPt.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-slate-700 text-[10.5px] font-semibold"
+                className="fill-slate-700 text-xs font-semibold"
               >
                 {item.short}
               </text>
               <text
                 x={labelPt.x}
-                y={labelPt.y + 13}
+                y={labelPt.y + 14}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-emerald-700 text-[10px] font-mono font-bold"
+                className="fill-emerald-700 text-xs font-mono font-bold"
               >
                 {current[item.key]}%
               </text>
@@ -213,7 +213,7 @@ export const SemesterProgressChart: React.FC<{ data: TrendSeriesPoint[] }> = ({ 
                 x={padL - 8}
                 y={y + 3}
                 textAnchor="end"
-                className="fill-slate-500 text-[10px] font-mono"
+                className="fill-slate-500 text-xs font-mono"
               >
                 {tick}
               </text>
@@ -249,7 +249,7 @@ export const SemesterProgressChart: React.FC<{ data: TrendSeriesPoint[] }> = ({ 
                     x={getX(idx)}
                     y={getY(val) - 9}
                     textAnchor="middle"
-                    className="fill-slate-700 text-[9.5px] font-mono font-semibold"
+                    className="fill-slate-700 text-xs font-mono font-semibold"
                   >
                     {val}
                   </text>
@@ -265,7 +265,7 @@ export const SemesterProgressChart: React.FC<{ data: TrendSeriesPoint[] }> = ({ 
             x={getX(idx)}
             y={height - 10}
             textAnchor="middle"
-            className="fill-slate-600 text-[10.5px] font-medium"
+            className="fill-slate-600 text-xs font-medium"
           >
             {d.label}
           </text>

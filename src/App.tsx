@@ -1765,23 +1765,23 @@ export default function App() {
           <h2 className="font-display font-bold text-lg text-slate-900">
             Gagal Memuat Data Google Sheets
           </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">{dbLoadError}</p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-sm text-slate-600 leading-relaxed">{dbLoadError}</p>
+          <p className="text-xs text-slate-500 leading-relaxed">
             Demi keamanan data, sistem tidak menampilkan data contoh palsu sebagai pengganti database asli saat koneksi gagal.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => void refreshFromServer(false)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+              className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-4 h-4" />
               <span>Coba Muat Ulang</span>
             </button>
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
+              className="min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold"
             >
               Kembali ke Login
             </button>
@@ -1862,38 +1862,38 @@ export default function App() {
     const isRaporLocked = Boolean(tpl.lockRaporDuringExam);
     return (
       <div
-        className="min-h-screen flex flex-col justify-between p-3 sm:p-8 max-w-full overflow-x-hidden"
+        className="min-h-screen flex flex-col justify-between p-4 sm:p-8 lg:p-10 max-w-full overflow-x-hidden"
         style={{ backgroundColor: theme.pageTint }}
       >
         {pwaUpdate.updateAvailable && (
-          <div className="max-w-5xl w-full mx-auto mb-3 p-3 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-2 text-xs shadow-md">
+          <div className="max-w-6xl w-full mx-auto mb-4 p-3.5 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-3 text-sm shadow-md">
             <div className="flex items-center gap-2 font-semibold">
-              <RefreshCw className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+              <RefreshCw className="w-4 h-4 text-[#1DF27A] shrink-0" />
               <span>Versi baru SIAKAD MDA tersedia. Muat ulang agar pembaruan aktif.</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={pwaUpdate.applyUpdate}
-                className="px-3 py-1.5 rounded-lg bg-[#1DF27A] text-slate-950 font-bold hover:bg-emerald-300"
+                className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#1DF27A] text-slate-950 text-sm font-bold hover:bg-emerald-300"
               >
                 Muat Ulang
               </button>
               <button
                 type="button"
                 onClick={pwaUpdate.dismissUpdateBanner}
-                className="p-1 rounded-lg text-slate-300 hover:text-white"
+                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-300 hover:text-white"
                 aria-label="Tutup pemberitahuan pembaruan"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
-        <div className="max-w-5xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-stretch min-w-0">
+        <div className="max-w-6xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-[45fr_55fr] gap-5 sm:gap-6 lg:gap-8 items-stretch min-w-0">
           {/* Left MDA Branding Panel */}
           <div
-            className="lg:col-span-6 min-w-0 rounded-3xl p-5 sm:p-8 text-white flex flex-col justify-between shadow-lg relative overflow-hidden"
+            className="min-w-0 rounded-3xl p-6 sm:p-7 lg:p-9 text-white flex flex-col justify-between shadow-lg relative overflow-hidden"
             style={{ background: theme.bannerGradient }}
           >
             {tpl.coverPhotoUrl && (
@@ -1908,21 +1908,21 @@ export default function App() {
               <div className="inline-flex items-center justify-center bg-white rounded-2xl px-4 py-2.5 shadow-sm">
                 <MdaLogo size="md" customLogoUrl={tpl.customLogoUrl} />
               </div>
-              <h1 className="font-display font-extrabold text-2xl sm:text-4xl leading-tight mt-6 sm:mt-8 text-balance">
+              <h1 className="font-display font-bold text-2xl sm:text-3xl lg:text-[32px] leading-tight mt-6 sm:mt-8 text-balance">
                 {tpl.loginHeadline}
               </h1>
-              <p className="mt-3 font-[Arial] text-xs sm:text-sm text-emerald-50/95 leading-relaxed">
+              <p className="mt-3 font-[Arial] text-sm sm:text-[15px] text-emerald-50/95 leading-relaxed">
                 {tpl.loginDescription}
               </p>
             </div>
 
-            <div className="relative z-10 mt-6 sm:mt-8 pt-5 border-t border-white/25 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className="relative z-10 mt-6 sm:mt-8 pt-5 border-t border-white/25 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-[13px] leading-relaxed">
               <div>
-                <div className="font-[Arial] font-bold text-[#1DF27A]">Admin, Guru &amp; Ujian CBT</div>
+                <div className="font-[Arial] font-bold text-sm text-[#1DF27A]">Admin, Guru &amp; Ujian CBT</div>
                 <div className="font-[Arial] text-white/90 mt-1">{tpl.loginAdminInfo}</div>
               </div>
               <div>
-                <div className="font-[Arial] font-bold text-sky-200">
+                <div className="font-[Arial] font-bold text-sm text-sky-200">
                   Portal Rapor Wali (Privat)
                 </div>
                 <div className="font-[Arial] text-white/90 mt-1">{tpl.loginParentInfo}</div>
@@ -1931,16 +1931,16 @@ export default function App() {
           </div>
 
           {/* Right Sign-In Card */}
-          <div className="lg:col-span-6 min-w-0 bg-white border border-emerald-200 rounded-3xl p-4 sm:p-8 flex flex-col justify-center space-y-5 shadow-xs">
+          <div className="min-w-0 bg-white border border-emerald-200 rounded-3xl p-5 sm:p-7 lg:p-9 flex flex-col justify-center space-y-5 shadow-xs">
             {/* 3 Entry Doors Switcher */}
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl min-w-0">
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-100 rounded-xl min-w-0">
               <button
                 type="button"
                 onClick={() => {
                   setLoginTab('cbt');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[44px] min-w-0 py-2.5 px-1.5 sm:px-3 rounded-lg font-[Arial] text-xs min-[420px]:text-sm font-semibold transition-colors leading-tight ${
                   loginTab === 'cbt'
                     ? 'bg-[#0E2228] text-[#1DF27A] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1954,7 +1954,7 @@ export default function App() {
                   setLoginTab('parent');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[44px] min-w-0 py-2.5 px-1.5 sm:px-3 rounded-lg font-[Arial] text-xs min-[420px]:text-sm font-semibold transition-colors leading-tight ${
                   loginTab === 'parent'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1968,7 +1968,7 @@ export default function App() {
                   setLoginTab('admin');
                   setAuthError(null);
                 }}
-                className={`min-h-[42px] min-w-0 py-2 px-1 sm:px-2 rounded-lg font-[Arial] text-[10.5px] sm:text-xs font-bold transition-colors leading-tight ${
+                className={`min-h-[44px] min-w-0 py-2.5 px-1.5 sm:px-3 rounded-lg font-[Arial] text-xs min-[420px]:text-sm font-semibold transition-colors leading-tight ${
                   loginTab === 'admin'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -1979,7 +1979,7 @@ export default function App() {
             </div>
 
             {authError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 leading-relaxed">
                 {authError}
               </div>
             )}
@@ -1988,20 +1988,20 @@ export default function App() {
               <div className="space-y-4">
                 <div>
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                    <ClipboardCheck className="w-3.5 h-3.5" />
+                    <ClipboardCheck className="w-4 h-4 shrink-0" />
                     <span className="font-[Arial]">RUANG UJIAN CBT SANTRI (MODE LOCKDOWN)</span>
                   </div>
-                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
+                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1.5">
                     Masuk Ruang Ujian CBT
                   </h2>
-                  <p className="font-[Arial] text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="font-[Arial] text-sm sm:text-[15px] text-slate-500 mt-1.5 leading-relaxed">
                     Khusus santri peserta ujian. Jalur ini hanya membuka lembar Ujian CBT Pilihan Ganda — menu Rapor &amp; Portofolio tidak dapat diakses dari sini.
                   </p>
                 </div>
 
-                <form onSubmit={handleCbtStudentLogin} autoComplete="on" className="space-y-3">
+                <form onSubmit={handleCbtStudentLogin} autoComplete="on" className="space-y-3.5">
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       ID Santri MDA / NIS / Nama Lengkap
                     </label>
                     <input
@@ -2019,11 +2019,11 @@ export default function App() {
                         }
                       }}
                       placeholder="Contoh: MDA02.2526.791 atau Nama Lengkap Santri"
-                      className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
                   </div>
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       PIN Akses Santri
                     </label>
                     <div className="relative">
@@ -2034,12 +2034,12 @@ export default function App() {
                         value={loginPin}
                         onChange={(e) => setLoginPin(e.target.value)}
                         placeholder="Masukkan PIN kartu peserta ujian"
-                        className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="w-full min-h-[44px] h-11 pl-3.5 pr-11 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                       />
                       <button
                         type="button"
                         onClick={() => setShowParentPin((v) => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-slate-700"
                         title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
                       >
                         {showParentPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -2049,7 +2049,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isLoggingIn}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
                   >
                     <ClipboardCheck className="w-4 h-4 text-[#1DF27A]" />
                     <span>{isLoggingIn ? 'Memverifikasi...' : 'Masuk Ruang Ujian CBT'}</span>
@@ -2062,17 +2062,17 @@ export default function App() {
                   <div className="text-xs font-[Arial] font-semibold text-emerald-700">
                     AKSES PENGELOLA LEMBAGA
                   </div>
-                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
+                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1.5">
                     Masuk Dashboard Admin / Guru
                   </h2>
-                  <p className="font-[Arial] text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="font-[Arial] text-sm sm:text-[15px] text-slate-500 mt-1.5 leading-relaxed">
                     Masuk menggunakan ID/Nama/Email Admin atau Guru beserta PIN yang tersimpan di Google Sheets (atau gunakan akun Super Admin bawaan).
                   </p>
                 </div>
 
-                <form onSubmit={handleTeacherPinLogin} autoComplete="on" className="space-y-3">
+                <form onSubmit={handleTeacherPinLogin} autoComplete="on" className="space-y-3.5">
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       Nama Lengkap / ID Guru / Email
                     </label>
                     <input
@@ -2090,7 +2090,7 @@ export default function App() {
                         }
                       }}
                       placeholder="Contoh: Nama Lengkap / ID Guru / Email"
-                      className="w-full px-3.5 py-2.5 font-[Arial] text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full min-h-[44px] h-11 px-3.5 py-2.5 font-[Arial] text-base sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
                     <datalist id="mda-saved-staff-names">
                       {savedDeviceCreds
@@ -2101,7 +2101,7 @@ export default function App() {
                     </datalist>
                   </div>
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       PIN / Password Akses Admin / Guru
                     </label>
                     <div className="relative">
@@ -2112,12 +2112,12 @@ export default function App() {
                         value={loginTeacherPin}
                         onChange={(e) => setLoginTeacherPin(e.target.value)}
                         placeholder="Terisi otomatis jika tersimpan di perangkat ini"
-                        className="w-full pl-3.5 pr-10 py-2.5 font-[Arial] text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="w-full min-h-[44px] h-11 pl-3.5 pr-11 py-2.5 font-[Arial] text-base sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                       />
                       <button
                         type="button"
                         onClick={() => setShowTeacherPin((v) => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-slate-700"
                         title={showTeacherPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
                       >
                         {showTeacherPin ? (
@@ -2128,13 +2128,13 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-600">
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none min-w-0">
                       <input
                         type="checkbox"
                         checked={rememberLoginOnDevice}
                         onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
+                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
                       />
                       <span>Isi otomatis PIN saat mengetik nama di perangkat ini</span>
                     </label>
@@ -2147,7 +2147,7 @@ export default function App() {
                           setSavedDeviceCreds(next);
                           setLoginTeacherPin('');
                         }}
-                        className="text-rose-600 hover:underline shrink-0"
+                        className="text-rose-600 hover:underline font-medium shrink-0"
                       >
                         Hapus tersimpan
                       </button>
@@ -2156,7 +2156,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isLoggingIn}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
                   >
                     <KeyRound className="w-4 h-4 text-[#1DF27A]" />
                     <span>{isLoggingIn ? 'Memverifikasi...' : 'Masuk Sebagai Admin / Guru'}</span>
@@ -2167,9 +2167,9 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => enterAlwanHanifPreview('admin')}
-                    className="w-full min-h-[42px] py-2.5 px-4 rounded-xl border border-emerald-300 bg-[#E8FAF3] hover:bg-emerald-100 text-xs font-semibold text-emerald-900 inline-flex items-center justify-center gap-2 transition-colors"
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl border border-emerald-300 bg-[#E8FAF3] hover:bg-emerald-100 text-sm font-semibold text-emerald-900 inline-flex items-center justify-center gap-2 transition-colors"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                    <Sparkles className="w-4 h-4 text-emerald-700" />
                     <span>Pratinjau Data Contoh: Alwan Hanif</span>
                   </button>
                 </div>
@@ -2178,21 +2178,21 @@ export default function App() {
               <div className="space-y-4">
                 <div>
                   <div className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-700">
-                    <Lock className="w-3.5 h-3.5" />
+                    <Lock className="w-4 h-4 shrink-0" />
                     <span className="font-[Arial]">PORTAL SANTRI, MAGANG &amp; RAPOR (WALI/SANTRI)</span>
                   </div>
-                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1">
+                  <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 mt-1.5">
                     {isRaporLocked
                       ? 'Masuk Mengisi Magang & Tracker Ibadah'
                       : 'Masuk Portal Santri & Rapor'}
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="text-sm sm:text-[15px] text-slate-500 mt-1.5 leading-relaxed">
                     Masukkan ID Santri MDA atau Nama Lengkap Santri beserta PIN Akses. Data dibaca langsung dari Google Sheets secara privat.
                   </p>
                 </div>
 
                 {isRaporLocked && (
-                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-2">
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-sm text-amber-950 space-y-2.5">
                     <div className="font-bold flex items-center gap-2 text-amber-800">
                       <Lock className="w-4 h-4 shrink-0" />
                       <span>Tab Rapor Dikunci Sementara · Magang &amp; Ibadah Tetap Buka</span>
@@ -2207,17 +2207,17 @@ export default function App() {
                         setLoginTab('cbt');
                         setAuthError(null);
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-[#0E2228] text-[#1DF27A] font-bold inline-flex items-center gap-1.5 text-[11px]"
+                      className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[#0E2228] text-[#1DF27A] font-bold inline-flex items-center gap-2 text-xs sm:text-sm"
                     >
-                      <ClipboardCheck className="w-3.5 h-3.5" />
+                      <ClipboardCheck className="w-4 h-4" />
                       <span>Pindah ke Ruang Ujian CBT</span>
                     </button>
                   </div>
                 )}
 
-                <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3">
+                <form onSubmit={handleParentPinLogin} autoComplete="on" className="space-y-3.5">
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       Nama Lengkap Santri atau ID Santri MDA
                     </label>
                     <input
@@ -2235,7 +2235,7 @@ export default function App() {
                         }
                       }}
                       placeholder="Contoh: Nama Lengkap Santri atau MDA02.2526.791"
-                      className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full min-h-[44px] h-11 px-3.5 py-2.5 text-base sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                     />
                     <datalist id="mda-saved-parent-names">
                       {savedDeviceCreds
@@ -2246,7 +2246,7 @@ export default function App() {
                     </datalist>
                   </div>
                   <div>
-                    <label className="block font-[Arial] text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block font-[Arial] text-sm font-semibold text-slate-700 mb-1.5">
                       PIN / Password Akses Privat
                     </label>
                     <div className="relative">
@@ -2257,12 +2257,12 @@ export default function App() {
                         value={loginPin}
                         onChange={(e) => setLoginPin(e.target.value)}
                         placeholder="Terisi otomatis jika tersimpan di perangkat ini"
-                        className="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="w-full min-h-[44px] h-11 pl-3.5 pr-11 py-2.5 text-base sm:text-sm font-mono border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                       />
                       <button
                         type="button"
                         onClick={() => setShowParentPin((v) => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-slate-700"
                         title={showParentPin ? 'Sembunyikan PIN' : 'Lihat PIN'}
                       >
                         {showParentPin ? (
@@ -2273,13 +2273,13 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-600">
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none min-w-0">
                       <input
                         type="checkbox"
                         checked={rememberLoginOnDevice}
                         onChange={(e) => setRememberLoginOnDevice(e.target.checked)}
-                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
+                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 shrink-0"
                       />
                       <span>Isi otomatis PIN saat mengetik nama di HP/laptop ini</span>
                     </label>
@@ -2292,7 +2292,7 @@ export default function App() {
                           setSavedDeviceCreds(next);
                           setLoginPin('');
                         }}
-                        className="text-rose-600 hover:underline shrink-0"
+                        className="text-rose-600 hover:underline font-medium shrink-0"
                       >
                         Hapus tersimpan
                       </button>
@@ -2301,7 +2301,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isLoggingIn}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    className="w-full min-h-[46px] py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
                   >
                     <KeyRound className="w-4 h-4" />
                     <span>
@@ -2316,8 +2316,8 @@ export default function App() {
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <span className="text-[11px] text-slate-500 leading-relaxed min-w-0 break-words">
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span className="text-xs sm:text-[13px] text-slate-500 leading-relaxed min-w-0 break-words">
                 {tpl.alamat} · {tpl.instagram}
               </span>
               {!pwa.isInstalled && (
@@ -2331,9 +2331,9 @@ export default function App() {
                       setShowPwaModal(true);
                     }
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 bg-[#E8FAF3] hover:bg-emerald-100 text-emerald-900 text-[11px] font-bold shrink-0 transition-colors"
+                  className="min-h-[42px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-200 bg-[#E8FAF3] hover:bg-emerald-100 text-emerald-900 text-xs sm:text-sm font-bold shrink-0 transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <Download className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>Pasang Aplikasi</span>
                 </button>
               )}
@@ -2353,27 +2353,27 @@ export default function App() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
                     Aplikasi Lintas Perangkat (PWA)
                   </div>
-                  <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 mt-0.5 break-words">
+                  <h3 className="font-display font-bold text-lg sm:text-xl text-slate-900 mt-0.5 break-words">
                     Pasang SIAKAD MDA di Perangkat Anda
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowPwaModal(false)}
-                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed break-words">
+              <p className="text-sm text-slate-600 leading-relaxed break-words">
                 Buka SIAKAD MDA (Rapor, Magang &amp; Tracker Ibadah, Portofolio, dan Ujian CBT) lebih cepat langsung dari layar utama HP atau Desktop tanpa membuka tab browser berulang kali.
               </p>
 
-              <div className="space-y-2.5 text-xs">
+              <div className="space-y-3 text-sm">
                 <div
                   className={`p-3.5 rounded-2xl border space-y-1.5 ${
                     pwa.platform === 'android'
@@ -2381,11 +2381,11 @@ export default function App() {
                       : 'bg-slate-50 border-slate-200'
                   }`}
                 >
-                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                  <div className="font-bold text-slate-900 flex flex-wrap items-center gap-2">
                     <Smartphone className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>Android (Google Chrome)</span>
                     {pwa.platform === 'android' && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-xs font-semibold">
                         Perangkat Anda
                       </span>
                     )}
@@ -2403,11 +2403,11 @@ export default function App() {
                       : 'bg-slate-50 border-slate-200'
                   }`}
                 >
-                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                  <div className="font-bold text-slate-900 flex flex-wrap items-center gap-2">
                     <Share className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>iPhone / iPad (Safari iOS)</span>
                     {pwa.platform === 'ios' && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-xs font-semibold">
                         Perangkat Anda
                       </span>
                     )}
@@ -2416,7 +2416,7 @@ export default function App() {
                     Buka di browser <strong>Safari</strong>, ketuk ikon{' '}
                     <strong>Bagikan (Share)</strong> di bilah Safari, lalu gulir dan pilih{' '}
                     <span className="inline-flex items-center gap-1 font-semibold text-slate-900">
-                      <PlusSquare className="w-3.5 h-3.5 text-emerald-700" />
+                      <PlusSquare className="w-4 h-4 text-emerald-700" />
                       Tambah ke Layar Utama
                     </span>
                     .
@@ -2430,11 +2430,11 @@ export default function App() {
                       : 'bg-slate-50 border-slate-200'
                   }`}
                 >
-                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                  <div className="font-bold text-slate-900 flex flex-wrap items-center gap-2">
                     <Monitor className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>Microsoft Windows (Chrome / Edge)</span>
                     {pwa.platform === 'windows' && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-xs font-semibold">
                         Perangkat Anda
                       </span>
                     )}
@@ -2452,7 +2452,7 @@ export default function App() {
                     await pwa.triggerNativeInstall();
                     setShowPwaModal(false);
                   }}
-                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-2"
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold inline-flex items-center justify-center gap-2"
                 >
                   <Download className="w-4 h-4" />
                   <span>Pasang Aplikasi Sekarang</span>
@@ -2462,7 +2462,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setShowPwaModal(false)}
-                className="w-full min-h-[42px] py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold"
               >
                 Tutup Panduan
               </button>
@@ -2484,16 +2484,16 @@ export default function App() {
           <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-6 h-6 text-rose-600" />
           </div>
-          <h2 className="font-display font-bold text-lg text-slate-900">
+          <h2 className="font-display font-bold text-xl text-slate-900">
             Akses Tidak Terdaftar di MDA
           </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Sesi login belum terdaftar pada peran Admin, Guru, maupun Wali Santri.
           </p>
           <button
             type="button"
             onClick={() => void handleLogout()}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
+            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800"
           >
             Kembali ke Halaman Login
           </button>
@@ -2590,12 +2590,12 @@ export default function App() {
 
       {/* Left Sidebar (Desktop + Mobile/Tablet Drawer) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 h-dvh bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-[264px] h-dvh bg-white border-r border-emerald-200/80 flex flex-col justify-between transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div
-          className="h-16 px-3.5 border-b border-emerald-200/80 flex items-center justify-between lg:justify-center gap-2 text-white shrink-0"
+          className="h-16 sm:h-[72px] px-4 border-b border-emerald-200/80 flex items-center justify-between lg:justify-center gap-2 text-white shrink-0"
           style={{ background: theme.bannerGradient }}
         >
           <div className="flex-1 lg:w-full inline-flex items-center justify-center bg-white/95 rounded-xl px-3 py-1.5 shadow-xs">
@@ -2604,15 +2604,16 @@ export default function App() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-white/90 hover:bg-white/15"
+            className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-white/90 hover:bg-white/15"
+            aria-label="Tutup Menu"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto pb-3">
 
-          <nav className="p-3 space-y-1">
+          <nav className="p-3 space-y-1.5">
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const active = activeNav === item.id;
@@ -2626,16 +2627,16 @@ export default function App() {
                     setActiveNav(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                     active
                       ? 'text-white shadow-xs'
                       : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
                   }`}
                   style={active ? { background: theme.bannerGradient } : undefined}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className="w-[18px] h-[18px] shrink-0" />
                   <span className="truncate flex-1 text-left">{item.label}</span>
-                  {isItemLocked && <Lock className="w-3.5 h-3.5 shrink-0 opacity-75" />}
+                  {isItemLocked && <Lock className="w-4 h-4 shrink-0 opacity-75" />}
                 </button>
               );
             })}
@@ -2644,19 +2645,19 @@ export default function App() {
           {/* Google Sheets Sync Card (Admin & Guru only) */}
           {effectiveRole !== 'santri_ortu' && !previewSampleMode && (
             <div
-              className="mx-3 mt-4 p-3.5 rounded-xl border border-emerald-200 space-y-2 text-xs"
+              className="mx-3 mt-4 p-4 rounded-xl border border-emerald-200 space-y-2.5 text-sm"
               style={{ backgroundColor: theme.pageTint }}
             >
-              <div className="flex items-center justify-between font-semibold text-slate-800">
-                <span className="inline-flex items-center gap-1.5">
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+              <div className="flex items-center justify-between gap-2 font-semibold text-slate-800">
+                <span className="inline-flex items-center gap-1.5 text-sm">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>Google Sheets</span>
                 </span>
-                <span className="text-[11px] font-mono text-emerald-800 font-bold">
+                <span className="text-xs font-mono text-emerald-800 font-bold shrink-0">
                   {db.spreadsheetId ? 'Terhubung' : 'Belum Taut'}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-600 truncate">
+              <div className="text-xs text-slate-600 truncate">
                 {db.spreadsheetId
                   ? db.spreadsheetTitle || db.spreadsheetId
                   : 'Hubungkan Google Spreadsheet MDA'}
@@ -2666,16 +2667,16 @@ export default function App() {
                   type="button"
                   disabled={isSyncing}
                   onClick={() => void refreshFromServer(false)}
-                  className="w-full py-1.5 px-2.5 rounded-lg bg-white border border-emerald-200 text-slate-800 text-[11px] font-semibold hover:bg-emerald-50 inline-flex items-center justify-center gap-1"
+                  className="w-full min-h-[40px] py-2 px-3 rounded-lg bg-white border border-emerald-200 text-slate-800 text-xs font-semibold hover:bg-emerald-50 inline-flex items-center justify-center gap-1.5"
                 >
-                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
                   <span>{isSyncing ? 'Menyinkronkan...' : 'Muat Ulang Sheets'}</span>
                 </button>
               ) : actualRole === 'admin' ? (
                 <button
                   type="button"
                   onClick={() => setActiveNav('sheets')}
-                  className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700"
+                  className="w-full min-h-[40px] py-2 px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
                 >
                   Buat / Pilih Spreadsheet
                 </button>
@@ -2685,10 +2686,10 @@ export default function App() {
         </div>
 
         {/* Account & Role Footer */}
-        <div className="p-3 border-t border-slate-200 space-y-2 shrink-0 bg-white">
+        <div className="p-3.5 border-t border-slate-200 space-y-2.5 shrink-0 bg-white">
           {actualRole === 'admin' && (
-            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-semibold text-slate-500 mb-1">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-semibold text-slate-500 mb-1.5">
                 Pratinjau Peran Portal
               </div>
               <select
@@ -2700,7 +2701,7 @@ export default function App() {
                     setActiveNav(tpl.lockRaporDuringExam ? 'internship' : 'portal');
                   }
                 }}
-                className="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-md px-2 py-1"
+                className="w-full min-h-[42px] text-base sm:text-sm font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg px-2.5 py-2"
               >
                 <option value="admin">Dashboard Admin</option>
                 <option value="guru">Dashboard Guru / Wali</option>
@@ -2711,12 +2712,12 @@ export default function App() {
 
           <div className="flex items-center justify-between gap-2 px-1">
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-slate-900 truncate">
+              <div className="text-sm font-semibold text-slate-900 truncate">
                 {previewSampleMode
                   ? 'Pratinjau Alwan Hanif'
                   : backendUser?.name || 'Pengguna MDA'}
               </div>
-              <div className="text-[11px] text-slate-500 truncate">
+              <div className="text-xs text-slate-500 truncate">
                 {previewSampleMode
                   ? 'Data Contoh MDA (Read-only Sheets)'
                   : `${
@@ -2733,10 +2734,10 @@ export default function App() {
               onClick={() =>
                 previewSampleMode ? exitPreviewSampleMode() : void handleLogout()
               }
-              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"
+              className="min-h-[42px] min-w-[42px] flex items-center justify-center rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"
               title="Keluar"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-[18px] h-[18px]" />
             </button>
           </div>
         </div>
@@ -2745,27 +2746,27 @@ export default function App() {
       {/* Main Content Area */}
       <div className="flex-1 min-w-0 max-w-full flex flex-col">
         {/* Top Header */}
-        <header className="w-full min-w-0 h-14 sm:h-16 bg-white/95 backdrop-blur-xs border-b border-emerald-200/80 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 shrink-0 sticky top-0 z-20">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <header className="w-full min-w-0 min-h-[64px] sm:min-h-[72px] bg-white/95 backdrop-blur-xs border-b border-emerald-200/80 px-4 sm:px-6 flex items-center justify-between gap-2.5 sm:gap-3 shrink-0 sticky top-0 z-20">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-slate-700 hover:bg-emerald-50 shrink-0"
+              className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:bg-emerald-50 shrink-0"
               aria-label="Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <div className="text-[10px] sm:text-xs text-emerald-700 font-semibold truncate">
+              <div className="text-xs sm:text-sm text-emerald-700 font-semibold truncate">
                 {tpl.namaLembaga} · {tpl.namaPesantren}
               </div>
-              <div className="font-display font-bold text-slate-900 text-xs sm:text-base truncate">
+              <div className="font-display font-bold text-slate-900 text-base sm:text-xl truncate">
                 {visibleNavItems.find((i) => i.id === activeNav)?.label || 'SIAKAD MDA'}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Real Sync / Connection Indicator */}
             {!previewSampleMode && (
               <button
@@ -2773,7 +2774,7 @@ export default function App() {
                 onClick={() => void refreshFromServer(false)}
                 disabled={isSyncing}
                 title="Klik untuk memuat ulang data terbaru dari Google Sheets"
-                className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-colors whitespace-nowrap ${
+                className={`hidden lg:inline-flex min-h-[42px] items-center gap-1.5 px-3 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                   !isOnline || syncState === 'offline'
                     ? 'bg-rose-50 border-rose-200 text-rose-700'
                     : syncState === 'loading' || syncState === 'saving' || isSyncing
@@ -2785,27 +2786,27 @@ export default function App() {
               >
                 {!isOnline || syncState === 'offline' ? (
                   <>
-                    <WifiOff className="w-3.5 h-3.5" />
+                    <WifiOff className="w-4 h-4" />
                     <span>Offline</span>
                   </>
                 ) : syncState === 'loading' ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Mengambil Data Sheets...</span>
                   </>
                 ) : syncState === 'saving' || isSyncing ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Menyimpan ke Sheets...</span>
                   </>
                 ) : syncState === 'error' ? (
                   <>
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <AlertTriangle className="w-4 h-4" />
                     <span>Gagal Sinkron</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-3 h-3" />
+                    <RefreshCw className="w-3.5 h-3.5" />
                     <span>Tersinkron Sheets</span>
                   </>
                 )}
@@ -2813,11 +2814,11 @@ export default function App() {
             )}
 
             {uniqueYears.length > 0 && (
-              <div className="hidden sm:flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-2">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs font-mono font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-lg text-slate-800"
+                  className="min-h-[42px] px-3 py-2 text-sm font-mono font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-xl text-slate-800"
                   aria-label="Tahun Akademik"
                 >
                   {uniqueYears.map((yr) => (
@@ -2831,7 +2832,7 @@ export default function App() {
                   onChange={(e) =>
                     setSelectedSemester(e.target.value as 'Gasal' | 'Genap')
                   }
-                  className="px-2.5 py-1.5 text-xs font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-lg text-slate-800"
+                  className="min-h-[42px] px-3 py-2 text-sm font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-xl text-slate-800"
                   aria-label="Semester"
                 >
                   <option value="Gasal">Gasal</option>
@@ -2845,18 +2846,18 @@ export default function App() {
                 type="button"
                 onClick={() => setInternReportStudentId(lockedStudentId || selectedStudentId)}
                 disabled={db.students.length === 0}
-                className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
+                className="min-h-[42px] inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#0E2228] text-white text-xs sm:text-sm font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
               >
-                <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                <Printer className="w-4 h-4 text-[#1DF27A]" />
                 <span>PDF Magang</span>
               </button>
             ) : isRaporLockedForStudent ? (
               <button
                 type="button"
                 onClick={() => setActiveNav('internship')}
-                className="min-h-[38px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold whitespace-nowrap shrink-0 shadow-xs"
+                className="min-h-[42px] inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 shadow-xs"
               >
-                <Briefcase className="w-3.5 h-3.5" />
+                <Briefcase className="w-4 h-4" />
                 <span>Buka Magang &amp; Jurnal</span>
               </button>
             ) : (
@@ -2864,9 +2865,9 @@ export default function App() {
                 type="button"
                 onClick={() => setPrintMode(true)}
                 disabled={db.students.length === 0 || db.reports.length === 0}
-                className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#0E2228] text-white text-xs font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
+                className="min-h-[42px] inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#0E2228] text-white text-xs sm:text-sm font-semibold hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-45"
               >
-                <Printer className="w-3.5 h-3.5 text-[#1DF27A]" />
+                <Printer className="w-4 h-4 text-[#1DF27A]" />
                 <span>Cetak PDF</span>
               </button>
             )}
@@ -2874,14 +2875,14 @@ export default function App() {
         </header>
 
         {/* Mobile Quick Period, Refresh & Tab Switcher */}
-        <div className="sm:hidden bg-white border-b border-emerald-100 px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <div className="sm:hidden bg-white border-b border-emerald-100 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             {uniqueYears.length > 0 && (
               <>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="min-w-0 flex-1 px-2 py-1.5 text-xs font-mono font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-lg"
+                  className="min-w-0 flex-1 min-h-[44px] px-2.5 py-2 text-base sm:text-sm font-mono font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-xl"
                   aria-label="Tahun Akademik Mobile"
                 >
                   {uniqueYears.map((yr) => (
@@ -2895,7 +2896,7 @@ export default function App() {
                   onChange={(e) =>
                     setSelectedSemester(e.target.value as 'Gasal' | 'Genap')
                   }
-                  className="px-2 py-1.5 text-xs font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-lg"
+                  className="min-h-[44px] px-2.5 py-2 text-base sm:text-sm font-semibold bg-[#E8FAF3] border border-emerald-200 rounded-xl"
                   aria-label="Semester Mobile"
                 >
                   <option value="Gasal">Gasal</option>
@@ -2906,35 +2907,35 @@ export default function App() {
           </div>
 
           {effectiveRole === 'santri_ortu' && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveNav('portal')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 ${
+                className={`min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1 ${
                   activeNav === 'portal'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700'
                 }`}
               >
-                {isRaporLockedForStudent && <Lock className="w-3 h-3" />}
+                {isRaporLockedForStudent && <Lock className="w-3.5 h-3.5" />}
                 <span>Rapor</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveNav('portfolio')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 ${
+                className={`min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1 ${
                   activeNav === 'portfolio'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700'
                 }`}
               >
-                {isRaporLockedForStudent && <Lock className="w-3 h-3" />}
+                {isRaporLockedForStudent && <Lock className="w-3.5 h-3.5" />}
                 <span>Karya</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveNav('internship')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold ${
+                className={`min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold ${
                   activeNav === 'internship'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700'
@@ -2950,10 +2951,10 @@ export default function App() {
               type="button"
               onClick={() => void refreshFromServer(false)}
               disabled={isSyncing}
-              className="p-2 rounded-lg border border-emerald-200 bg-[#E8FAF3] text-emerald-800 shrink-0"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-emerald-200 bg-[#E8FAF3] text-emerald-800 shrink-0"
               aria-label="Muat Ulang Google Sheets"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             </button>
           )}
         </div>
@@ -2962,55 +2963,55 @@ export default function App() {
         {toast && (
           <div className="px-4 sm:px-6 pt-3">
             <div
-              className={`px-4 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-3 ${
+              className={`px-4 py-3 rounded-xl border text-sm font-medium flex items-center justify-between gap-3 ${
                 toast.type === 'ok'
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                   : 'bg-rose-50 border-rose-200 text-rose-800'
               }`}
             >
-              <span className="inline-flex items-start gap-2 min-w-0 flex-1">
+              <span className="inline-flex items-start gap-2.5 min-w-0 flex-1">
                 {toast.type === 'ok' ? (
                   <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                 ) : (
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 )}
-                <span className="min-w-0 break-words">{toast.text}</span>
+                <span className="min-w-0 break-words leading-relaxed">{toast.text}</span>
               </span>
               <button
                 type="button"
                 onClick={() => setToast(null)}
-                className="text-slate-500 hover:text-slate-800 shrink-0"
+                className="p-1 text-slate-500 hover:text-slate-800 shrink-0"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
         {/* Active Viewport */}
-        <main className="flex-1 min-w-0 max-w-[1360px] w-full mx-auto p-3 sm:p-6 space-y-4">
+        <main className="flex-1 min-w-0 max-w-[1400px] w-full mx-auto p-4 sm:p-6 lg:p-7 space-y-6">
           {/* Non-intrusive PWA Auto-Update Banner */}
           {pwaUpdate.updateAvailable && (
-            <div className="p-3 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-2 text-xs shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#0E2228] text-white border border-emerald-400/40 flex flex-wrap items-center justify-between gap-3 text-sm shadow-sm">
               <div className="flex items-center gap-2 font-semibold">
-                <RefreshCw className="w-3.5 h-3.5 text-[#1DF27A] shrink-0" />
+                <RefreshCw className="w-4 h-4 text-[#1DF27A] shrink-0" />
                 <span>Versi baru SIAKAD MDA tersedia. Muat ulang agar pembaruan aktif.</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={pwaUpdate.applyUpdate}
-                  className="px-3 py-1.5 rounded-lg bg-[#1DF27A] text-slate-950 font-bold hover:bg-emerald-300"
+                  className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#1DF27A] text-slate-950 text-sm font-bold hover:bg-emerald-300"
                 >
                   Muat Ulang
                 </button>
                 <button
                   type="button"
                   onClick={pwaUpdate.dismissUpdateBanner}
-                  className="p-1 rounded-lg text-slate-300 hover:text-white"
+                  className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-slate-300 hover:text-white"
                   aria-label="Tutup pemberitahuan pembaruan"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -3018,24 +3019,24 @@ export default function App() {
 
           {/* Explicit Alwan Hanif Preview Sample Mode Banner */}
           {previewSampleMode && (
-            <div className="p-3.5 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
-              <div className="space-y-0.5">
-                <div className="font-bold text-[#1DF27A] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
+            <div className="p-4 rounded-2xl bg-[#0E2228] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-xs">
+              <div className="space-y-1">
+                <div className="font-bold text-[#1DF27A] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 shrink-0" />
                   <span>MODE PRATINJAU · DATA CONTOH SANTRI ALWAN HANIF</span>
                 </div>
-                <p className="text-slate-300 text-[11px]">
+                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
                   Anda sedang melihat pratinjau struktur dashboard dengan data contoh Alwan Hanif. Perubahan di mode ini tidak dikirim ke Google Sheets.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setPreviewRole('admin');
                     setActiveNav('overview');
                   }}
-                  className={`px-2.5 py-1.5 rounded-lg font-semibold ${
+                  className={`min-h-[40px] px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold ${
                     previewRole === 'admin'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-white/10 text-slate-200 hover:bg-white/20'
@@ -3050,7 +3051,7 @@ export default function App() {
                     setSelectedStudentId('std-alwan');
                     setActiveNav(tpl.lockRaporDuringExam ? 'internship' : 'portal');
                   }}
-                  className={`px-2.5 py-1.5 rounded-lg font-semibold ${
+                  className={`min-h-[40px] px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold ${
                     previewRole === 'santri_ortu'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-white/10 text-slate-200 hover:bg-white/20'
@@ -3061,7 +3062,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={exitPreviewSampleMode}
-                  className="px-3 py-1.5 rounded-lg bg-white text-slate-950 font-bold hover:bg-slate-100"
+                  className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white text-slate-950 text-xs sm:text-sm font-bold hover:bg-slate-100"
                 >
                   Keluar &amp; Login Asli
                 </button>
@@ -3075,8 +3076,8 @@ export default function App() {
             legacySnapshot &&
             db.spreadsheetId &&
             activeNav !== 'sheets' && (
-              <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-sky-950">
-                <div>
+              <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-sky-950">
+                <div className="leading-relaxed">
                   <strong>Data lokal browser lama terdeteksi:</strong> {legacySnapshot.students.length} santri,{' '}
                   {legacySnapshot.reports.length} rapor. Anda dapat memigrasikannya ke Google Sheets tanpa menimpa/duplikasi data.
                 </div>
@@ -3084,7 +3085,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleMigrateLocalToSheets}
-                    className="px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white font-semibold"
+                    className="min-h-[40px] px-3.5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs sm:text-sm font-semibold"
                   >
                     Migrasikan Sekarang
                   </button>
@@ -3094,7 +3095,7 @@ export default function App() {
                       safeLocalStorage.removeItem(LEGACY_LOCAL_DB_KEY);
                       setLegacySnapshot(null);
                     }}
-                    className="px-2.5 py-1.5 rounded-lg border border-sky-200 bg-white text-sky-800 font-semibold"
+                    className="min-h-[40px] px-3 py-2 rounded-xl border border-sky-200 bg-white text-sky-800 text-xs sm:text-sm font-semibold"
                   >
                     Abaikan
                   </button>
@@ -3345,13 +3346,13 @@ export default function App() {
                   <Lock className="w-6 h-6 text-amber-700" />
                 </div>
                 <div className="space-y-1.5">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-700">
                     Mode Pekan Ujian CBT Aktif
                   </div>
                   <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900">
                     Rapor Akademik Dikunci Sementara
                   </h2>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed">
                     {tpl.lockRaporMessage ||
                       'Akses Rapor Akademik sedang dikunci sementara selama pekan ujian CBT berlangsung. Anda tetap dapat mengisi Laporan Jurnaling Magang & Tracker Ibadah Harian.'}
                   </p>
@@ -3359,7 +3360,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveNav('internship')}
-                  className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:w-auto min-h-[46px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Briefcase className="w-4 h-4 shrink-0" />
                   <span>Buka Magang &amp; Jurnal Harian</span>
@@ -3403,13 +3404,13 @@ export default function App() {
                   <Lock className="w-6 h-6 text-amber-700" />
                 </div>
                 <div className="space-y-1.5">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-700">
                     Mode Pekan Ujian CBT Aktif
                   </div>
                   <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900">
                     Tab Portofolio &amp; Rapor Dikunci Sementara
                   </h2>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed">
                     {tpl.lockRaporMessage ||
                       'Akses Student Portfolio & Rapor Akademik sedang dikunci sementara selama pekan ujian CBT. Silakan lanjutkan pengisian Jurnaling Magang & Tracker Ibadah.'}
                   </p>
@@ -3417,7 +3418,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveNav('internship')}
-                  className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:w-auto min-h-[46px] px-6 py-3 rounded-xl bg-[#0E2228] hover:bg-slate-800 text-[#1DF27A] text-sm font-bold inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Briefcase className="w-4 h-4 shrink-0" />
                   <span>Buka Magang &amp; Jurnal Harian</span>
@@ -3525,7 +3526,7 @@ export default function App() {
           onClick={() => setConflictDialog(null)}
         >
           <div
-            className="w-full max-w-md max-h-[90dvh] overflow-y-auto bg-white border border-amber-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl my-auto"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto bg-white border border-amber-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
@@ -3533,16 +3534,16 @@ export default function App() {
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-display font-bold text-sm text-slate-900 break-words leading-snug">
+                <h3 className="font-display font-bold text-base text-slate-900 break-words leading-snug">
                   Konflik Pembaruan Bersamaan Terdeteksi
                 </h3>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words">
+                <p className="text-sm text-slate-600 mt-1 leading-relaxed break-words">
                   {conflictDialog.message}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() =>
@@ -3552,7 +3553,7 @@ export default function App() {
                     true
                   )
                 }
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-0 py-2 px-3 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold"
+                className="w-full sm:w-auto min-h-[44px] py-2.5 px-4 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-sm font-semibold"
               >
                 Timpa Paksa
               </button>
@@ -3562,7 +3563,7 @@ export default function App() {
                   setConflictDialog(null);
                   await refreshFromServer(false);
                 }}
-                className="w-full sm:flex-1 min-h-[42px] sm:min-h-0 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                className="w-full sm:flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
               >
                 Muat Data Terbaru dari Sheets
               </button>
