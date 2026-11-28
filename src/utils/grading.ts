@@ -334,6 +334,104 @@ export function hitungNilaiAkhirTahfidz(
   return Math.round((sum / 4) * 100) / 100;
 }
 
+export interface TahfidzJuzProgress {
+  juz: number;
+  juzFormatted: string;
+  targetJuz: number;
+  pct: number;
+}
+
+function parseTahfidzTotalJuzText(raw?: string): number {
+  const text = String(raw || '').trim();
+  if (!text || /^(-|—|belum(\s+ada)?)$/i.test(text)) {
+    return 0;
+  }
+
+  let juzPart = 0;
+  let hasMatchedUnit = false;
+
+  const juzMatch = text.match(/(\d+(?:[.,]\d+)?)\s*juz\b/i);
+  if (juzMatch?.[1]) {
+    const parsed = Number(juzMatch[1].replace(',', '.'));
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      juzPart += parsed;
+      hasMatchedUnit = true;
+    }
+  }
+
+  const halamanMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:halaman|hal|hlm)\b/i);
+  if (halamanMatch?.[1]) {
+    const parsedHal = Number(halamanMatch[1].replace(',', '.'));
+    if (Number.isFinite(parsedHal) && parsedHal >= 0) {
+      juzPart += parsedHal / 20;
+      hasMatchedUnit = true;
+    }
+  }
+
+  const lembarMatch = text.match(/(\d+(?:[.,]\d+)?)\s*lembar\b/i);
+  if (lembarMatch?.[1]) {
+    const parsedLembar = Number(lembarMatch[1].replace(',', '.'));
+    if (Number.isFinite(parsedLembar) && parsedLembar >= 0) {
+      juzPart += parsedLembar / 10;
+      hasMatchedUnit = true;
+    }
+  }
+
+  if (hasMatchedUnit) {
+    return juzPart;
+  }
+
+  const plainNumberMatch = text.match(/^\s*(\d+(?:[.,]\d+)?)\s*$/);
+  if (plainNumberMatch?.[1]) {
+    const parsed = Number(plainNumberMatch[1].replace(',', '.'));
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
+export function calculateTahfidzJuzProgress(
+  tahfidz?: (Partial<TahfidzAssessment> & { totalJuz?: number | string }) | string | null
+): TahfidzJuzProgress {
+  const targetJuz = 30;
+  let rawJuz = 0;
+
+  if (tahfidz && typeof tahfidz === 'object') {
+    const hasNumericTotalJuz =
+      tahfidz.totalJuz !== undefined &&
+      tahfidz.totalJuz !== null &&
+      String(tahfidz.totalJuz).trim() !== '';
+    const numericTotalJuz = Number(
+      typeof tahfidz.totalJuz === 'string'
+        ? tahfidz.totalJuz.replace(',', '.')
+        : tahfidz.totalJuz
+    );
+    if (hasNumericTotalJuz && Number.isFinite(numericTotalJuz) && numericTotalJuz >= 0) {
+      rawJuz = numericTotalJuz;
+    } else {
+      rawJuz = parseTahfidzTotalJuzText(tahfidz.totalHafalan);
+    }
+  } else if (typeof tahfidz === 'string') {
+    rawJuz = parseTahfidzTotalJuzText(tahfidz);
+  }
+
+  const clampedJuz = Math.max(0, Math.min(targetJuz, Math.round(rawJuz * 100) / 100));
+  const pct = Math.max(0, Math.min(100, Math.round((clampedJuz / targetJuz) * 100)));
+  const juzFormatted = clampedJuz.toLocaleString('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
+  return {
+    juz: clampedJuz,
+    juzFormatted,
+    targetJuz,
+    pct,
+  };
+}
+
 export function hitungRataRataDiniyah(items: DiniyahSubject[]): number {
   const active = items.filter((d) => d.mataPelajaran.trim() !== '' && d.nilai > 0);
   if (active.length === 0) return 0;

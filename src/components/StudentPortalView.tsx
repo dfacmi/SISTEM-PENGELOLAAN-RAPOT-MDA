@@ -44,6 +44,7 @@ import {
   TrendSeriesPoint,
 } from './Charts';
 import { MdaLogo, PortfolioArtwork, StudentAvatar } from './MdaLogo';
+import { TahfidzJuzDonutChart } from './TahfidzJuzDonutChart';
 
 interface StudentPortalViewProps {
   db: MdaDatabase;
@@ -576,9 +577,18 @@ export const StudentPortalView: React.FC<StudentPortalViewProps> = ({
             ))}
           </div>
 
-          <p className="text-sm text-slate-700 leading-relaxed bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5">
-            {currentReport.tahfidz.deskripsi}
-          </p>
+          <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 sm:p-4 flex flex-col min-[420px]:flex-row min-[420px]:items-center justify-between gap-3.5">
+            <div className="flex-1 min-w-0 text-sm text-slate-700 leading-relaxed">
+              <span className="font-bold text-slate-900">Deskripsi capaian tahfidz:</span>{' '}
+              <span>{currentReport.tahfidz.deskripsi || '—'}</span>
+            </div>
+            <div className="shrink-0 pt-3 min-[420px]:pt-0 min-[420px]:pl-3.5 border-t min-[420px]:border-t-0 min-[420px]:border-l border-emerald-200 flex items-center">
+              <TahfidzJuzDonutChart
+                tahfidz={currentReport.tahfidz}
+                accentColor={tpl.accentTheme === 'darul-forest' ? '#0D9488' : '#0284C7'}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="lg:col-span-7 min-w-0 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">

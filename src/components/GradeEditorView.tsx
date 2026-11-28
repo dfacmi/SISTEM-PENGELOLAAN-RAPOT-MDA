@@ -45,6 +45,7 @@ import {
   recalculateReport,
 } from '../utils/grading';
 import { StudentAvatar } from './MdaLogo';
+import { TahfidzJuzDonutChart } from './TahfidzJuzDonutChart';
 
 interface GradeEditorViewProps {
   db: MdaDatabase;
@@ -1572,6 +1573,18 @@ export const GradeEditorView: React.FC<GradeEditorViewProps> = ({
                       />
                     </div>
                   ))}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex flex-col min-[420px]:flex-row min-[420px]:items-center justify-between gap-3">
+                  <div className="text-xs text-slate-600 leading-relaxed">
+                    <span className="font-semibold text-slate-800 block">
+                      Pratinjau Progres 30 Juz di Rapor &amp; PDF
+                    </span>
+                    Dihitung otomatis dari isian Total Hafalan (misal &ldquo;5 Juz&rdquo; atau &ldquo;5 Juz 10 halaman&rdquo;).
+                  </div>
+                  <div className="shrink-0">
+                    <TahfidzJuzDonutChart tahfidz={draft.tahfidz} />
+                  </div>
                 </div>
               </div>
 

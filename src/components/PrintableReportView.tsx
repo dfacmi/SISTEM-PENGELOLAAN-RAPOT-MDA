@@ -27,6 +27,7 @@ import {
 import { normalizeDisplayImageUrl } from '../utils/imageHelper';
 import { getThemeStyles, mergeTemplateConfig } from '../utils/theme';
 import { MdaLogo, PortfolioArtwork, StudentAvatar } from './MdaLogo';
+import { TahfidzJuzDonutChart } from './TahfidzJuzDonutChart';
 
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
@@ -1223,9 +1224,18 @@ export const PrintableReportView: React.FC<PrintableReportViewProps> = ({
                   </table>
                 </div>
 
-                <div className="mt-2 bg-white border border-slate-300 rounded-lg p-2.5 text-[11px] leading-snug">
-                  <span className="font-bold">Deskripsi capaian tahfidz:</span>{' '}
-                  <span className="text-slate-700">{report.tahfidz.deskripsi}</span>
+                <div className="mt-2 bg-white border border-slate-300 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0 text-[11px] leading-snug">
+                    <span className="font-bold text-slate-950">Deskripsi capaian tahfidz:</span>{' '}
+                    <span className="text-slate-700">{report.tahfidz.deskripsi}</span>
+                  </div>
+                  <div className="shrink-0 pl-3 border-l border-slate-200 flex items-center">
+                    <TahfidzJuzDonutChart
+                      tahfidz={report.tahfidz}
+                      compact
+                      accentColor={tpl.accentTheme === 'darul-forest' ? '#0D9488' : '#0284C7'}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
